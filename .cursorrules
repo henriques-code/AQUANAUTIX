@@ -1,0 +1,39 @@
+# AQUADEX / AQUANAUTIX — Regras do projecto
+
+## Idioma
+- Respostas e documentação de trabalho em **Português de Portugal**.
+
+## Visão geral
+- **App**: Flutter + Supabase (código em `lib/`, etc.).
+- **Site marketing / landing**: ficheiro único `Site V2/index.html` (~4900+ linhas), HTML + CSS + JS.
+- **Stack do site**: Mapbox GL JS v3.3.0, SunCalc.
+- **Servidor local**: script `_local_server.ps1` (ex.: http://localhost:8080).
+- **Deploy site**: aquanautix.vercel.app
+
+## Design system — Midnight Deep Sea
+- `--bg: #000814` | `--bg3: #071428` | `--cyan: #00F5FF` | `--amber: #F3C64D` | `--hint: #8AADBE`
+- Títulos: Orbitron | Corpo: IBM Plex Sans
+
+## Módulos PROTEGIDOS (Site V2)
+Não remover nem alterar sem autorização explícita do utilizador:
+`handleWaitlist()` | `calcularOraculo()` | `initMapbox()` | `addSpots()` | `SPOTS[]` | `ESPECIES[]` | `ISCO_DB` | `_spotMarkers[]` | `toggleBaitShops()` | `setMapStyle()` | Modal Early Access | CSS Midnight Deep Sea (coerência visual)
+
+## Fluxo de alterações (Site V2)
+1. **Nunca apagar código** sem o utilizador escrever **AUTORIZO** (ou equivalente explícito).
+2. **ANTES / DEPOIS**: mostrar diff ou excertos antes de aplicar mudanças relevantes.
+3. **Uma alteração de cada vez** (evitar packs de refactors não pedidos).
+4. **Backup** antes de alterações grandes (ex.: cópia `.bak` ou commit intermédio).
+5. Após editar `index.html`: verificar integridade (estrutura, fecho `</html>`, contagens de linhas se o utilizador usar esse controlo).
+
+## Mapbox (Site V2)
+- Instância global: `aquaMap3D`.
+- `addSpots()` usa camada GeoJSON para `bait_shop`; spots normais com marcadores HTML.
+- `IntersectionObserver` para inicializar o mapa quando `#mapa-live` fica visível.
+- **bearing: 0** em todos os `easeTo` / `flyTo` (Portugal ao alto).
+- Centro padrão: `[-8.5, 39.5]`, zoom: **5.5**.
+
+## Privacidade
+- Não expor ou pedir dados que identifiquem spots de pescadores sem salvaguardas; se o pedido o prejudicar, sugerir alternativa (ex.: agregação, ruído, privacidade diferencial).
+
+## Estilo de código
+- Alterações mínimas e focadas no pedido; alinhar ao estilo existente; evitar refactors não solicitados.

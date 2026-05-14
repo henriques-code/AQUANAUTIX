@@ -1,0 +1,33 @@
+# AQUANAUTIX — Implementação P1: pesquisa de local (modo planeamento) no Oráculo
+
+Cola isto no Claude Code como primeira mensagem da sessão de implementação.
+
+---
+
+És o engenheiro Flutter deste repo. **Escopo único:** implementar **P1 — Pesquisa de local (modo planeamento)** conforme `.cursor/rules/aquanautix-claude-code-prompt.mdc` (secção "P1 — Pesquisa de local").
+
+## Objetivo
+Permitir ao utilizador **escrever o nome de um sítio** (ex. cidade, praia, rio) e obter o **mesmo bundle** de maré/tempo/score que `OracleDataService` já produz, usando **coordenadas escolhidas** no geocoding — para **planeamento**. **Sem IA / LLM.** **Não editar Site V2.**
+
+## Invariantes
+- **Modo ao vivo (GPS):** mantém o comportamento actual: `fetch` / `fetchRiver` com `_requireGpsFix()` quando **não** há coordenadas de planeamento activas.
+- **Modo planeamento:** após o utilizador escolher um resultado da pesquisa Nominatim, o fetch usa **essas** lat/lon e **não** exige GPS para esse pedido.
+- **Transparência:** o UI/bundle deve deixar claro se os dados são para **local pesquisado** vs **posição GPS actual** (usa `usedGps` / subtítulo de forma coerente com `OracleBundle` e `RiverOracleBundle` em `lib/core/tides/oracle_data_service.dart`).
+- **Diff mínimo** em `lib/screens/oraculo.dart`: só o necessário (pesquisa, lista, voltar ao GPS); **não** refactor cosmético nem apagar blocos existentes.
+- **Design:** alterações visuais discretas; se precisares de layout novo invasivo, **para** e pede AUTORIZO ao utilizador.
+
+## Ordem de trabalho sugerida
+1. **`lib/core/tides/osm_place_search.dart`** (ou nome equivalente): GET `nominatim.openstreetmap.org/search` com os mesmos headers `User-Agent` que `osm_reverse_geocode.dart`; parâmetros `format=json`, `limit=5`, `accept-language=pt`, `addressdetails=1`, `countrycodes=pt,es`; modelo tipado para lista de hits (`lat`, `lon`, labels).
+2. **`OracleDataService`**: extensão **aditiva** — coordenadas opcionais de planeamento **ou** método que factoriza o código **depois** de ter `(lat,lon)`; se planeamento definido, **não** chamar `_requireGpsFix()`; ajustar **chave de cache** para não misturar origens.
+3. **`fetchRiver`:** mesma ideia de coords opcionais se o ecrã usar modo rio com planeamento.
+4. **`lib/screens/oraculo.dart`:** debounce no texto de pesquisa (≥300 ms), lista de resultados, selecção → refresh do bundle; acção **«Usar a minha posição»** que limpa o planeamento e volta ao fluxo GPS.
+5. Tratar erres: rede, lista vazia, Nominatim; sem crash.
+
+## Verificação
+- `flutter analyze` sem erros novos.
+- Testar mentalmente / dispositivo: pesquisa → escolha → dados; voltar GPS → `OracleGpsRequiredException` ou sucesso conforme permissões no modo ao vivo.
+
+## Fora de âmbito
+RevenueCat, Mapbox, Vision, site marketing, assistente IA.
+
+Começa por ler `oracle_data_service.dart` (especialmente `fetch`, `fetchRiver`, `_requireGpsFix`, cache) e `oraculo.dart` (onde chamas `fetch`). Implementa na ordem acima e resume no final em 3–6 linhas o que mudou e o comando de verificação.

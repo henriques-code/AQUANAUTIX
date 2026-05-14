@@ -1,0 +1,7 @@
+.vercel
+
+# Dependências Node (Puppeteer para screenshot*.js)
+node_modules/
+
+# Backups locais (não versionar)
+*.bak

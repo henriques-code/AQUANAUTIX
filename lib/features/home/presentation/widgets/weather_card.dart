@@ -1,0 +1,139 @@
+import 'package:flutter/material.dart';
+
+import '../../../../core/l10n/aqx_l10n.dart';
+import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_text_styles.dart';
+import '../../../../core/widgets/aqua_card.dart';
+import '../../domain/entities/weather_data.dart';
+
+class WeatherCard extends StatelessWidget {
+  const WeatherCard({super.key, required this.weather, required this.t});
+
+  final WeatherData weather;
+  final AqxL10n t;
+
+  @override
+  Widget build(BuildContext context) {
+    return AquaCard(
+      borderRadius: 16,
+      borderAlpha: 0.3,
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Row(
+                  children: [
+                    Icon(Icons.location_on_rounded, size: 18, color: AppColors.accent),
+                    const SizedBox(width: 4),
+                    Expanded(
+                      child: Text(
+                        weather.location,
+                        style: AppTextStyles.ibmSans(13, color: AppColors.textSecondary),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Text(weather.conditionIcon, style: const TextStyle(fontSize: 48)),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.baseline,
+            textBaseline: TextBaseline.alphabetic,
+            children: [
+              Text('${weather.temperature.round()}°C', style: AppTextStyles.orbitron(42, fw: FontWeight.w700)),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  weather.condition,
+                  style: AppTextStyles.ibmSans(14, color: AppColors.textSecondary),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Divider(height: 1, color: AppColors.accent.withValues(alpha: 0.15)),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(child: _StatCol(label: t.homeStatWind, icon: Icons.air_rounded, value: '${weather.windSpeed.round()} km/h')),
+              Expanded(child: _StatCol(label: t.homeStatWaves, icon: Icons.waves_rounded, value: '${weather.waveHeight.toStringAsFixed(1)} m')),
+              Expanded(
+                child: _StatCol(
+                  label: t.homeStatTide,
+                  icon: weather.tideRising ? Icons.trending_up_rounded : Icons.trending_down_rounded,
+                  value: '${weather.tideHeight.toStringAsFixed(1)} m',
+                ),
+              ),
+              Expanded(
+                child: _StatCol(
+                  label: t.homeStatMoon,
+                  icon: Icons.nightlight_round,
+                  value: '${weather.moonIcon} ${weather.moonPhase}',
+                  rawIcon: false,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _StatCol extends StatelessWidget {
+  const _StatCol({
+    required this.label,
+    required this.icon,
+    required this.value,
+    this.rawIcon = true,
+  });
+
+  final String label;
+  final IconData icon;
+  final String value;
+  final bool rawIcon;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Text(label, style: AppTextStyles.ibmSans(11, color: AppColors.textSecondary, fw: FontWeight.w500)),
+        const SizedBox(height: 4),
+        if (rawIcon)
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 14, color: AppColors.accent.withValues(alpha: 0.85)),
+              const SizedBox(width: 2),
+              Flexible(
+                child: Text(
+                  value,
+                  textAlign: TextAlign.center,
+                  style: AppTextStyles.ibmSans(13, fw: FontWeight.w700),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          )
+        else
+          Text(
+            value,
+            textAlign: TextAlign.center,
+            style: AppTextStyles.ibmSans(12, fw: FontWeight.w700),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
+      ],
+    );
+  }
+}

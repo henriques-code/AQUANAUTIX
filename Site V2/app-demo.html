@@ -1,0 +1,1859 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AQUANAUTIX App</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=IBM+Plex+Sans:wght@300;400;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+:root {
+  --bg:    #000814;
+  --bg2:   #040f24;
+  --bg3:   #071428;
+  --bg4:   #0a1c35;
+  --cyan:  #00F5FF;
+  --amber: #F3C64D;
+  --hint:  #8AADBE;
+  --green: #00FF9F;
+  --red:   #FF4D6D;
+  --inactive: #2a4050;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{height:100%;background:#000610;display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Sans',sans-serif;}
+
+/* ── PHONE SHELL ── */
+.phone-shell{
+  width:375px;height:812px;
+  background:var(--bg);
+  border-radius:44px;
+  border:2px solid rgba(255,255,255,.10);
+  box-shadow:0 40px 100px rgba(0,0,0,.8),0 0 60px rgba(0,245,255,.06);
+  display:flex;flex-direction:column;
+  overflow:hidden;position:relative;
+}
+.phone-status{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:14px 24px 6px;
+  font-family:'Share Tech Mono',monospace;font-size:11px;color:rgba(255,255,255,.45);
+  flex-shrink:0;
+}
+.status-time{font-weight:700;color:rgba(255,255,255,.7);}
+
+/* ── SCREEN CONTAINER ── */
+.screens{flex:1;position:relative;overflow:hidden;}
+.screen{
+  position:absolute;inset:0;
+  overflow-y:auto;
+  opacity:0;pointer-events:none;
+  transform:translateX(30px);
+  transition:opacity .25s ease,transform .25s ease;
+}
+.screen.active{
+  opacity:1;pointer-events:all;
+  transform:translateX(0);
+}
+.screen::-webkit-scrollbar{display:none;}
+
+/* ── BOTTOM NAV ── */
+.bottom-nav{
+  display:flex;align-items:center;
+  padding:8px 0 20px;
+  border-top:1px solid rgba(0,245,255,.08);
+  background:var(--bg);
+  flex-shrink:0;
+}
+.nav-item{
+  flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;
+  cursor:pointer;padding:4px 0;
+  transition:opacity .15s;
+}
+.nav-item:active{opacity:.6;}
+.nav-icon{font-size:20px;transition:filter .2s;}
+.nav-label{
+  font-family:'Share Tech Mono',monospace;font-size:8px;letter-spacing:.5px;
+  color:var(--inactive);transition:color .2s;
+}
+.nav-dot{
+  width:4px;height:4px;border-radius:50%;
+  background:var(--cyan);
+  box-shadow:0 0 6px var(--cyan);
+  opacity:0;transition:opacity .2s;
+}
+.nav-item.active .nav-label{color:var(--cyan);}
+.nav-item.active .nav-dot{opacity:1;}
+
+/* Vision tab especial */
+.nav-vision .nav-btn{
+  width:52px;height:52px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  background:var(--bg3);
+  border:1.5px solid rgba(0,245,255,.25);
+  transition:all .2s;
+  margin-bottom:2px;
+}
+.nav-vision.active .nav-btn{
+  background:linear-gradient(135deg,var(--cyan),#007899);
+  border-color:var(--cyan);
+  box-shadow:0 0 20px rgba(0,245,255,.4);
+}
+.nav-vision.active .nav-btn .nav-icon{filter:brightness(0);}
+
+/* ── HELPERS ── */
+.sec-label{
+  font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:1.2px;
+  color:var(--hint);margin-bottom:8px;
+}
+.orb{font-family:'Orbitron',sans-serif;}
+.mono{font-family:'Share Tech Mono',monospace;}
+
+/* ════════════════════════════════════════
+   ECRÃ 1 — ORÁCULO
+════════════════════════════════════════ */
+#s-oraculo{background:var(--bg);padding:16px;}
+
+.ora-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;}
+.ora-greeting{font-size:10px;color:var(--hint);letter-spacing:.5px;margin-bottom:2px;}
+.ora-city{font-size:16px;font-weight:700;color:#fff;}
+.bell-btn{
+  width:34px;height:34px;border-radius:50%;
+  background:rgba(0,245,255,.08);border:1px solid rgba(0,245,255,.2);
+  display:flex;align-items:center;justify-content:center;font-size:14px;cursor:pointer;
+}
+
+/* Score hero */
+.score-hero{
+  background:rgba(0,245,255,.04);border:1px solid rgba(0,245,255,.2);
+  border-radius:16px;padding:16px;
+  display:flex;align-items:center;gap:14px;margin-bottom:12px;
+}
+.ring-wrap{position:relative;width:72px;height:72px;flex-shrink:0;}
+.ring-wrap svg{width:100%;height:100%;transform:rotate(-90deg);}
+.ring-track{fill:none;stroke:rgba(0,245,255,.1);stroke-width:6;}
+.ring-fill{fill:none;stroke:var(--cyan);stroke-width:6;stroke-linecap:round;
+           stroke-dasharray:195;stroke-dashoffset:31;
+           transition:stroke-dashoffset 1.2s ease;}
+.ring-num{
+  position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+  font-family:'Orbitron',sans-serif;font-size:22px;font-weight:900;color:var(--cyan);
+}
+.score-info .verdict{
+  font-family:'Orbitron',sans-serif;font-size:11px;font-weight:700;
+  color:var(--cyan);letter-spacing:.5px;margin-bottom:4px;
+}
+.score-info .desc{font-size:12px;color:var(--hint);line-height:1.5;}
+.score-info .window{
+  display:inline-block;margin-top:6px;
+  font-family:'Share Tech Mono',monospace;font-size:10px;
+  background:rgba(0,245,255,.1);color:var(--cyan);
+  padding:2px 8px;border-radius:4px;
+}
+
+/* Data strip */
+.data-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px;}
+.ds{
+  background:var(--bg3);border:1px solid rgba(255,255,255,.05);
+  border-radius:10px;padding:10px 6px;text-align:center;
+}
+.ds-icon{font-size:16px;margin-bottom:3px;}
+.ds-val{font-family:'Share Tech Mono',monospace;font-size:12px;color:#fff;margin-bottom:1px;}
+.ds-key{font-size:8px;color:var(--hint);letter-spacing:.5px;}
+
+/* 5-day */
+.five-row{display:flex;gap:6px;margin-bottom:12px;}
+.fd{
+  flex:1;background:var(--bg3);border:1px solid rgba(255,255,255,.05);
+  border-radius:10px;padding:8px 4px;text-align:center;cursor:pointer;
+  transition:border-color .2s;
+}
+.fd.best{border-color:var(--cyan);background:rgba(0,245,255,.05);}
+.fd-d{font-size:9px;color:var(--hint);margin-bottom:3px;font-family:'Share Tech Mono',monospace;}
+.fd-s{font-family:'Orbitron',sans-serif;font-size:14px;font-weight:700;color:#fff;margin-bottom:2px;}
+.fd.best .fd-s{color:var(--cyan);}
+.fd-i{font-size:12px;}
+.fd-best-tag{font-size:8px;color:var(--cyan);font-family:'Share Tech Mono',monospace;}
+
+/* Gold alert */
+.gold-alert{
+  background:rgba(243,198,77,.06);border:1px solid rgba(243,198,77,.3);
+  border-radius:12px;padding:12px;display:flex;align-items:flex-start;gap:10px;
+}
+.ga-icon{font-size:18px;flex-shrink:0;}
+.ga-text{font-size:12px;color:#fff;line-height:1.5;}
+.ga-text strong{color:var(--amber);}
+
+/* ════════════════════════════════════════
+   ECRÃ 2 — MAPA
+════════════════════════════════════════ */
+#s-mapa{background:var(--bg);display:flex;flex-direction:column;height:100%;}
+
+.map-area{
+  flex:1;position:relative;overflow:hidden;
+  background:
+    radial-gradient(ellipse 70% 50% at 40% 60%,rgba(0,40,90,.9) 0%,transparent 65%),
+    radial-gradient(ellipse 50% 40% at 65% 35%,rgba(0,25,60,.8) 0%,transparent 60%),
+    linear-gradient(180deg,#000c20 0%,#000f28 100%);
+  min-height:320px;
+}
+.map-grid{
+  position:absolute;inset:0;
+  background-image:
+    linear-gradient(rgba(0,245,255,.04) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(0,245,255,.04) 1px,transparent 1px);
+  background-size:28px 28px;
+}
+.map-glow{
+  position:absolute;inset:0;
+  background:radial-gradient(ellipse 60% 40% at 40% 55%,rgba(0,100,180,.12) 0%,transparent 60%);
+}
+.map-score{
+  position:absolute;top:12px;left:12px;
+  background:rgba(0,8,20,.85);border:1px solid rgba(0,245,255,.3);
+  border-radius:8px;padding:5px 10px;
+  font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--cyan);
+}
+.map-ctrls{
+  position:absolute;top:12px;right:12px;
+  display:flex;flex-direction:column;gap:6px;
+}
+.mc{
+  width:28px;height:28px;background:rgba(0,8,20,.8);
+  border:1px solid rgba(255,255,255,.15);border-radius:6px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:12px;color:var(--hint);cursor:pointer;
+}
+
+/* Spots */
+.spot-pin{
+  position:absolute;display:flex;flex-direction:column;align-items:center;cursor:pointer;
+}
+.sp-dot{
+  width:14px;height:14px;border-radius:50%;border:2px solid;
+  display:flex;align-items:center;justify-content:center;font-size:7px;
+  transition:transform .15s;box-shadow:0 0 8px currentColor;
+}
+.sp-dot:hover,.sp-dot:active{transform:scale(1.3);}
+.sp-dot.free{background:rgba(0,245,255,.2);border-color:var(--cyan);color:var(--cyan);}
+.sp-dot.pro{background:rgba(0,245,255,.3);border-color:var(--cyan);color:var(--cyan);}
+.sp-dot.elite{background:rgba(243,198,77,.3);border-color:var(--amber);color:var(--amber);}
+.sp-label{
+  font-family:'Share Tech Mono',monospace;font-size:8px;
+  background:rgba(0,8,20,.9);color:#fff;
+  padding:1px 4px;border-radius:3px;margin-top:2px;white-space:nowrap;
+}
+
+/* Drawer */
+.map-drawer{
+  background:var(--bg3);border-top:1px solid rgba(255,255,255,.07);
+  border-radius:16px 16px 0 0;padding:10px 16px 8px;
+}
+.drawer-handle{width:32px;height:3px;background:rgba(255,255,255,.15);border-radius:2px;margin:0 auto 10px;}
+.drawer-title{font-family:'Orbitron',sans-serif;font-size:11px;color:#fff;letter-spacing:.8px;margin-bottom:10px;}
+.spot-row{
+  display:flex;align-items:center;gap:10px;
+  padding:8px 0;border-bottom:1px solid rgba(255,255,255,.04);
+}
+.spot-row:last-child{border-bottom:none;}
+.sr-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.sr-dot.free{background:rgba(0,245,255,.5);border:1px solid var(--cyan);}
+.sr-dot.pro{background:rgba(0,245,255,.8);border:1px solid var(--cyan);}
+.sr-dot.elite{background:rgba(243,198,77,.8);border:1px solid var(--amber);}
+.sr-dot.locked{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);}
+.sr-info{flex:1;}
+.sr-name{font-size:12px;color:#fff;font-weight:600;}
+.sr-loc{font-size:10px;color:var(--hint);}
+.sr-score{font-family:'Share Tech Mono',monospace;font-size:12px;color:var(--cyan);}
+.ghost-chip{
+  font-family:'Share Tech Mono',monospace;font-size:8px;
+  color:var(--amber);background:rgba(243,198,77,.08);
+  border:1px solid rgba(243,198,77,.25);padding:1px 5px;border-radius:3px;
+}
+
+/* ════════════════════════════════════════
+   ECRÃ 3 — VISION
+════════════════════════════════════════ */
+#s-vision{background:var(--bg);}
+
+.scanner-zone{
+  height:52%;
+  background:
+    radial-gradient(ellipse 60% 50% at 50% 50%,rgba(0,245,255,.05) 0%,transparent 70%),
+    linear-gradient(180deg,#000c20 0%,var(--bg) 100%);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;
+  position:relative;overflow:hidden;
+}
+.scan-frame{
+  width:160px;height:120px;
+  border:2px solid rgba(0,245,255,.4);border-radius:12px;
+  position:relative;display:flex;align-items:center;justify-content:center;
+}
+.sf-c{position:absolute;width:14px;height:14px;border-color:var(--cyan);border-style:solid;}
+.sf-tl{top:-1px;left:-1px;border-width:3px 0 0 3px;border-radius:4px 0 0 0;}
+.sf-tr{top:-1px;right:-1px;border-width:3px 3px 0 0;border-radius:0 4px 0 0;}
+.sf-bl{bottom:-1px;left:-1px;border-width:0 0 3px 3px;border-radius:0 0 0 4px;}
+.sf-br{bottom:-1px;right:-1px;border-width:0 3px 3px 0;border-radius:0 0 4px 0;}
+.scan-fish{font-size:40px;opacity:.2;}
+.scan-line{
+  position:absolute;left:4px;right:4px;height:2px;
+  background:linear-gradient(90deg,transparent,var(--cyan),transparent);
+  animation:scanMove 2s ease-in-out infinite;top:20%;
+}
+@keyframes scanMove{0%,100%{top:10%;}50%{top:80%;}}
+.scan-lbl{font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--hint);letter-spacing:.8px;}
+.scan-sources{display:flex;gap:8px;}
+.scan-src{
+  font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--hint);
+  background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);
+  border-radius:6px;padding:5px 10px;cursor:pointer;
+}
+.scan-btn{
+  width:48px;height:48px;border-radius:50%;
+  background:var(--cyan);border:none;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;font-size:20px;
+  box-shadow:0 0 24px rgba(0,245,255,.4);
+}
+
+.vision-result{padding:14px 16px;}
+.vr-card{
+  background:var(--bg3);border:1px solid rgba(0,245,255,.2);
+  border-radius:14px;padding:14px;
+}
+.vr-top{display:flex;align-items:flex-start;gap:10px;margin-bottom:12px;}
+.vr-fish-emoji{font-size:28px;}
+.vr-names{flex:1;}
+.vr-name{font-size:15px;font-weight:700;color:#fff;}
+.vr-sci{font-size:10px;color:var(--hint);font-style:italic;}
+.vr-conf{
+  font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--green);
+  background:rgba(0,255,159,.1);border:1px solid rgba(0,255,159,.3);
+  padding:3px 7px;border-radius:4px;white-space:nowrap;
+}
+.vr-rows{display:flex;flex-direction:column;gap:7px;margin-bottom:10px;}
+.vr-row{display:flex;justify-content:space-between;}
+.vr-key{font-size:11px;color:var(--hint);}
+.vr-val{font-family:'Share Tech Mono',monospace;font-size:11px;color:#fff;}
+.vr-legal{
+  display:flex;align-items:center;gap:8px;
+  background:rgba(0,255,159,.06);border:1px solid rgba(0,255,159,.25);
+  border-radius:8px;padding:8px 10px;margin-bottom:10px;
+}
+.vr-legal-ico{font-size:14px;}
+.vr-legal-txt{font-size:11px;color:var(--green);line-height:1.4;}
+.vr-btns{display:flex;gap:8px;}
+.vr-btn{
+  flex:1;padding:10px;border-radius:8px;border:none;cursor:pointer;
+  font-family:'Orbitron',sans-serif;font-size:9px;font-weight:700;letter-spacing:.5px;
+}
+.vr-btn.primary{background:var(--cyan);color:#000;}
+.vr-btn.secondary{background:rgba(255,255,255,.06);color:var(--hint);border:1px solid rgba(255,255,255,.1);}
+
+/* ════════════════════════════════════════
+   ECRÃ 4 — LOGBOOK
+════════════════════════════════════════ */
+#s-logbook{background:var(--bg);padding:16px;}
+
+.log-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
+.log-title{font-family:'Orbitron',sans-serif;font-size:18px;font-weight:900;color:var(--cyan);
+  text-shadow:0 0 16px rgba(0,245,255,.4);}
+.add-btn{
+  width:30px;height:30px;border-radius:50%;
+  background:var(--cyan);border:none;color:#000;font-size:18px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;font-weight:700;
+}
+
+/* PB strip */
+.pb-scroll{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;margin-bottom:14px;}
+.pb-scroll::-webkit-scrollbar{display:none;}
+.pb-card{
+  flex-shrink:0;width:80px;
+  background:rgba(243,198,77,.06);border:1px solid rgba(243,198,77,.25);
+  border-radius:10px;padding:10px 8px;text-align:center;
+}
+.pb-fish{font-size:20px;margin-bottom:3px;}
+.pb-sp{font-size:9px;color:var(--hint);margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.pb-w{font-family:'Orbitron',sans-serif;font-size:13px;color:var(--amber);font-weight:900;}
+.pb-date{font-size:8px;color:var(--hint);}
+
+/* Catch cards */
+.catch-card{
+  background:var(--bg3);border:1px solid rgba(255,255,255,.06);
+  border-radius:12px;padding:12px;display:flex;align-items:center;gap:10px;
+  margin-bottom:8px;
+}
+.catch-card.record{border-color:rgba(243,198,77,.4);background:rgba(243,198,77,.04);}
+.cc-fish{font-size:24px;}
+.cc-info{flex:1;}
+.cc-name{font-size:13px;font-weight:600;color:#fff;margin-bottom:2px;}
+.cc-meta{font-size:10px;color:var(--hint);}
+.cc-right{text-align:right;}
+.cc-w{font-family:'Orbitron',sans-serif;font-size:14px;font-weight:900;color:#fff;}
+.cc-score{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--cyan);}
+.cc-record{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--amber);}
+
+.share-row{display:flex;gap:8px;margin-top:4px;}
+.share-btn{
+  flex:1;padding:10px;border-radius:8px;border:none;cursor:pointer;
+  font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:.5px;
+}
+.share-btn.export{background:rgba(0,245,255,.08);color:var(--cyan);border:1px solid rgba(0,245,255,.25);}
+.share-btn.share{background:rgba(255,255,255,.04);color:var(--hint);border:1px solid rgba(255,255,255,.1);}
+
+/* ════════════════════════════════════════
+   ECRÃ 5 — PERFIL
+════════════════════════════════════════ */
+#s-perfil{background:var(--bg);padding:16px;}
+
+.profile-hero{
+  background:var(--bg3);border:1px solid rgba(0,245,255,.15);
+  border-radius:14px;padding:14px;display:flex;align-items:center;gap:12px;
+  margin-bottom:10px;
+}
+.avatar{
+  width:48px;height:48px;border-radius:50%;
+  background:var(--bg);border:2px solid rgba(0,245,255,.4);
+  display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;
+}
+.ph-name{font-family:'Orbitron',sans-serif;font-size:14px;font-weight:700;color:#fff;margin-bottom:4px;}
+.ph-badge{
+  display:inline-block;
+  font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:.8px;
+  background:rgba(243,198,77,.1);color:var(--amber);
+  border:1px solid rgba(243,198,77,.35);padding:2px 8px;border-radius:4px;
+}
+
+.trial-banner{
+  background:rgba(0,245,255,.05);border:1px solid rgba(0,245,255,.3);
+  border-radius:12px;padding:12px;display:flex;align-items:center;gap:10px;margin-bottom:14px;
+}
+.tb-icon{font-size:18px;flex-shrink:0;}
+.tb-txt{font-size:11px;color:#fff;line-height:1.5;flex:1;}
+.tb-txt strong{color:var(--cyan);}
+.tb-cta{
+  background:var(--cyan);color:#000;border:none;border-radius:5px;
+  font-family:'Orbitron',sans-serif;font-size:9px;font-weight:900;
+  padding:6px 10px;cursor:pointer;white-space:nowrap;
+}
+
+.stats-row{display:flex;gap:8px;margin-bottom:16px;}
+.stat-cell{
+  flex:1;background:var(--bg3);border:1px solid rgba(255,255,255,.05);
+  border-radius:10px;padding:12px 8px;text-align:center;
+}
+.stat-val{font-family:'Orbitron',sans-serif;font-size:18px;color:var(--cyan);font-weight:900;}
+.stat-key{font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--hint);letter-spacing:.5px;margin-top:2px;}
+
+.plan-card{
+  border-radius:12px;padding:14px;margin-bottom:8px;border:1px solid;
+}
+.plan-card.free{border-color:rgba(255,255,255,.08);background:var(--bg3);}
+.plan-card.pro{border-color:rgba(0,245,255,.35);background:rgba(0,245,255,.04);}
+.plan-card.elite{border-color:rgba(243,198,77,.35);background:rgba(243,198,77,.04);}
+.plan-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
+.plan-name{font-family:'Orbitron',sans-serif;font-size:12px;font-weight:700;letter-spacing:.8px;}
+.plan-card.free .plan-name{color:var(--hint);}
+.plan-card.pro .plan-name{color:var(--cyan);}
+.plan-card.elite .plan-name{color:var(--amber);}
+.plan-price{font-family:'Orbitron',sans-serif;font-size:14px;color:#fff;font-weight:900;}
+.plan-price span{font-size:10px;color:var(--hint);}
+.plan-feats{margin-bottom:10px;}
+.plan-feat{font-size:11px;color:var(--hint);padding:3px 0;line-height:1.4;}
+.plan-feat.on{color:#cce0ea;}
+.plan-btn{
+  width:100%;padding:11px;border-radius:8px;border:none;cursor:pointer;
+  font-family:'Orbitron',sans-serif;font-size:9px;font-weight:700;letter-spacing:.5px;
+}
+.plan-btn.current{background:rgba(255,255,255,.05);color:var(--hint);border:1px solid rgba(255,255,255,.1);}
+.plan-btn.upgrade-pro{background:var(--cyan);color:#000;}
+.plan-btn.upgrade-elite{background:var(--amber);color:#000;}
+
+/* ── TÉCNICA CARDS ── */
+.tec-card{
+  flex-shrink:0;width:110px;
+  background:var(--bg3);border:1px solid rgba(255,255,255,.07);
+  border-radius:12px;padding:10px 9px;cursor:pointer;
+  transition:border-color .2s,transform .15s;
+}
+.tec-card:active{transform:scale(.96);}
+.tec-card.top{border-color:rgba(0,245,255,.35);background:rgba(0,245,255,.04);}
+.tec-icon{font-size:22px;margin-bottom:5px;}
+.tec-name{font-family:'Orbitron',sans-serif;font-size:9px;font-weight:700;color:#fff;margin-bottom:3px;letter-spacing:.3px;}
+.tec-card.top .tec-name{color:var(--cyan);}
+.tec-target{font-size:9px;color:var(--hint);margin-bottom:6px;line-height:1.3;}
+.tec-match{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--green);}
+.tec-card.top .tec-match{color:var(--cyan);}
+
+/* ── TÉCNICA DETAIL MODAL ── */
+.tec-modal{
+  position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:300;
+  display:flex;align-items:flex-end;justify-content:center;
+  animation:fadeIn .2s ease;
+}
+.tec-sheet{
+  background:#071428;border-radius:24px 24px 0 0;width:100%;max-width:375px;
+  padding:20px 20px 36px;border-top:2px solid rgba(0,245,255,.2);
+  max-height:80vh;overflow-y:auto;
+}
+.tec-sheet::-webkit-scrollbar{display:none;}
+.tec-tip{
+  background:rgba(0,245,255,.05);border-left:3px solid var(--cyan);
+  border-radius:0 8px 8px 0;padding:10px 12px;margin-bottom:8px;
+  font-size:12px;color:#cce0ea;line-height:1.5;
+}
+.tec-step{
+  display:flex;gap:10px;align-items:flex-start;padding:8px 0;
+  border-bottom:1px solid rgba(255,255,255,.04);
+}
+.tec-step-num{
+  width:22px;height:22px;border-radius:50%;background:rgba(0,245,255,.1);
+  border:1px solid rgba(0,245,255,.3);font-family:'Orbitron',sans-serif;
+  font-size:9px;color:var(--cyan);display:flex;align-items:center;justify-content:center;flex-shrink:0;
+}
+.tec-step-txt{font-size:12px;color:#cce0ea;line-height:1.5;}
+
+/* ── LOGBOOK FORM MODAL ── */
+.lb-modal{
+  position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:300;
+  display:flex;align-items:flex-end;justify-content:center;
+  animation:fadeIn .2s ease;
+}
+.lb-sheet{
+  background:#071428;border-radius:24px 24px 0 0;width:100%;max-width:375px;
+  padding:20px 20px 36px;border-top:2px solid rgba(0,245,255,.25);
+}
+.lb-field{margin-bottom:12px;}
+.lb-field label{display:block;font-family:'Share Tech Mono',monospace;font-size:9px;
+  color:var(--hint);letter-spacing:.8px;margin-bottom:6px;}
+.lb-field input,.lb-field select{
+  width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);
+  border-radius:8px;padding:10px 12px;color:#fff;font-family:'IBM Plex Sans',sans-serif;
+  font-size:13px;outline:none;transition:border-color .2s;
+}
+.lb-field input:focus,.lb-field select:focus{border-color:rgba(0,245,255,.4);}
+.lb-field select option{background:#071428;}
+.lb-row{display:flex;gap:10px;}
+.lb-row .lb-field{flex:1;}
+
+/* ── SCORE SHARE CARD ── */
+.share-card-overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:300;
+  display:flex;align-items:center;justify-content:center;
+  animation:fadeIn .2s ease;padding:20px;
+}
+.share-card{
+  background:linear-gradient(145deg,#000f28 0%,#001a3a 100%);
+  border:1px solid rgba(0,245,255,.3);border-radius:20px;
+  padding:24px;width:100%;max-width:320px;text-align:center;
+  box-shadow:0 0 60px rgba(0,245,255,.1);
+}
+
+/* ── ORÁCULO CHAT ── */
+.ai-chat-overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:300;
+  display:flex;align-items:flex-end;justify-content:center;
+  animation:fadeIn .2s ease;
+}
+.ai-chat-sheet{
+  background:#071428;border-radius:24px 24px 0 0;width:100%;max-width:375px;
+  padding:16px 16px 28px;border-top:2px solid rgba(0,245,255,.25);
+  max-height:75vh;display:flex;flex-direction:column;
+}
+.chat-msgs{flex:1;overflow-y:auto;margin-bottom:12px;display:flex;flex-direction:column;gap:10px;}
+.chat-msgs::-webkit-scrollbar{display:none;}
+.msg-ai{
+  background:rgba(0,245,255,.06);border:1px solid rgba(0,245,255,.15);
+  border-radius:12px 12px 12px 4px;padding:10px 12px;
+  font-size:12px;color:#cce0ea;line-height:1.5;max-width:90%;
+}
+.msg-user{
+  background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);
+  border-radius:12px 12px 4px 12px;padding:10px 12px;
+  font-size:12px;color:#fff;line-height:1.5;max-width:90%;align-self:flex-end;
+}
+.msg-typing{display:flex;gap:4px;align-items:center;padding:12px;}
+.typing-dot{width:6px;height:6px;border-radius:50%;background:var(--cyan);opacity:.4;
+  animation:typingBounce .9s ease-in-out infinite;}
+.typing-dot:nth-child(2){animation-delay:.15s;}
+.typing-dot:nth-child(3){animation-delay:.3s;}
+@keyframes typingBounce{0%,80%,100%{transform:translateY(0);opacity:.4;}40%{transform:translateY(-5px);opacity:1;}}
+.chat-input-row{display:flex;gap:8px;}
+.chat-input{
+  flex:1;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);
+  border-radius:10px;padding:10px 12px;color:#fff;font-size:13px;
+  font-family:'IBM Plex Sans',sans-serif;outline:none;
+}
+.chat-input:focus{border-color:rgba(0,245,255,.4);}
+.chat-send{
+  width:40px;height:40px;border-radius:10px;border:none;
+  background:var(--cyan);color:#000;font-size:16px;cursor:pointer;flex-shrink:0;
+}
+
+/* ── LEAFLET OVERRIDES ── */
+#real-map{width:100%;height:100%;z-index:0;}
+.leaflet-container{background:#000814 !important;}
+.leaflet-control-zoom{display:none;}
+.leaflet-control-attribution{
+  background:rgba(0,8,20,.7)!important;color:rgba(255,255,255,.3)!important;
+  font-size:8px!important;border-radius:4px 0 0 0!important;
+}
+.leaflet-control-attribution a{color:rgba(0,245,255,.4)!important;}
+/* Marcadores custom */
+.spot-marker{
+  width:26px;height:26px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:11px;font-weight:700;cursor:pointer;
+  border:2px solid;
+  box-shadow:0 0 10px currentColor;
+  font-family:'Share Tech Mono',monospace;
+}
+.spot-marker.free{background:rgba(0,245,255,.2);border-color:#00F5FF;color:#00F5FF;}
+.spot-marker.pro{background:rgba(0,245,255,.3);border-color:#00F5FF;color:#00F5FF;}
+.spot-marker.elite{background:rgba(243,198,77,.3);border-color:#F3C64D;color:#F3C64D;}
+.leaflet-popup-content-wrapper{
+  background:#071428;border:1px solid rgba(0,245,255,.25);border-radius:10px!important;
+  box-shadow:0 8px 24px rgba(0,0,0,.6);
+}
+.leaflet-popup-content{margin:8px 12px;font-family:'IBM Plex Sans',sans-serif;}
+.leaflet-popup-tip{background:#071428;}
+.leaflet-popup-close-button{color:var(--hint)!important;font-size:16px!important;}
+
+/* ── DESKTOP WRAPPER ── */
+@keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
+@keyframes slideDown{from{opacity:0;transform:translateY(-100%);}to{opacity:1;transform:translateY(0);}}
+@keyframes scanFast{0%,100%{top:5%;}50%{top:90%;}}
+
+/* ── VISION SCAN STATE ── */
+.scanning .scan-line{animation:scanFast .6s ease-in-out infinite;}
+.scanning .sf-c{border-color:#00FF9F !important;transition:border-color .3s;}
+.scan-progress{
+  width:160px;height:4px;background:rgba(255,255,255,.08);border-radius:2px;overflow:hidden;
+}
+.scan-progress-fill{
+  height:100%;width:0;background:var(--cyan);border-radius:2px;
+  transition:width 1.8s cubic-bezier(.4,0,.2,1);
+}
+.conf-bar-wrap{margin-top:6px;}
+.conf-bar{height:4px;background:rgba(255,255,255,.08);border-radius:2px;overflow:hidden;margin-top:4px;}
+.conf-bar-fill{height:100%;width:0;border-radius:2px;transition:width 1s ease .3s;}
+
+/* ── MAP SPOT POPUP ── */
+.spot-popup{
+  position:absolute;bottom:0;left:0;right:0;
+  background:#071428;border-top:1px solid rgba(0,245,255,.25);
+  border-radius:16px 16px 0 0;padding:14px 16px 16px;
+  transform:translateY(100%);transition:transform .3s cubic-bezier(.4,0,.2,1);
+  z-index:10;
+}
+.spot-popup.open{transform:translateY(0);}
+.popup-handle{width:32px;height:3px;background:rgba(255,255,255,.15);border-radius:2px;margin:0 auto 12px;}
+.popup-close{position:absolute;top:14px;right:16px;font-size:16px;color:var(--hint);cursor:pointer;background:none;border:none;}
+
+/* ── PUSH NOTIFICATION ── */
+.push-notif{
+  position:absolute;top:8px;left:12px;right:12px;
+  background:#0d1f38;border:1px solid rgba(0,245,255,.3);border-radius:14px;
+  padding:10px 12px;z-index:200;
+  animation:slideDown .35s cubic-bezier(.4,0,.2,1);
+  cursor:pointer;
+  box-shadow:0 8px 24px rgba(0,0,0,.5);
+}
+@media(min-width:600px){
+  body{background:radial-gradient(ellipse 80% 60% at 50% 40%,#001428 0%,#000610 100%);}
+  .phone-shell{box-shadow:0 60px 120px rgba(0,0,0,.9),0 0 80px rgba(0,245,255,.08);}
+}
+@media(max-width:400px){
+  .phone-shell{width:100vw;height:100vh;border-radius:0;border:none;}
+}
+</style>
+</head>
+<body>
+
+<div class="phone-shell">
+
+  <!-- Status bar -->
+  <div class="phone-status">
+    <span class="status-time" id="clock">09:42</span>
+    <span>▲▲▲ 5G 🔋</span>
+  </div>
+
+  <!-- Screens -->
+  <div class="screens">
+
+    <!-- ══ ORÁCULO ══ -->
+    <div class="screen active" id="s-oraculo">
+      <div class="ora-header">
+        <div>
+          <div class="ora-greeting orb" style="font-size:10px;letter-spacing:.5px;">BOM DIA, JOÃO</div>
+          <div class="ora-city">📍 Sesimbra</div>
+        </div>
+        <div class="bell-btn" onclick="showAlert()">🔔</div>
+      </div>
+
+      <div class="score-hero" onclick="openShareCard()" style="cursor:pointer;" title="Partilhar score">
+        <div class="ring-wrap">
+          <svg viewBox="0 0 80 80">
+            <circle class="ring-track" cx="40" cy="40" r="31"/>
+            <circle class="ring-fill" cx="40" cy="40" r="31"/>
+          </svg>
+          <div class="ring-num">84</div>
+        </div>
+        <div class="score-info">
+          <div class="verdict">⚡ EXCELENTE</div>
+          <div class="desc">Maré vazante + lua crescente + vento NW fraco</div>
+          <div class="window">06:30 – 09:00</div>
+        </div>
+      </div>
+
+      <div class="data-strip">
+        <div class="ds"><div class="ds-icon">🌊</div><div class="ds-val">1.8m</div><div class="ds-key">MARÉ</div></div>
+        <div class="ds"><div class="ds-icon">💨</div><div class="ds-val">12km/h</div><div class="ds-key">VENTO NW</div></div>
+        <div class="ds"><div class="ds-icon">🌡️</div><div class="ds-val">17°C</div><div class="ds-key">ÁGUA</div></div>
+        <div class="ds"><div class="ds-icon">🌙</div><div class="ds-val">72%</div><div class="ds-key">LUA</div></div>
+      </div>
+
+      <div class="sec-label">// PREVISÃO 5 DIAS</div>
+      <div class="five-row" style="margin-bottom:14px;">
+        <div class="fd best">
+          <div class="fd-d">HOJE</div>
+          <div class="fd-s">84</div>
+          <div class="fd-i">⚡</div>
+          <div class="fd-best-tag">MELHOR</div>
+        </div>
+        <div class="fd"><div class="fd-d">SEX</div><div class="fd-s" style="color:#fff">71</div><div class="fd-i">🎣</div></div>
+        <div class="fd"><div class="fd-d">SÁB</div><div class="fd-s" style="color:var(--hint)">44</div><div class="fd-i">🌧️</div></div>
+        <div class="fd"><div class="fd-d">DOM</div><div class="fd-s" style="color:#fff">68</div><div class="fd-i">🎣</div></div>
+        <div class="fd"><div class="fd-d">SEG</div><div class="fd-s" style="color:var(--amber)">79</div><div class="fd-i">⭐</div></div>
+      </div>
+
+      <div class="sec-label">// TÉCNICAS RECOMENDADAS HOJE</div>
+      <div class="pb-scroll" id="tecnicas-strip" style="margin-bottom:14px;gap:8px;">
+        <!-- preenchido por JS -->
+      </div>
+
+      <div class="gold-alert">
+        <div class="ga-icon">👑</div>
+        <div class="ga-text"><strong>Janela de Ouro</strong> amanhã 07:15 em Ericeira — Score 79. Activa alertas PRO para não perder.</div>
+      </div>
+
+      <div style="margin-top:12px;">
+        <button onclick="openAIChat()" style="width:100%;padding:13px;border-radius:12px;border:1px solid rgba(0,245,255,.25);background:rgba(0,245,255,.05);color:var(--cyan);cursor:pointer;font-family:'Orbitron',sans-serif;font-size:10px;font-weight:700;letter-spacing:.5px;display:flex;align-items:center;justify-content:center;gap:8px;">
+          <span>🤖</span> PERGUNTAR AO ORÁCULO IA
+        </button>
+      </div>
+      <div id="data-badge" style="margin-top:8px;font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--hint);letter-spacing:.5px;opacity:0;transition:opacity .6s;text-align:right;"></div>
+    </div>
+
+    <!-- ══ MAPA ══ -->
+    <div class="screen" id="s-mapa" style="display:flex;flex-direction:column;">
+      <div style="flex:1;position:relative;overflow:hidden;min-height:0;">
+        <!-- Mapa Leaflet real -->
+        <div id="real-map"></div>
+
+        <!-- HUD overlay -->
+        <div style="position:absolute;top:10px;left:10px;z-index:400;
+          background:rgba(0,8,20,.85);border:1px solid rgba(0,245,255,.3);
+          border-radius:8px;padding:5px 10px;
+          font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--cyan);pointer-events:none;">
+          SCORE ÁREA: <span id="map-area-score">84</span>
+        </div>
+        <div style="position:absolute;top:10px;right:10px;z-index:400;display:flex;flex-direction:column;gap:6px;">
+          <div class="mc" onclick="mapZoomIn()" style="cursor:pointer;">+</div>
+          <div class="mc" onclick="mapZoomOut()" style="cursor:pointer;">−</div>
+          <div class="mc" title="Ghost Mode">👻</div>
+        </div>
+
+        <!-- Spot popup (bottom sheet) -->
+        <div class="spot-popup" id="spot-popup">
+          <div class="popup-handle"></div>
+          <button class="popup-close" onclick="closeSpot()">✕</button>
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+            <div id="sp-badge" style="font-family:'Share Tech Mono',monospace;font-size:8px;padding:2px 7px;border-radius:4px;border:1px solid;">FREE</div>
+            <div id="sp-name" style="font-family:'Orbitron',sans-serif;font-size:13px;font-weight:700;color:#fff;"></div>
+          </div>
+          <div style="display:flex;gap:8px;margin-bottom:12px;">
+            <div style="flex:1;background:rgba(0,245,255,.06);border:1px solid rgba(0,245,255,.15);border-radius:10px;padding:10px;text-align:center;">
+              <div id="sp-score" style="font-family:'Orbitron',sans-serif;font-size:22px;font-weight:900;color:var(--cyan);"></div>
+              <div style="font-family:'Share Tech Mono',monospace;font-size:8px;color:var(--hint);margin-top:2px;">SCORE</div>
+            </div>
+            <div style="flex:2;background:var(--bg3);border-radius:10px;padding:10px;">
+              <div style="font-size:9px;color:var(--hint);margin-bottom:6px;font-family:'Share Tech Mono',monospace;">ESPÉCIES ACTIVAS</div>
+              <div id="sp-species" style="font-size:11px;color:#cce0ea;line-height:1.6;"></div>
+            </div>
+          </div>
+          <div id="sp-ghost" style="display:none;background:rgba(243,198,77,.06);border:1px solid rgba(243,198,77,.2);border-radius:8px;padding:8px 10px;margin-bottom:10px;font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--amber);">
+            👻 GHOST MODE — Coords fuzzy a 500m por privacidade
+          </div>
+          <button id="sp-cta" style="width:100%;padding:12px;border-radius:10px;border:none;cursor:pointer;font-family:'Orbitron',sans-serif;font-size:10px;font-weight:700;letter-spacing:.5px;"></button>
+        </div>
+      </div>
+      <div class="map-drawer" style="position:relative;z-index:5;">
+        <div class="drawer-handle"></div>
+        <div class="drawer-title">SPOTS PRÓXIMOS</div>
+        <div class="spot-row">
+          <div class="sr-dot free"></div>
+          <div class="sr-info"><div class="sr-name">Praia da Comporta</div><div class="sr-loc">Setúbal · FREE</div></div>
+          <div class="sr-score">71</div>
+        </div>
+        <div class="spot-row">
+          <div class="sr-dot pro"></div>
+          <div class="sr-info">
+            <div class="sr-name">Cabo Espichel Norte</div>
+            <div class="sr-loc">Sesimbra · PRO <span class="ghost-chip">👻 GHOST</span></div>
+          </div>
+          <div class="sr-score">84</div>
+        </div>
+        <div class="spot-row">
+          <div class="sr-dot pro"></div>
+          <div class="sr-info"><div class="sr-name">Pedra Branca</div><div class="sr-loc">Ericeira · PRO</div></div>
+          <div class="sr-score">68</div>
+        </div>
+        <div class="spot-row">
+          <div class="sr-dot locked"></div>
+          <div class="sr-info">
+            <div class="sr-name">Spot Secreto #ES-07</div>
+            <div class="sr-loc" style="color:var(--amber)">Costa Vicentina · ELITE 🔒</div>
+          </div>
+          <div class="sr-score" style="color:var(--amber)">91</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ VISION ══ -->
+    <div class="screen" id="s-vision">
+      <div class="scanner-zone" id="scanner-zone">
+        <div class="scan-frame" id="scan-frame">
+          <div class="sf-c sf-tl"></div><div class="sf-c sf-tr"></div>
+          <div class="sf-c sf-bl"></div><div class="sf-c sf-br"></div>
+          <div class="scan-fish" id="scan-fish">🐟</div>
+          <div class="scan-line"></div>
+        </div>
+        <div class="scan-lbl" id="scan-lbl">APONTAR PARA O PEIXE</div>
+        <div class="scan-progress" id="scan-progress" style="display:none;">
+          <div class="scan-progress-fill" id="scan-progress-fill"></div>
+        </div>
+        <div class="scan-sources" id="scan-sources">
+          <div class="scan-src">📷 CÂMARA</div>
+          <div class="scan-src">🖼️ GALERIA</div>
+        </div>
+        <button class="scan-btn" id="scan-btn" onclick="startScan()">📷</button>
+      </div>
+
+      <div class="vision-result" id="vision-result">
+        <div class="sec-label" id="vision-result-label">// ÚLTIMO RESULTADO</div>
+        <div class="vr-card" id="vr-card">
+          <div class="vr-top">
+            <div class="vr-fish-emoji" id="vr-emoji">🐟</div>
+            <div class="vr-names">
+              <div class="vr-name" id="vr-name">Robalo Europeu</div>
+              <div class="vr-sci" id="vr-sci">Dicentrarchus labrax</div>
+            </div>
+            <div class="vr-conf" id="vr-conf">98% conf.</div>
+          </div>
+          <div class="conf-bar-wrap">
+            <div style="font-size:9px;color:var(--hint);font-family:'Share Tech Mono',monospace;letter-spacing:.5px;">CONFIANÇA IA</div>
+            <div class="conf-bar"><div class="conf-bar-fill" id="conf-bar-fill" style="background:var(--green);width:98%;"></div></div>
+          </div>
+          <div class="vr-rows" style="margin-top:10px;">
+            <div class="vr-row"><span class="vr-key">Comprimento estimado</span><span class="vr-val" id="vr-len">42 cm</span></div>
+            <div class="vr-row"><span class="vr-key">Peso estimado</span><span class="vr-val" id="vr-weight">~1.2 kg</span></div>
+            <div class="vr-row"><span class="vr-key">Mínimo legal PT</span><span class="vr-val" id="vr-legal-val">36 cm ✓</span></div>
+            <div class="vr-row"><span class="vr-key">Isco ideal</span><span class="vr-val" id="vr-bait">Shad 10–14cm</span></div>
+            <div class="vr-row"><span class="vr-key">Técnica recomendada</span><span class="vr-val" id="vr-tec" style="color:var(--cyan);">Spinning</span></div>
+          </div>
+          <div class="vr-legal" id="vr-legal-box">
+            <div class="vr-legal-ico">✅</div>
+            <div class="vr-legal-txt">Dentro do tamanho legal em Portugal e Espanha. Pode guardar.</div>
+          </div>
+          <div class="vr-btns">
+            <button class="vr-btn primary" onclick="goTab(3)">GUARDAR LOG</button>
+            <button class="vr-btn secondary">PARTILHAR</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ LOGBOOK ══ -->
+    <div class="screen" id="s-logbook">
+      <div class="log-header">
+        <div class="log-title">LOGBOOK</div>
+        <button class="add-btn" onclick="openLogForm()">+</button>
+      </div>
+
+      <div class="sec-label">// RECORDES PESSOAIS</div>
+      <div class="pb-scroll" style="margin-bottom:14px;">
+        <div class="pb-card"><div class="pb-fish">🐟</div><div class="pb-sp">Robalo</div><div class="pb-w">4.2kg</div><div class="pb-date">Mar 2026</div></div>
+        <div class="pb-card"><div class="pb-fish">🐠</div><div class="pb-sp">Dourada</div><div class="pb-w">2.8kg</div><div class="pb-date">Jan 2026</div></div>
+        <div class="pb-card"><div class="pb-fish">🦈</div><div class="pb-sp">Pargo</div><div class="pb-w">6.1kg</div><div class="pb-date">Dez 2025</div></div>
+        <div class="pb-card"><div class="pb-fish">🐡</div><div class="pb-sp">Garoupa</div><div class="pb-w">3.4kg</div><div class="pb-date">Nov 2025</div></div>
+      </div>
+
+      <div class="sec-label">// ÚLTIMAS CAPTURAS</div>
+      <div class="catch-card record">
+        <div class="cc-fish">🐟</div>
+        <div class="cc-info">
+          <div class="cc-name">Robalo Europeu 👑</div>
+          <div class="cc-meta">Cabo Espichel · Shad 14cm · 17 Abr</div>
+        </div>
+        <div class="cc-right">
+          <div class="cc-w">4.2kg</div>
+          <div class="cc-record">RECORDE!</div>
+        </div>
+      </div>
+      <div class="catch-card">
+        <div class="cc-fish">🐠</div>
+        <div class="cc-info">
+          <div class="cc-name">Dourada</div>
+          <div class="cc-meta">Comporta · Minhoca · 14 Abr</div>
+        </div>
+        <div class="cc-right">
+          <div class="cc-w">1.8kg</div>
+          <div class="cc-score">Score 71</div>
+        </div>
+      </div>
+      <div class="catch-card">
+        <div class="cc-fish">🐡</div>
+        <div class="cc-info">
+          <div class="cc-name">Garoupa</div>
+          <div class="cc-meta">Espichel Norte · Jig · 10 Abr</div>
+        </div>
+        <div class="cc-right">
+          <div class="cc-w">2.1kg</div>
+          <div class="cc-score">Score 84</div>
+        </div>
+      </div>
+      <div class="share-row">
+        <button class="share-btn export">📤 EXPORTAR</button>
+        <button class="share-btn share">📸 PARTILHAR</button>
+      </div>
+    </div>
+
+    <!-- ══ PERFIL ══ -->
+    <div class="screen" id="s-perfil">
+      <div class="profile-hero">
+        <div class="avatar">🎣</div>
+        <div>
+          <div class="ph-name">João Henriques</div>
+          <div class="ph-badge">TRIAL — 3 DIAS RESTANTES</div>
+        </div>
+      </div>
+
+      <div class="trial-banner">
+        <div class="tb-icon">⏱️</div>
+        <div class="tb-txt"><strong>Trial a terminar em 3 dias.</strong> Garante o PRO e não percas o Oráculo.</div>
+        <button class="tb-cta" onclick="showUpgradeModal('pro')">PRO →</button>
+      </div>
+
+      <div class="stats-row">
+        <div class="stat-cell"><div class="stat-val">23</div><div class="stat-key">SESSÕES</div></div>
+        <div class="stat-cell"><div class="stat-val">41</div><div class="stat-key">CAPTURAS</div></div>
+        <div class="stat-cell"><div class="stat-val">4.2kg</div><div class="stat-key">MAIOR PB</div></div>
+      </div>
+
+      <div class="sec-label">// PLANOS</div>
+
+      <div class="plan-card free">
+        <div class="plan-top">
+          <div class="plan-name">FREE</div>
+          <div class="plan-price">€0</div>
+        </div>
+        <div class="plan-feats">
+          <div class="plan-feat on">✓ 1 spot · previsão básica</div>
+          <div class="plan-feat">✗ Oráculo completo</div>
+          <div class="plan-feat">✗ Alertas push</div>
+        </div>
+        <button class="plan-btn current">PLANO ACTUAL</button>
+      </div>
+
+      <div class="plan-card pro">
+        <div class="plan-top">
+          <div class="plan-name">PRO</div>
+          <div class="plan-price">€9<span>.99/mês</span></div>
+        </div>
+        <div class="plan-feats">
+          <div class="plan-feat on">✓ Oráculo completo + dados reais</div>
+          <div class="plan-feat on">✓ Todos os spots PT + ES</div>
+          <div class="plan-feat on">✓ Alertas push + previsão 5 dias</div>
+        </div>
+        <button class="plan-btn upgrade-pro" onclick="showUpgradeModal('pro')">UPGRADE PRO →</button>
+      </div>
+
+      <div class="plan-card elite">
+        <div class="plan-top">
+          <div class="plan-name">ELITE</div>
+          <div class="plan-price">€19<span>.99/mês</span></div>
+        </div>
+        <div class="plan-feats">
+          <div class="plan-feat on">✓ Spots secretos + coords exactas</div>
+          <div class="plan-feat on">✓ IA personalizada + relatórios</div>
+          <div class="plan-feat on">✓ Alertas prioritários tempo real</div>
+        </div>
+        <button class="plan-btn upgrade-elite" onclick="showUpgradeModal('elite')">TORNAR-ME ELITE →</button>
+      </div>
+    </div>
+
+  </div><!-- /screens -->
+
+  <!-- Bottom Nav -->
+  <div class="bottom-nav">
+    <div class="nav-item active" id="nav-0" onclick="goTab(0)">
+      <div class="nav-icon">🎯</div>
+      <div class="nav-label">ORÁCULO</div>
+      <div class="nav-dot"></div>
+    </div>
+    <div class="nav-item" id="nav-1" onclick="goTab(1)">
+      <div class="nav-icon">🗺️</div>
+      <div class="nav-label">MAPA</div>
+      <div class="nav-dot"></div>
+    </div>
+    <div class="nav-item nav-vision" id="nav-2" onclick="goTab(2)">
+      <div class="nav-btn"><div class="nav-icon">📷</div></div>
+      <div class="nav-label">VISION</div>
+    </div>
+    <div class="nav-item" id="nav-3" onclick="goTab(3)">
+      <div class="nav-icon">📖</div>
+      <div class="nav-label">LOG</div>
+      <div class="nav-dot"></div>
+    </div>
+    <div class="nav-item" id="nav-4" onclick="goTab(4)">
+      <div class="nav-icon">👤</div>
+      <div class="nav-label">PERFIL</div>
+      <div class="nav-dot"></div>
+    </div>
+  </div>
+
+</div><!-- /phone-shell -->
+
+<script>
+const SCREENS = ['s-oraculo','s-mapa','s-vision','s-logbook','s-perfil'];
+let current = 0;
+
+function goTab(i) {
+  if (i === current) return;
+  const prev = document.getElementById(SCREENS[current]);
+  const next = document.getElementById(SCREENS[i]);
+  const dir  = i > current ? 1 : -1;
+
+  prev.style.transform = `translateX(${-dir * 30}px)`;
+  prev.style.opacity = '0';
+  prev.style.pointerEvents = 'none';
+
+  next.style.display = '';
+  next.style.transform = `translateX(${dir * 30}px)`;
+  next.style.opacity = '0';
+
+  requestAnimationFrame(() => {
+    next.style.transition = 'opacity .22s ease, transform .22s ease';
+    next.style.transform = 'translateX(0)';
+    next.style.opacity = '1';
+    next.style.pointerEvents = 'all';
+  });
+
+  setTimeout(() => {
+    prev.classList.remove('active');
+    next.classList.add('active');
+    prev.style.transition = '';
+    prev.style.transform = '';
+    prev.style.opacity = '';
+  }, 240);
+
+  document.getElementById('nav-' + current).classList.remove('active');
+  document.getElementById('nav-' + i).classList.add('active');
+  current = i;
+}
+
+function showAlert() {
+  const b = document.createElement('div');
+  b.style.cssText = `
+    position:fixed;top:60px;left:50%;transform:translateX(-50%);
+    background:#071428;border:1px solid rgba(0,245,255,.4);border-radius:12px;
+    padding:12px 16px;font-family:'IBM Plex Sans',sans-serif;font-size:12px;color:#fff;
+    z-index:999;max-width:320px;width:90%;
+    box-shadow:0 8px 32px rgba(0,0,0,.6);
+  `;
+  b.innerHTML = `<div style="color:#00F5FF;font-weight:700;margin-bottom:4px;">⚡ Condições perfeitas em Sesimbra!</div>Score 84/100 · Robalo activo · Janela: 2h30 → Vai agora.`;
+  document.body.appendChild(b);
+  setTimeout(() => b.remove(), 3000);
+}
+
+// ── 1. SCORE ANIMADO ─────────────────────────────────────────────────────────
+const SCORE_TARGET   = 84;
+const RING_CIRCUMF   = 195; // 2π × r=31
+const RING_EMPTY     = RING_CIRCUMF;
+const RING_FULL      = RING_CIRCUMF - (SCORE_TARGET / 100) * RING_CIRCUMF;
+
+function animateScore() {
+  const numEl  = document.querySelector('.ring-num');
+  const fillEl = document.querySelector('.ring-fill');
+  if (!numEl || !fillEl) return;
+
+  fillEl.style.transition = 'none';
+  fillEl.style.strokeDashoffset = RING_EMPTY;
+  numEl.textContent = '0';
+
+  let start = null;
+  const DURATION = 1400;
+
+  requestAnimationFrame(function step(ts) {
+    if (!start) start = ts;
+    const p = Math.min((ts - start) / DURATION, 1);
+    const ease = 1 - Math.pow(1 - p, 3); // ease-out cubic
+
+    const val  = Math.round(ease * SCORE_TARGET);
+    const dash = RING_EMPTY - ease * (RING_EMPTY - RING_FULL);
+
+    numEl.textContent  = val;
+    fillEl.style.strokeDashoffset = dash;
+
+    if (p < 1) requestAnimationFrame(step);
+    else {
+      numEl.textContent = SCORE_TARGET;
+      fillEl.style.strokeDashoffset = RING_FULL;
+    }
+  });
+}
+
+// ── 2. DADOS REAIS — Open-Meteo (gratuito, sem API key) ──────────────────────
+// Coordenadas: Sesimbra, Portugal
+const LAT = 38.44, LON = -9.10;
+
+async function fetchWeather() {
+  try {
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}` +
+      `&current=temperature_2m,wind_speed_10m,wind_direction_10m,precipitation` +
+      `&hourly=temperature_2m&timezone=Europe%2FLisbon&forecast_days=1`;
+
+    const r    = await fetch(url);
+    const data = await r.json();
+    const c    = data.current;
+
+    const windKmh = Math.round(c.wind_speed_10m);
+    const tempAir = Math.round(c.temperature_2m);
+    const windDir = degreesToPt(c.wind_direction_10m);
+
+    // Atualiza os cards de dados
+    setDS(0, `${windKmh} km/h`, `VENTO ${windDir}`);
+    setDS(2, `${tempAir}°C`, 'AR');
+
+    // Score dinâmico baseado em condições reais
+    const dynScore = calcScore(windKmh, c.precipitation);
+    updateScore(dynScore);
+
+    // Label de fonte
+    showDataBadge('Open-Meteo · ao vivo');
+  } catch(e) {
+    // Silencioso — mantém dados demo
+    console.warn('[AQUANAUTIX] meteo offline:', e.message);
+  }
+}
+
+function setDS(idx, val, key) {
+  const cells = document.querySelectorAll('.ds');
+  if (!cells[idx]) return;
+  cells[idx].querySelector('.ds-val').textContent = val;
+  cells[idx].querySelector('.ds-key').textContent = key;
+}
+
+function degreesToPt(deg) {
+  const dirs = ['N','NE','E','SE','S','SO','O','NO'];
+  return dirs[Math.round(deg / 45) % 8];
+}
+
+function calcScore(windKmh, precip) {
+  let s = 84;
+  if (windKmh > 30) s -= 20;
+  else if (windKmh > 20) s -= 10;
+  if (precip > 0.5) s -= 15;
+  return Math.max(30, Math.min(98, s));
+}
+
+function updateScore(score) {
+  const numEl  = document.querySelector('.ring-num');
+  const fillEl = document.querySelector('.ring-fill');
+  if (!numEl || !fillEl) return;
+  const newDash = RING_CIRCUMF - (score / 100) * RING_CIRCUMF;
+  fillEl.style.transition = 'stroke-dashoffset .8s ease';
+  fillEl.style.strokeDashoffset = newDash;
+  numEl.textContent = score;
+
+  const verdict = document.querySelector('.verdict');
+  if (verdict) {
+    if (score >= 75) { verdict.textContent = '⚡ EXCELENTE'; verdict.style.color = '#00F5FF'; }
+    else if (score >= 55) { verdict.textContent = '🎣 BOM'; verdict.style.color = '#00FF9F'; }
+    else { verdict.textContent = '⚠️ FRACO'; verdict.style.color = '#F3C64D'; }
+  }
+}
+
+function showDataBadge(txt) {
+  const el = document.getElementById('data-badge');
+  if (el) { el.textContent = '📡 ' + txt; el.style.opacity = '1'; }
+}
+
+// ── 3. MODAL UPGRADE PRO ─────────────────────────────────────────────────────
+function showUpgradeModal(plan) {
+  const overlay = document.createElement('div');
+  overlay.id = 'upgrade-overlay';
+  overlay.style.cssText = `
+    position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:1000;
+    display:flex;align-items:flex-end;justify-content:center;
+    animation:fadeIn .2s ease;
+  `;
+
+  const isPro   = plan !== 'elite';
+  const color   = isPro ? '#00F5FF' : '#F3C64D';
+  const price   = isPro ? '€9.99/mês' : '€19.99/mês';
+  const title   = isPro ? 'PRO' : 'ELITE';
+  const feats   = isPro
+    ? ['Oráculo completo com dados reais','Todos os spots PT + ES','Alertas push personalizados','Previsão 5 dias','Histórico ilimitado']
+    : ['Tudo do PRO','Spots secretos com coordenadas exactas','IA personalizada ao teu perfil','Alertas prioritários em tempo real','Relatórios semanais automáticos'];
+
+  overlay.innerHTML = `
+    <div style="
+      background:#071428;border-radius:24px 24px 0 0;width:100%;max-width:375px;
+      padding:20px 20px 36px;border-top:2px solid ${color}40;
+      box-shadow:0 -20px 60px rgba(0,0,0,.6);
+    ">
+      <div style="width:36px;height:4px;background:rgba(255,255,255,.15);border-radius:2px;margin:0 auto 20px;"></div>
+      <div style="font-family:'Orbitron',sans-serif;font-size:20px;font-weight:900;color:${color};margin-bottom:4px;">${title}</div>
+      <div style="font-family:'Orbitron',sans-serif;font-size:28px;color:#fff;font-weight:900;margin-bottom:16px;">${price}</div>
+      <div style="margin-bottom:20px;">
+        ${feats.map(f => `
+          <div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:13px;color:#cce0ea;">
+            <span style="color:${color};font-size:14px;">✓</span> ${f}
+          </div>`).join('')}
+      </div>
+      <div style="background:rgba(0,245,255,.06);border:1px solid rgba(0,245,255,.2);border-radius:10px;padding:10px 14px;margin-bottom:16px;font-size:11px;color:#8AADBE;display:flex;align-items:center;gap:8px;">
+        <span>⏱️</span> <span><strong style="color:#00F5FF;">3 dias grátis</strong> — depois ${price}. Cancela quando quiseres.</span>
+      </div>
+      <button onclick="startTrial('${plan}')" style="
+        width:100%;padding:16px;border-radius:12px;border:none;cursor:pointer;
+        font-family:'Orbitron',sans-serif;font-size:13px;font-weight:900;letter-spacing:.5px;
+        background:${color};color:#000;margin-bottom:10px;
+      ">COMEÇAR 3 DIAS GRÁTIS →</button>
+      <button onclick="document.getElementById('upgrade-overlay').remove()" style="
+        width:100%;padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,.1);
+        background:transparent;color:#8AADBE;cursor:pointer;font-family:'IBM Plex Sans',sans-serif;font-size:13px;
+      ">Agora não</button>
+    </div>`;
+
+  overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+  document.body.appendChild(overlay);
+}
+
+function startTrial(plan) {
+  document.getElementById('upgrade-overlay')?.remove();
+  // Redireciona para waitlist do site principal
+  window.open('https://aquanautix.vercel.app/#waitlist', '_blank');
+}
+
+// ── G. TÉCNICAS DE PESCA ─────────────────────────────────────────────────────
+const TECNICAS = [
+  {
+    id:'spinning', icon:'🎣', name:'SPINNING',
+    target:'Robalo · Corvina', match:94, top:true,
+    desc:'Técnica de lançamento e recuperação com isco artificial. Ideal em marés vazantes com vento fraco — condições de hoje.',
+    gear:['Cana 2.1–2.7m · Ação Rápida','Reel 3000–4000 · 20lb braid','Shad 10–14cm cor natural ou chartreuse'],
+    steps:[
+      'Lança a 45° contra a corrente para deixar o shad derivar natural.',
+      'Recupera em twitching curto (2 puxões + pausa 2s) — imita peixe ferido.',
+      'Varia a profundidade: começa raso (0.5m) e vai aprofundando até encontrar o cardume.',
+      'Com maré vazante, trabalha as quebras de fundo onde o Robalo embosca.',
+      'Golden hour: 30min antes e após o pôr/nascer do sol.',
+    ],
+    conditions:'Vento < 20km/h · Maré vazante · Água clara',
+    species:['Robalo Europeu','Corvina','Pargo'],
+  },
+  {
+    id:'surfcasting', icon:'🏄', name:'SURFCASTING',
+    target:'Dourada · Linguado', match:78, top:false,
+    desc:'Pesca de praia com cana longa e isco natural. Dourada activa em fundos de areia — Comporta ideal hoje.',
+    gear:['Cana 4–5m · Ação Lenta/Média','Reel 6000–8000 · 30lb mono','Minhoca de areia · Lugworm · Poliqueta'],
+    steps:[
+      'Identifica bancos de areia e depressões na rebentação — Dourada concentra-se aí.',
+      'Usa aparelho de 2–3 anzóis com minhoca fresca. Lança além da 2ª vaga.',
+      'Mantém a linha ligeiramente tensa — não deixa afundar na areia.',
+      'Reposiciona a cada 15 min se não houver picadas — a Dourada está em movimento.',
+      'Ao amanhecer, usa iscos maiores para Robalo que entra na arrebentação.',
+    ],
+    conditions:'Ressaca moderada · Fundo areia · Água turva aceitável',
+    species:['Dourada','Linguado','Robalo'],
+  },
+  {
+    id:'jigging', icon:'⚓', name:'JIGGING',
+    target:'Pargo · Garoupa', match:71, top:false,
+    desc:'Isco metálico em vertical ou diagonal. Pargo e Garoupa nos pinheiros rochosos do Espichel — spot PRO.',
+    gear:['Cana PE1.5–PE3 · 1.8–2.0m','Reel Low-Profile ou Spinning 5000','Jig 40–80g · Cor vermelho/dourado'],
+    steps:[
+      'Localiza fundo rochoso com eco-sonar (entre 20–60m de profundidade).',
+      'Deixa o jig afundar até ao fundo. Inicia a animação: lift rápido + queda livre.',
+      'Técnica "one pitch jerk" — uma puxada por rotação do reel, ritmo constante.',
+      'Pargo morde na queda — mantém tensão mínima para sentir o toque.',
+      'Garoupa bate de forma explosiva perto do fundo — reage imediatamente.',
+    ],
+    conditions:'Mar calmo · Barco ou kayak · Fundo rochoso',
+    species:['Pargo','Garoupa','Cherne'],
+  },
+  {
+    id:'mosca', icon:'🪰', name:'MOSCA',
+    target:'Truta · Robalo raso', match:52, top:false,
+    desc:'Técnica de alta precisão com isco artificial de penas. Robalo em águas rasas ao amanhecer.',
+    gear:['Cana #7–#9 · 9ft','Reel com backing 100m','Streamer de 8–12cm cor branca/chartreuse'],
+    steps:[
+      'Observa actividade superficial — Robalo a perseguir tainhas é sinal certo.',
+      'Lança 3–5m à frente do cardume. Recupera em strips longos de 30cm.',
+      'Usa o vento a favor — menor resistência, maior precisão.',
+      'Wading em fundos de areia ao amanhecer — máxima eficácia.',
+      'Streamer de penas brancas imita tainha pequena — cor preferida do Robalo.',
+    ],
+    conditions:'Vento lateral fraco · Água clara · Amanhecer/anoitecer',
+    species:['Robalo','Truta Marisca'],
+  },
+  {
+    id:'boia', icon:'🎈', name:'PESCA À BÓIA',
+    target:'Sargo · Salema', match:65, top:false,
+    desc:'Clássica e eficaz em zonas rochosas. Sargo activo perto das algas com maré enchente.',
+    gear:['Cana telescópica 4–5m','Linha 0.20–0.25mm mono','Isco: pão · mexilhão · camarão'],
+    steps:[
+      'Coloca a bóia a 1–2m de profundidade junto às algas e rochas.',
+      'Usa pão amassado ou mexilhão fresco no anzol — Sargo não resiste.',
+      'Observa a bóia: mergulho rápido = picada, inclinar = peixe a provar.',
+      'Aguenta 3 segundos antes de fechar o reel e puxar — garante que o anzol pegou.',
+      'Com corrente, deixa a bóia derivar natural ao longo das rochas.',
+    ],
+    conditions:'Qualquer condição · Ideal em famílias e iniciantes',
+    species:['Sargo','Salema','Bica','Peixe-Rei'],
+  },
+];
+
+function renderTecnicas(score) {
+  const strip = document.getElementById('tecnicas-strip');
+  if (!strip) return;
+  // Ordena por match dinâmico ajustado ao score
+  const sorted = [...TECNICAS].map(t => ({
+    ...t,
+    dynMatch: Math.min(99, Math.round(t.match * (score / 84)))
+  })).sort((a,b) => b.dynMatch - a.dynMatch);
+
+  strip.innerHTML = sorted.map((t,i) => `
+    <div class="tec-card${i===0?' top':''}" onclick="openTecnica('${t.id}')">
+      <div class="tec-icon">${t.icon}</div>
+      <div class="tec-name">${t.name}</div>
+      <div class="tec-target">${t.target}</div>
+      <div class="tec-match">${t.dynMatch}% match</div>
+    </div>`).join('');
+}
+
+function openTecnica(id) {
+  const t = TECNICAS.find(x => x.id === id);
+  if (!t) return;
+
+  const modal = document.createElement('div');
+  modal.className = 'tec-modal';
+  modal.innerHTML = `
+    <div class="tec-sheet">
+      <div style="width:36px;height:4px;background:rgba(255,255,255,.15);border-radius:2px;margin:0 auto 16px;"></div>
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;">
+        <div style="font-size:32px;">${t.icon}</div>
+        <div>
+          <div style="font-family:'Orbitron',sans-serif;font-size:15px;font-weight:900;color:var(--cyan);">${t.name}</div>
+          <div style="font-size:11px;color:var(--hint);">🎯 ${t.target}</div>
+        </div>
+      </div>
+
+      <div class="tec-tip">${t.desc}</div>
+
+      <div style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--hint);letter-spacing:.8px;margin:12px 0 8px;">// MATERIAL NECESSÁRIO</div>
+      ${t.gear.map(g => `<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:12px;color:#cce0ea;"><span style="color:var(--cyan);">◆</span>${g}</div>`).join('')}
+
+      <div style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--hint);letter-spacing:.8px;margin:14px 0 8px;">// TÉCNICA PASSO A PASSO</div>
+      ${t.steps.map((s,i) => `
+        <div class="tec-step">
+          <div class="tec-step-num">${i+1}</div>
+          <div class="tec-step-txt">${s}</div>
+        </div>`).join('')}
+
+      <div style="margin-top:14px;background:rgba(0,255,159,.05);border:1px solid rgba(0,255,159,.2);border-radius:10px;padding:10px 12px;">
+        <div style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--green);margin-bottom:4px;letter-spacing:.5px;">CONDIÇÕES IDEAIS</div>
+        <div style="font-size:11px;color:#cce0ea;">${t.conditions}</div>
+      </div>
+
+      <div style="margin-top:10px;display:flex;flex-wrap:wrap;gap:6px;">
+        ${t.species.map(s => `<span style="font-family:'Share Tech Mono',monospace;font-size:9px;background:rgba(0,245,255,.08);border:1px solid rgba(0,245,255,.2);color:var(--cyan);padding:3px 8px;border-radius:5px;">${s}</span>`).join('')}
+      </div>
+
+      <button onclick="this.closest('.tec-modal').remove()" style="width:100%;margin-top:16px;padding:13px;border-radius:12px;border:none;cursor:pointer;background:var(--cyan);color:#000;font-family:'Orbitron',sans-serif;font-size:10px;font-weight:700;">FECHAR</button>
+    </div>`;
+  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+  document.body.appendChild(modal);
+}
+
+// ── D. LOGBOOK — REGISTO DE CAPTURA ─────────────────────────────────────────
+const PB_RECORDS = { 'Robalo':4.2, 'Dourada':2.8, 'Pargo':6.1, 'Garoupa':3.4, 'Corvina':2.8, 'Linguado':1.2 };
+
+function openLogForm() {
+  const modal = document.createElement('div');
+  modal.className = 'lb-modal';
+  modal.id = 'lb-modal';
+  modal.innerHTML = `
+    <div class="lb-sheet">
+      <div style="width:36px;height:4px;background:rgba(255,255,255,.15);border-radius:2px;margin:0 auto 16px;"></div>
+      <div style="font-family:'Orbitron',sans-serif;font-size:14px;font-weight:700;color:var(--cyan);margin-bottom:16px;">REGISTAR CAPTURA</div>
+
+      <div class="lb-row">
+        <div class="lb-field">
+          <label>ESPÉCIE</label>
+          <select id="lf-species">
+            <option>Robalo</option><option>Dourada</option><option>Pargo</option>
+            <option>Garoupa</option><option>Corvina</option><option>Linguado</option><option>Outro</option>
+          </select>
+        </div>
+        <div class="lb-field">
+          <label>PESO (kg)</label>
+          <input id="lf-weight" type="number" step="0.1" min="0" placeholder="ex: 1.8">
+        </div>
+      </div>
+
+      <div class="lb-field">
+        <label>SPOT</label>
+        <input id="lf-spot" type="text" placeholder="ex: Cabo Espichel" value="Sesimbra">
+      </div>
+
+      <div class="lb-row">
+        <div class="lb-field">
+          <label>MÉTODO</label>
+          <select id="lf-method">
+            <option>Spinning</option><option>Surfcasting</option><option>Jigging</option>
+            <option>Pesca à Bóia</option><option>Mosca</option><option>Outra</option>
+          </select>
+        </div>
+        <div class="lb-field">
+          <label>COMPRIMENTO (cm)</label>
+          <input id="lf-len" type="number" min="0" placeholder="ex: 42">
+        </div>
+      </div>
+
+      <button onclick="submitCatch()" style="width:100%;padding:14px;border-radius:12px;border:none;cursor:pointer;font-family:'Orbitron',sans-serif;font-size:11px;font-weight:700;background:var(--cyan);color:#000;margin-top:4px;letter-spacing:.5px;">GUARDAR CAPTURA</button>
+      <button onclick="document.getElementById('lb-modal').remove()" style="width:100%;padding:11px;border-radius:10px;border:1px solid rgba(255,255,255,.1);background:transparent;color:var(--hint);cursor:pointer;font-size:13px;margin-top:8px;">Cancelar</button>
+    </div>`;
+  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+  document.body.appendChild(modal);
+}
+
+function submitCatch() {
+  const species = document.getElementById('lf-species').value;
+  const weight  = parseFloat(document.getElementById('lf-weight').value) || 0;
+  const spot    = document.getElementById('lf-spot').value || 'Desconhecido';
+  const method  = document.getElementById('lf-method').value;
+  const len     = document.getElementById('lf-len').value;
+
+  const isRecord = weight > 0 && weight > (PB_RECORDS[species] || 0);
+  if (isRecord) PB_RECORDS[species] = weight;
+
+  // Cria card
+  const card = document.createElement('div');
+  card.className = 'catch-card' + (isRecord ? ' record' : '');
+  const now = new Date();
+  const dateStr = now.getDate() + ' ' + ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'][now.getMonth()];
+  card.innerHTML = `
+    <div class="cc-fish">🐟</div>
+    <div class="cc-info">
+      <div class="cc-name">${species}${isRecord ? ' 👑' : ''}</div>
+      <div class="cc-meta">${spot} · ${method}${len ? ' · ' + len + 'cm' : ''} · ${dateStr}</div>
+    </div>
+    <div class="cc-right">
+      <div class="cc-w">${weight > 0 ? weight.toFixed(1) + 'kg' : '—'}</div>
+      ${isRecord ? '<div class="cc-record">RECORDE!</div>' : '<div class="cc-score">Score 84</div>'}
+    </div>`;
+
+  // Insere antes do primeiro catch-card existente
+  const container = document.querySelector('#s-logbook');
+  const firstCard = container.querySelector('.catch-card');
+  if (firstCard) firstCard.parentNode.insertBefore(card, firstCard);
+
+  // Fecha modal com feedback
+  document.getElementById('lb-modal').remove();
+  const toast = document.createElement('div');
+  toast.style.cssText = `position:fixed;top:70px;left:50%;transform:translateX(-50%);background:#071428;border:1px solid rgba(0,245,255,.4);border-radius:10px;padding:10px 16px;font-family:'IBM Plex Sans',sans-serif;font-size:12px;color:#fff;z-index:999;white-space:nowrap;box-shadow:0 8px 24px rgba(0,0,0,.5);`;
+  toast.innerHTML = isRecord
+    ? `👑 <strong style="color:var(--amber)">NOVO RECORDE!</strong> ${species} ${weight.toFixed(1)}kg`
+    : `✅ Captura guardada — ${species}${weight > 0 ? ' ' + weight.toFixed(1) + 'kg' : ''}`;
+  document.body.appendChild(toast);
+  setTimeout(() => toast.remove(), 3000);
+}
+
+// ── E. SCORE SHARE CARD ───────────────────────────────────────────────────────
+function openShareCard() {
+  const score   = document.querySelector('.ring-num').textContent;
+  const verdict = document.querySelector('.verdict').textContent;
+  const now     = new Date();
+  const dateStr = now.toLocaleDateString('pt-PT',{weekday:'long',day:'numeric',month:'long'});
+
+  const overlay = document.createElement('div');
+  overlay.className = 'share-card-overlay';
+  overlay.innerHTML = `
+    <div class="share-card">
+      <div style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--hint);letter-spacing:1.5px;margin-bottom:16px;">AQUANAUTIX · ORÁCULO DIÁRIO</div>
+
+      <svg viewBox="0 0 80 80" width="90" height="90" style="display:block;margin:0 auto 10px;">
+        <circle fill="none" stroke="rgba(0,245,255,.1)" stroke-width="6" cx="40" cy="40" r="31"/>
+        <circle fill="none" stroke="#00F5FF" stroke-width="6" stroke-linecap="round"
+          stroke-dasharray="195" stroke-dashoffset="${195 - (parseInt(score)/100)*195}"
+          cx="40" cy="40" r="31" transform="rotate(-90 40 40)"/>
+      </svg>
+
+      <div style="font-family:'Orbitron',sans-serif;font-size:48px;font-weight:900;color:var(--cyan);text-shadow:0 0 30px rgba(0,245,255,.5);line-height:1;">${score}</div>
+      <div style="font-family:'Orbitron',sans-serif;font-size:13px;color:var(--cyan);margin:6px 0 4px;">${verdict}</div>
+      <div style="font-size:12px;color:var(--hint);margin-bottom:4px;">📍 Sesimbra · Portugal</div>
+      <div style="font-family:'Share Tech Mono',monospace;font-size:10px;color:rgba(255,255,255,.3);margin-bottom:20px;">${dateStr}</div>
+
+      <div style="display:flex;gap:8px;">
+        <button onclick="copyScore(${score})" style="flex:1;padding:12px;border-radius:10px;border:none;cursor:pointer;background:var(--cyan);color:#000;font-family:'Orbitron',sans-serif;font-size:9px;font-weight:700;">📋 COPIAR</button>
+        <button onclick="this.closest('.share-card-overlay').remove()" style="flex:1;padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,.1);background:transparent;color:var(--hint);cursor:pointer;font-family:'IBM Plex Sans',sans-serif;font-size:12px;">Fechar</button>
+      </div>
+    </div>`;
+  overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+  document.body.appendChild(overlay);
+}
+
+function copyScore(score) {
+  const txt = `🎯 Score do dia: ${score}/100 — AQUANAUTIX\n📍 Sesimbra · Condições excelentes para pesca\naquanautix.vercel.app`;
+  navigator.clipboard?.writeText(txt).catch(() => {});
+  const btn = document.querySelector('.share-card-overlay button');
+  if (btn) { btn.textContent = '✓ COPIADO!'; setTimeout(() => { btn.textContent = '📋 COPIAR'; }, 2000); }
+}
+
+// ── F. ORÁCULO IA CHAT ────────────────────────────────────────────────────────
+const AI_REPLIES = [
+  { keys:['isco','engodo','isca'],   reply:'Com vento NW fraco e maré vazante, recomendo <strong>Shad 10–12cm cor natural</strong> para Robalo. Em fundos rochosos, o jig 30–40g é excelente para Pargo. Evita iscos vivos com corrente forte.' },
+  { keys:['hora','melhor','quando'], reply:'A <strong>janela de ouro hoje é 06:30–09:00</strong>. Após as 10h o vento roda e a turbidez aumenta. Amanhã às 07:15 em Ericeira há outra janela — activa os alertas PRO para não perderes.' },
+  { keys:['spot','local','onde'],    reply:'Para hoje com score 84, o <strong>Cabo Espichel Norte</strong> é o spot ideal — menos corrente, fundo misto. Comporta é alternativa free mas score 71. Ericeira perfeita para Corvina mas 2h de viagem.' },
+  { keys:['maré','agua','corrente'], reply:'Maré <strong>vazante até às 11:42</strong> — condições ideais para Robalo em zonas de esteiro. A corrente está a 0.4 nós, excelente para isco derivar natural. Próxima enchente às 18:15.' },
+  { keys:['especie','peixe','robalo','dourada'], reply:'Com este score, <strong>Robalo Europeu</strong> está em máxima actividade (confirmado pelos dados de temperatura e maré). Dourada activa em fundos de areia — Comporta ideal. Pargo nos pinheiros rochosos do Espichel.' },
+  { keys:['tempo','vento','chuva'],  reply:'Vento <strong>NW 12km/h</strong> — dentro do ideal para pesca costeira. Sem precipitação prevista até amanhã à noite. Temperatura da água estimada 17°C — Robalo em modo feed activo.' },
+  { keys:['tecnica','técnica','spinning','jigging','surfcasting','mosca','boia','bóia'], reply:'Para hoje em Sesimbra recomendo por ordem: <strong style="color:var(--cyan);">1. Spinning</strong> (94% match — Robalo activo, vento fraco ideal) → <strong>2. Surfcasting</strong> (78% — Dourada na Comporta) → <strong>3. Jigging</strong> (71% — Pargo no Espichel). Abre a secção Técnicas no Oráculo para ver o guia passo a passo de cada uma.' },
+  { keys:['spinning'], reply:'<strong>Spinning</strong> é a técnica ideal hoje. Usa Shad 10–12cm cor natural. Lança a 45° contra a corrente, recupera em twitching (2 puxões + pausa 2s). Robalo em modo feed activo nas próximas 2h — não percas a janela das 07:30.' },
+  { keys:['jigging','jig'], reply:'<strong>Jigging</strong> no Cabo Espichel Norte (PRO) — fundo rochoso 25–40m, jig 40–60g vermelho/dourado. Técnica one-pitch-jerk: uma puxada por rotação do reel. Pargo morde na queda — mantém tensão mínima.' },
+  { keys:['surfcast','surf'], reply:'<strong>Surfcasting</strong> na Comporta — fundo areia, Dourada activa. Minhoca de areia fresca, aparelho 2 anzóis, lança além da 2ª vaga. Reposiciona a cada 15 min. Melhor entre 06:30–09:00.' },
+];
+const AI_DEFAULT = 'Com base nas condições actuais de <strong>Sesimbra</strong> — score 84, maré vazante e vento NW fraco — as próximas 2 horas são ideais. O Oráculo analisa 12 variáveis em tempo real para maximizar as tuas capturas. Que mais queres saber?';
+
+function openAIChat() {
+  const overlay = document.createElement('div');
+  overlay.className = 'ai-chat-overlay';
+  overlay.id = 'ai-chat';
+  overlay.innerHTML = `
+    <div class="ai-chat-sheet">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <div style="width:32px;height:32px;border-radius:8px;background:linear-gradient(135deg,#00F5FF,#007899);display:flex;align-items:center;justify-content:center;font-size:16px;">🤖</div>
+          <div>
+            <div style="font-family:'Orbitron',sans-serif;font-size:11px;color:#fff;font-weight:700;">ORÁCULO IA</div>
+            <div style="font-size:9px;color:var(--green);font-family:'Share Tech Mono',monospace;">● Online · Sesimbra</div>
+          </div>
+        </div>
+        <button onclick="document.getElementById('ai-chat').remove()" style="background:none;border:none;color:var(--hint);font-size:18px;cursor:pointer;">✕</button>
+      </div>
+
+      <div class="chat-msgs" id="chat-msgs">
+        <div class="msg-ai">Olá João! 👋 Analisei as condições de hoje em <strong style="color:var(--cyan)">Sesimbra</strong>.<br>Score <strong style="color:var(--cyan)">84/100</strong> — condições excelentes. O que queres saber?</div>
+      </div>
+
+      <div class="chat-input-row">
+        <input class="chat-input" id="chat-inp" placeholder="ex: Qual o melhor isco agora?" onkeydown="if(event.key==='Enter')sendAI()">
+        <button class="chat-send" onclick="sendAI()">➤</button>
+      </div>
+    </div>`;
+  overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+  document.body.appendChild(overlay);
+  setTimeout(() => document.getElementById('chat-inp')?.focus(), 300);
+}
+
+function sendAI() {
+  const inp  = document.getElementById('chat-inp');
+  const msgs = document.getElementById('chat-msgs');
+  if (!inp || !msgs) return;
+  const txt = inp.value.trim();
+  if (!txt) return;
+  inp.value = '';
+
+  // Mensagem do utilizador
+  const userMsg = document.createElement('div');
+  userMsg.className = 'msg-user';
+  userMsg.textContent = txt;
+  msgs.appendChild(userMsg);
+
+  // Typing indicator
+  const typing = document.createElement('div');
+  typing.className = 'msg-ai msg-typing';
+  typing.innerHTML = '<div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>';
+  msgs.appendChild(typing);
+  msgs.scrollTop = msgs.scrollHeight;
+
+  setTimeout(() => {
+    typing.remove();
+    const lower  = txt.toLowerCase();
+    const match  = AI_REPLIES.find(r => r.keys.some(k => lower.includes(k)));
+    const replyTxt = match ? match.reply : AI_DEFAULT;
+
+    const aiMsg = document.createElement('div');
+    aiMsg.className = 'msg-ai';
+    aiMsg.innerHTML = replyTxt;
+    msgs.appendChild(aiMsg);
+    msgs.scrollTop = msgs.scrollHeight;
+  }, 1400);
+}
+
+// ── A. VISION SCAN ───────────────────────────────────────────────────────────
+const FISH_DB = [
+  { emoji:'🐟', name:'Robalo Europeu',  sci:'Dicentrarchus labrax',  conf:98, len:'42 cm', weight:'~1.2 kg', legal:'36 cm ✓', bait:'Shad 10–14cm',   ok:true,  tec:'Spinning · Mosca'   },
+  { emoji:'🐠', name:'Dourada',         sci:'Sparus aurata',         conf:95, len:'36 cm', weight:'~0.9 kg', legal:'23 cm ✓', bait:'Minhoca / Isco',  ok:true,  tec:'Surfcasting · Bóia' },
+  { emoji:'🦈', name:'Pargo Legítimo',  sci:'Pagrus pagrus',         conf:91, len:'31 cm', weight:'~0.7 kg', legal:'25 cm ✓', bait:'Jig 40g',         ok:true,  tec:'Jigging · Fundo'    },
+  { emoji:'🐡', name:'Garoupa',         sci:'Epinephelus marginatus',conf:87, len:'48 cm', weight:'~2.1 kg', legal:'45 cm ✓', bait:'Polvo vivo',      ok:true,  tec:'Jigging · Fundo'    },
+  { emoji:'🐙', name:'Corvina',         sci:'Argyrosomus regius',    conf:93, len:'55 cm', weight:'~2.8 kg', legal:'30 cm ✓', bait:'Shad 15–20cm',    ok:true,  tec:'Spinning · Slow jig' },
+];
+let scanBusy = false;
+
+function startScan() {
+  if (scanBusy) return;
+  scanBusy = true;
+
+  const zone    = document.getElementById('scanner-zone');
+  const frame   = document.getElementById('scan-frame');
+  const lbl     = document.getElementById('scan-lbl');
+  const btn     = document.getElementById('scan-btn');
+  const srcs    = document.getElementById('scan-sources');
+  const prog    = document.getElementById('scan-progress');
+  const fill    = document.getElementById('scan-progress-fill');
+  const result  = document.getElementById('vision-result');
+  const resLbl  = document.getElementById('vision-result-label');
+
+  // Estado scanning
+  srcs.style.display  = 'none';
+  prog.style.display  = 'block';
+  btn.textContent     = '⏳';
+  btn.style.background = '#071428';
+  btn.style.boxShadow = 'none';
+  lbl.textContent     = 'A ANALISAR...';
+  lbl.style.color     = 'var(--cyan)';
+  frame.classList.add('scanning');
+  result.style.opacity = '0';
+
+  // Progress bar anima
+  requestAnimationFrame(() => { fill.style.width = '100%'; });
+
+  setTimeout(() => {
+    // Escolhe peixe aleatório
+    const fish = FISH_DB[Math.floor(Math.random() * FISH_DB.length)];
+
+    // Actualiza resultado
+    document.getElementById('vr-emoji').textContent  = fish.emoji;
+    document.getElementById('vr-name').textContent   = fish.name;
+    document.getElementById('vr-sci').textContent    = fish.sci;
+    document.getElementById('vr-conf').textContent   = fish.conf + '% conf.';
+    document.getElementById('vr-len').textContent    = fish.len;
+    document.getElementById('vr-weight').textContent = fish.weight;
+    document.getElementById('vr-legal-val').textContent = fish.legal;
+    document.getElementById('vr-bait').textContent   = fish.bait;
+    const tecEl = document.getElementById('vr-tec');
+    if (tecEl) tecEl.textContent = fish.tec || 'Spinning';
+
+    const confFill = document.getElementById('conf-bar-fill');
+    confFill.style.width = '0';
+    confFill.style.background = fish.conf >= 90 ? 'var(--green)' : 'var(--amber)';
+
+    const legalBox = document.getElementById('vr-legal-box');
+    legalBox.style.borderColor = fish.ok ? 'rgba(0,255,159,.25)' : 'rgba(255,77,109,.25)';
+    legalBox.style.background  = fish.ok ? 'rgba(0,255,159,.06)'  : 'rgba(255,77,109,.06)';
+    legalBox.querySelector('.vr-legal-ico').textContent = fish.ok ? '✅' : '⛔';
+    legalBox.querySelector('.vr-legal-txt').textContent = fish.ok
+      ? 'Dentro do tamanho legal em Portugal e Espanha. Pode guardar.'
+      : 'Abaixo do mínimo legal. Devolve ao mar.';
+    legalBox.querySelector('.vr-legal-txt').style.color = fish.ok ? 'var(--green)' : 'var(--red)';
+
+    resLbl.textContent = '// IDENTIFICADO';
+
+    // Reset scanner
+    frame.classList.remove('scanning');
+    btn.textContent = '🔄';
+    btn.style.background  = 'var(--cyan)';
+    btn.style.boxShadow   = '0 0 24px rgba(0,245,255,.4)';
+    lbl.textContent = 'TOCA PARA NOVO SCAN';
+    lbl.style.color = 'var(--hint)';
+    srcs.style.display = 'flex';
+    prog.style.display = 'none';
+    fill.style.width   = '0';
+
+    // Mostra resultado
+    result.style.transition = 'opacity .4s ease';
+    result.style.opacity = '1';
+
+    // Anima confidence bar
+    setTimeout(() => { confFill.style.width = fish.conf + '%'; }, 100);
+
+    scanBusy = false;
+  }, 2200);
+}
+
+// ── B. MAPA LEAFLET REAL ─────────────────────────────────────────────────────
+let _map = null;
+
+const MAP_SPOTS = [
+  { key:'comporta', lat:38.40, lon:-8.77, tier:'free',  label:'Comporta',      score:71 },
+  { key:'espichel', lat:38.42, lon:-9.21, tier:'pro',   label:'Espichel N.',   score:84 },
+  { key:'ericeira', lat:38.96, lon:-9.42, tier:'pro',   label:'Ericeira',      score:68 },
+  { key:'elite7',   lat:37.40, lon:-8.85, tier:'elite', label:'Elite #ES-07',  score:91 },
+  { key:'sines',    lat:37.95, lon:-8.87, tier:'pro',   label:'Sines',         score:73 },
+  { key:'nazare',   lat:39.60, lon:-9.07, tier:'free',  label:'Nazaré',        score:62 },
+  { key:'setubal',  lat:38.52, lon:-8.89, tier:'free',  label:'Setúbal',       score:58 },
+];
+
+function initMap() {
+  if (_map) { _map.invalidateSize(); return; }
+
+  _map = L.map('real-map', {
+    center: [38.7, -9.15],
+    zoom: 8,
+    zoomControl: false,
+    attributionControl: true,
+  });
+
+  // Dark tiles CartoDB
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+    attribution: '© OpenStreetMap © CARTO',
+    subdomains: 'abcd',
+    maxZoom: 18,
+  }).addTo(_map);
+
+  // Marcadores custom
+  MAP_SPOTS.forEach(s => {
+    const sym  = s.tier === 'elite' ? '♛' : s.tier === 'pro' ? '★' : '●';
+    const col  = s.tier === 'elite' ? '#F3C64D' : '#00F5FF';
+    const icon = L.divIcon({
+      className: '',
+      html: `<div class="spot-marker ${s.tier}" style="color:${col};border-color:${col};">${sym}</div>`,
+      iconSize: [26, 26],
+      iconAnchor: [13, 13],
+    });
+
+    const marker = L.marker([s.lat, s.lon], { icon }).addTo(_map);
+    marker.on('click', () => {
+      _map.panTo([s.lat, s.lon], { animate: true, duration: 0.4 });
+      openSpot(s.key);
+    });
+  });
+}
+
+function mapZoomIn()  { _map?.zoomIn(); }
+function mapZoomOut() { _map?.zoomOut(); }
+
+// ── C. MAPA — SPOT POPUP DATA ─────────────────────────────────────────────────
+const SPOTS_DATA = {
+  comporta: { name:'Praia da Comporta',   tier:'FREE',  score:71, species:'🐠 Dourada\n🐟 Robalo\n🦀 Polvo',           ghost:false, pro:false },
+  espichel: { name:'Cabo Espichel N.',    tier:'PRO',   score:84, species:'🐟 Robalo (activo!)\n🦈 Pargo\n🐡 Garoupa', ghost:true,  pro:true  },
+  ericeira: { name:'Pedra Branca',        tier:'PRO',   score:68, species:'🐙 Corvina\n🐟 Robalo\n🐠 Dourada',          ghost:false, pro:true  },
+  elite7:   { name:'Spot Secreto #ES-07', tier:'ELITE', score:91, species:'??? — desbloqueado só ELITE',               ghost:true,  pro:false, elite:true },
+  sines:    { name:'Sines — Ponta Norte', tier:'PRO',   score:73, species:'🐟 Robalo\n🐡 Garoupa\n🦑 Choco',           ghost:false, pro:true  },
+  nazare:   { name:'Nazaré — Praia Sul',  tier:'FREE',  score:62, species:'🐠 Dourada\n🐟 Robalo\n🦀 Polvo',           ghost:false, pro:false },
+  setubal:  { name:'Setúbal — Estuário',  tier:'FREE',  score:58, species:'🐠 Dourada\n🦐 Camarão\n🦀 Caranguejo',     ghost:false, pro:false },
+};
+
+function openSpot(key) {
+  const s = SPOTS_DATA[key];
+  if (!s) return;
+
+  const tierColor  = s.tier === 'ELITE' ? '#F3C64D' : s.tier === 'PRO' ? '#00F5FF' : '#8AADBE';
+  document.getElementById('sp-name').textContent    = s.name;
+  document.getElementById('sp-score').textContent   = s.score;
+  document.getElementById('sp-species').textContent = s.species;
+
+  const badge = document.getElementById('sp-badge');
+  badge.textContent   = s.tier;
+  badge.style.color   = tierColor;
+  badge.style.borderColor = tierColor + '66';
+  badge.style.background  = tierColor + '18';
+
+  const ghost = document.getElementById('sp-ghost');
+  ghost.style.display = s.ghost ? 'block' : 'none';
+
+  const cta = document.getElementById('sp-cta');
+  if (s.elite) {
+    cta.textContent = 'TORNAR-ME ELITE → DESBLOQUEAR';
+    cta.style.background = '#F3C64D';
+    cta.style.color = '#000';
+    cta.onclick = () => { closeSpot(); showUpgradeModal('elite'); };
+  } else if (s.pro) {
+    cta.textContent = 'NAVEGAR PARA ESTE SPOT';
+    cta.style.background = '#00F5FF';
+    cta.style.color = '#000';
+    cta.onclick = closeSpot;
+  } else {
+    cta.textContent = 'SPOT LIVRE — NAVEGAR';
+    cta.style.background = 'rgba(255,255,255,.08)';
+    cta.style.color = '#cce0ea';
+    cta.style.border = '1px solid rgba(255,255,255,.15)';
+    cta.onclick = closeSpot;
+  }
+
+  document.getElementById('spot-popup').classList.add('open');
+}
+
+function closeSpot() {
+  document.getElementById('spot-popup').classList.remove('open');
+}
+
+// ── C. PUSH NOTIFICATION ─────────────────────────────────────────────────────
+function showPushNotif() {
+  const notif = document.createElement('div');
+  notif.className = 'push-notif';
+  notif.innerHTML = `
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px;">
+      <div style="width:28px;height:28px;border-radius:7px;background:linear-gradient(135deg,#00F5FF,#007899);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;">🎯</div>
+      <div>
+        <div style="font-family:'Orbitron',sans-serif;font-size:10px;font-weight:700;color:#fff;letter-spacing:.3px;">AQUANAUTIX</div>
+        <div style="font-size:9px;color:var(--hint);font-family:'Share Tech Mono',monospace;">agora mesmo</div>
+      </div>
+    </div>
+    <div style="font-size:12px;color:#fff;line-height:1.4;">⚡ <strong style="color:var(--cyan);">Janela de Ouro</strong> em Ericeira amanhã 07:15 — Score 79. <span style="color:var(--hint);">Activa os alertas PRO.</span></div>
+  `;
+  notif.onclick = () => {
+    notif.style.transition = 'opacity .3s,transform .3s';
+    notif.style.opacity = '0';
+    notif.style.transform = 'translateY(-110%)';
+    setTimeout(() => notif.remove(), 300);
+    goTab(0);
+  };
+
+  document.querySelector('.phone-shell').appendChild(notif);
+
+  setTimeout(() => {
+    notif.style.transition = 'opacity .4s,transform .4s';
+    notif.style.opacity = '0';
+    notif.style.transform = 'translateY(-110%)';
+    setTimeout(() => notif.remove(), 400);
+  }, 5000);
+}
+
+// ── RELÓGIO ───────────────────────────────────────────────────────────────────
+function updateClock() {
+  const n = new Date();
+  document.getElementById('clock').textContent =
+    n.getHours().toString().padStart(2,'0') + ':' +
+    n.getMinutes().toString().padStart(2,'0');
+}
+updateClock();
+setInterval(updateClock, 30000);
+
+// ── ESTILOS TRANSIÇÃO ─────────────────────────────────────────────────────────
+document.querySelectorAll('.screen').forEach(s => {
+  s.style.transition = 'opacity .22s ease, transform .22s ease';
+});
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+window.addEventListener('load', () => {
+  setTimeout(animateScore, 400);
+  renderTecnicas(84);
+  fetchWeather();
+  setTimeout(showPushNotif, 6000);
+});
+</script>
+</body>
+</html>

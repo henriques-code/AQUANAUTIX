@@ -1,0 +1,2552 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AQUANAUTIX — Conceitos Visuais com Comunidade</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=IBM+Plex+Sans:wght@300;400;500;600&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #000814;
+    --bg2: #040f24;
+    --bg3: #071428;
+    --bg4: #0a1f3a;
+    --cyan: #00F5FF;
+    --cyan2: #00c8d4;
+    --amber: #F3C64D;
+    --amber2: #d4a83a;
+    --hint: #8AADBE;
+    --red: #FF4444;
+    --green: #00E676;
+    --pro: #F3C64D;
+    --elite: #c084fc;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: #fff;
+    font-family: 'IBM Plex Sans', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ═══════════════════════════════════════
+     HEADER GERAL
+  ═══════════════════════════════════════ */
+  .page-header {
+    text-align: center;
+    padding: 48px 24px 32px;
+    background: linear-gradient(180deg, #000d1a 0%, var(--bg) 100%);
+    border-bottom: 1px solid rgba(0,245,255,0.1);
+  }
+
+  .page-header .badge {
+    display: inline-block;
+    background: rgba(0,245,255,0.1);
+    border: 1px solid rgba(0,245,255,0.3);
+    color: var(--cyan);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 3px;
+    padding: 6px 18px;
+    border-radius: 100px;
+    margin-bottom: 20px;
+    text-transform: uppercase;
+  }
+
+  .page-header h1 {
+    font-family: 'Orbitron', sans-serif;
+    font-size: clamp(28px, 5vw, 52px);
+    font-weight: 900;
+    letter-spacing: 2px;
+    background: linear-gradient(135deg, var(--cyan) 0%, var(--amber) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 16px;
+  }
+
+  .page-header p {
+    color: var(--hint);
+    font-size: 16px;
+    max-width: 600px;
+    margin: 0 auto;
+    line-height: 1.6;
+  }
+
+  /* ═══════════════════════════════════════
+     TABS DE CONCEITOS
+  ═══════════════════════════════════════ */
+  .concepts-nav {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    padding: 32px 24px 24px;
+    flex-wrap: wrap;
+  }
+
+  .concept-tab {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.1);
+    color: var(--hint);
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    padding: 10px 24px;
+    border-radius: 100px;
+    cursor: pointer;
+    transition: all 0.3s;
+    letter-spacing: 0.5px;
+  }
+
+  .concept-tab:hover {
+    border-color: rgba(0,245,255,0.4);
+    color: var(--cyan);
+  }
+
+  .concept-tab.active {
+    background: linear-gradient(135deg, rgba(0,245,255,0.15), rgba(243,198,77,0.1));
+    border-color: var(--cyan);
+    color: var(--cyan);
+    box-shadow: 0 0 20px rgba(0,245,255,0.2);
+  }
+
+  .concept-tab .tab-num {
+    display: inline-block;
+    background: rgba(0,245,255,0.2);
+    color: var(--cyan);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    text-align: center;
+    line-height: 20px;
+    margin-right: 8px;
+  }
+
+  /* ═══════════════════════════════════════
+     SECÇÕES DE CONCEITO
+  ═══════════════════════════════════════ */
+  .concept-section { display: none; }
+  .concept-section.active { display: block; }
+
+  .concept-label {
+    text-align: center;
+    padding: 0 24px 40px;
+  }
+
+  .concept-label h2 {
+    font-family: 'Orbitron', sans-serif;
+    font-size: clamp(20px, 3vw, 32px);
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 10px;
+  }
+
+  .concept-label p {
+    color: var(--hint);
+    font-size: 15px;
+    max-width: 560px;
+    margin: 0 auto;
+    line-height: 1.6;
+  }
+
+  .concept-label .impact-tag {
+    display: inline-block;
+    background: rgba(243,198,77,0.12);
+    border: 1px solid rgba(243,198,77,0.3);
+    color: var(--amber);
+    font-size: 11px;
+    font-family: 'Share Tech Mono', monospace;
+    letter-spacing: 2px;
+    padding: 4px 14px;
+    border-radius: 100px;
+    margin-bottom: 16px;
+    text-transform: uppercase;
+  }
+
+  /* ═══════════════════════════════════════
+     PHONE FRAMES
+  ═══════════════════════════════════════ */
+  .phones-row {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    gap: 32px;
+    padding: 0 24px 80px;
+    flex-wrap: wrap;
+  }
+
+  .phone-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+  }
+
+  .phone-label {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    color: var(--hint);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+
+  .phone-label.pro { color: var(--amber); }
+  .phone-label.free { color: var(--hint); }
+  .phone-label.elite { color: var(--elite); }
+
+  .phone-frame {
+    width: 320px;
+    background: #0a0e1a;
+    border-radius: 40px;
+    border: 2px solid rgba(255,255,255,0.1);
+    box-shadow: 0 30px 80px rgba(0,0,0,0.6), 0 0 40px rgba(0,245,255,0.05), inset 0 1px 0 rgba(255,255,255,0.05);
+    overflow: hidden;
+    position: relative;
+  }
+
+  .phone-frame.glow-cyan {
+    border-color: rgba(0,245,255,0.3);
+    box-shadow: 0 30px 80px rgba(0,0,0,0.6), 0 0 40px rgba(0,245,255,0.15);
+  }
+
+  .phone-frame.glow-amber {
+    border-color: rgba(243,198,77,0.3);
+    box-shadow: 0 30px 80px rgba(0,0,0,0.6), 0 0 40px rgba(243,198,77,0.15);
+  }
+
+  .phone-frame.glow-elite {
+    border-color: rgba(192,132,252,0.4);
+    box-shadow: 0 30px 80px rgba(0,0,0,0.6), 0 0 40px rgba(192,132,252,0.2);
+  }
+
+  .phone-notch {
+    width: 100px;
+    height: 28px;
+    background: #0a0e1a;
+    margin: 0 auto;
+    border-radius: 0 0 20px 20px;
+    position: relative;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .phone-notch::before {
+    content: '';
+    width: 60px;
+    height: 8px;
+    background: #1a1f2e;
+    border-radius: 4px;
+  }
+
+  .phone-screen {
+    min-height: 620px;
+    background: var(--bg3);
+    overflow: hidden;
+    position: relative;
+  }
+
+  /* ═══════════════════════════════════════
+     STATUS BAR
+  ═══════════════════════════════════════ */
+  .status-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 16px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    color: rgba(255,255,255,0.6);
+    background: rgba(0,0,0,0.3);
+  }
+
+  /* ═══════════════════════════════════════
+     CONCEITO 1 — FEED DA COMUNIDADE
+  ═══════════════════════════════════════ */
+
+  /* Stories */
+  .stories-bar {
+    display: flex;
+    gap: 12px;
+    padding: 12px 14px;
+    overflow-x: auto;
+    background: rgba(0,0,0,0.4);
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    scrollbar-width: none;
+  }
+
+  .stories-bar::-webkit-scrollbar { display: none; }
+
+  .story-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    flex-shrink: 0;
+    cursor: pointer;
+  }
+
+  .story-avatar {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    position: relative;
+    background: var(--bg4);
+    overflow: hidden;
+  }
+
+  .story-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .story-avatar::after {
+    content: '';
+    position: absolute;
+    inset: -3px;
+    border-radius: 50%;
+    border: 2px solid transparent;
+    background: linear-gradient(135deg, var(--cyan), var(--amber)) border-box;
+    -webkit-mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: destination-out;
+    mask-composite: exclude;
+    z-index: 1;
+  }
+
+  .story-avatar.seen::after {
+    background: rgba(255,255,255,0.15) border-box;
+  }
+
+  .story-name {
+    font-size: 9px;
+    color: var(--hint);
+    font-family: 'IBM Plex Sans', sans-serif;
+    max-width: 52px;
+    text-align: center;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* Feed Post */
+  .feed-post {
+    background: var(--bg3);
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+  }
+
+  .post-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 14px 10px;
+  }
+
+  .post-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--bg4);
+    border: 1.5px solid rgba(0,245,255,0.3);
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+
+  .post-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .post-user-info { flex: 1; }
+
+  .post-username {
+    font-size: 12px;
+    font-weight: 600;
+    color: #fff;
+    font-family: 'IBM Plex Sans', sans-serif;
+  }
+
+  .post-meta {
+    font-size: 10px;
+    color: var(--hint);
+    font-family: 'Share Tech Mono', monospace;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 2px;
+  }
+
+  .post-meta .dot { color: rgba(255,255,255,0.2); }
+
+  .post-badge-pro {
+    background: linear-gradient(135deg, var(--amber), #e8a820);
+    color: #000;
+    font-size: 8px;
+    font-weight: 700;
+    font-family: 'Orbitron', sans-serif;
+    padding: 2px 7px;
+    border-radius: 3px;
+    letter-spacing: 1px;
+  }
+
+  .post-badge-elite {
+    background: linear-gradient(135deg, var(--elite), #a855f7);
+    color: #fff;
+    font-size: 8px;
+    font-weight: 700;
+    font-family: 'Orbitron', sans-serif;
+    padding: 2px 7px;
+    border-radius: 3px;
+    letter-spacing: 1px;
+  }
+
+  .post-image {
+    width: 100%;
+    aspect-ratio: 4/3;
+    object-fit: cover;
+    display: block;
+    position: relative;
+  }
+
+  .post-image-wrap {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .post-image-wrap img {
+    width: 100%;
+    aspect-ratio: 4/3;
+    object-fit: cover;
+    display: block;
+  }
+
+  .post-image-overlay {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: linear-gradient(0deg, rgba(0,8,20,0.95) 0%, transparent 100%);
+    padding: 24px 14px 10px;
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+  }
+
+  .fish-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: rgba(0,245,255,0.15);
+    border: 1px solid rgba(0,245,255,0.4);
+    border-radius: 6px;
+    padding: 4px 10px;
+    font-size: 11px;
+    color: var(--cyan);
+    font-family: 'Share Tech Mono', monospace;
+  }
+
+  .fish-tag .fish-icon { font-size: 13px; }
+
+  .weight-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: rgba(243,198,77,0.15);
+    border: 1px solid rgba(243,198,77,0.4);
+    border-radius: 6px;
+    padding: 4px 10px;
+    font-size: 11px;
+    color: var(--amber);
+    font-family: 'Share Tech Mono', monospace;
+  }
+
+  .legal-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: rgba(0,230,118,0.15);
+    border: 1px solid rgba(0,230,118,0.4);
+    border-radius: 6px;
+    padding: 4px 10px;
+    font-size: 11px;
+    color: var(--green);
+    font-family: 'Share Tech Mono', monospace;
+  }
+
+  .post-actions {
+    display: flex;
+    align-items: center;
+    padding: 10px 14px 6px;
+    gap: 16px;
+  }
+
+  .action-btn {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 12px;
+    color: var(--hint);
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-family: 'IBM Plex Sans', sans-serif;
+    transition: color 0.2s;
+  }
+
+  .action-btn:hover { color: var(--cyan); }
+  .action-btn.liked { color: var(--red); }
+  .action-btn .icon { font-size: 15px; }
+
+  .share-btn {
+    margin-left: auto;
+    background: rgba(0,245,255,0.08);
+    border: 1px solid rgba(0,245,255,0.2);
+    color: var(--cyan);
+    font-size: 10px;
+    font-family: 'Share Tech Mono', monospace;
+    padding: 5px 12px;
+    border-radius: 100px;
+    cursor: pointer;
+    letter-spacing: 1px;
+  }
+
+  .post-caption {
+    padding: 4px 14px 14px;
+    font-size: 12px;
+    color: rgba(255,255,255,0.8);
+    line-height: 1.5;
+  }
+
+  .post-caption .username-mention {
+    color: var(--cyan);
+    font-weight: 600;
+  }
+
+  .post-caption .spot-tag {
+    color: var(--amber);
+  }
+
+  /* Score card no post */
+  .oracle-mini {
+    margin: 0 14px 12px;
+    background: rgba(0,245,255,0.05);
+    border: 1px solid rgba(0,245,255,0.15);
+    border-radius: 10px;
+    padding: 10px 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .oracle-mini-label {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 9px;
+    color: var(--hint);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  .oracle-mini-score {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 22px;
+    font-weight: 900;
+    color: var(--cyan);
+  }
+
+  .oracle-mini-score span {
+    font-size: 11px;
+    color: var(--hint);
+    font-family: 'IBM Plex Sans', sans-serif;
+  }
+
+  .oracle-mini-info {
+    font-size: 10px;
+    color: rgba(255,255,255,0.5);
+    font-family: 'Share Tech Mono', monospace;
+  }
+
+  /* Ghost zone */
+  .ghost-zone {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 10px;
+    color: var(--hint);
+    font-family: 'Share Tech Mono', monospace;
+  }
+
+  /* Blur bloqueado */
+  .locked-post {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .locked-post .post-image-wrap img {
+    filter: blur(18px);
+    transform: scale(1.05);
+  }
+
+  .locked-overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0,8,20,0.5);
+    gap: 10px;
+    padding: 20px;
+  }
+
+  .locked-icon {
+    font-size: 28px;
+    filter: drop-shadow(0 0 10px rgba(243,198,77,0.5));
+  }
+
+  .locked-text {
+    font-size: 13px;
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 700;
+    color: var(--amber);
+    text-align: center;
+    line-height: 1.4;
+  }
+
+  .unlock-btn {
+    background: linear-gradient(135deg, var(--amber), #e8a820);
+    color: #000;
+    border: none;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 8px 20px;
+    border-radius: 100px;
+    cursor: pointer;
+    letter-spacing: 1px;
+    box-shadow: 0 4px 20px rgba(243,198,77,0.4);
+  }
+
+  /* Bottom nav */
+  .bottom-nav {
+    display: flex;
+    background: rgba(4,15,36,0.98);
+    border-top: 1px solid rgba(255,255,255,0.06);
+    padding: 10px 0 14px;
+  }
+
+  .nav-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    font-size: 9px;
+    color: var(--hint);
+    font-family: 'IBM Plex Sans', sans-serif;
+    cursor: pointer;
+    transition: color 0.2s;
+  }
+
+  .nav-item.active { color: var(--cyan); }
+  .nav-item .nav-icon { font-size: 18px; }
+  .nav-item.active .nav-icon { filter: drop-shadow(0 0 6px var(--cyan)); }
+
+  .nav-dot {
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: var(--red);
+    position: absolute;
+    top: 0;
+    right: -2px;
+  }
+
+  .nav-icon-wrap {
+    position: relative;
+    display: inline-block;
+  }
+
+  /* ═══════════════════════════════════════
+     CONCEITO 2 — TROPHY WALL
+  ═══════════════════════════════════════ */
+
+  .screen-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    background: rgba(0,0,0,0.3);
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+  }
+
+  .screen-title {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: 1px;
+  }
+
+  .screen-subtitle {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 9px;
+    color: var(--hint);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-top: 2px;
+  }
+
+  .header-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .icon-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.06);
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 14px;
+  }
+
+  /* Tabs */
+  .screen-tabs {
+    display: flex;
+    background: rgba(0,0,0,0.2);
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+  }
+
+  .stab {
+    flex: 1;
+    text-align: center;
+    padding: 10px 4px;
+    font-size: 10px;
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-weight: 500;
+    color: var(--hint);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s;
+    letter-spacing: 0.5px;
+  }
+
+  .stab.active {
+    color: var(--cyan);
+    border-bottom-color: var(--cyan);
+  }
+
+  /* Record card principal */
+  .record-hero {
+    position: relative;
+    margin: 14px;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  }
+
+  .record-hero img {
+    width: 100%;
+    aspect-ratio: 16/9;
+    object-fit: cover;
+    display: block;
+  }
+
+  .record-hero-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(0,0,0,0.1) 0%, rgba(0,8,20,0.9) 100%);
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    padding: 16px;
+  }
+
+  .record-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: linear-gradient(135deg, var(--amber), #e8a820);
+    color: #000;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 9px;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 5px;
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+    width: fit-content;
+  }
+
+  .record-fish-name {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 18px;
+    font-weight: 900;
+    color: #fff;
+    line-height: 1.1;
+  }
+
+  .record-stats-row {
+    display: flex;
+    gap: 12px;
+    margin-top: 8px;
+  }
+
+  .record-stat {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+  }
+
+  .record-stat-val {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 16px;
+    color: var(--cyan);
+    font-weight: 700;
+  }
+
+  .record-stat-lbl {
+    font-size: 9px;
+    color: var(--hint);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  /* Species grid */
+  .species-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    padding: 0 14px 14px;
+  }
+
+  .species-card {
+    background: var(--bg4);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 12px;
+    overflow: hidden;
+    position: relative;
+    cursor: pointer;
+    transition: border-color 0.2s;
+  }
+
+  .species-card:hover { border-color: rgba(0,245,255,0.3); }
+
+  .species-card-img {
+    width: 100%;
+    aspect-ratio: 3/2;
+    object-fit: cover;
+    display: block;
+  }
+
+  .species-card-info {
+    padding: 8px 10px;
+  }
+
+  .species-card-name {
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 11px;
+    font-weight: 600;
+    color: #fff;
+  }
+
+  .species-card-record {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    color: var(--cyan);
+    margin-top: 2px;
+  }
+
+  .species-card-record.no-record {
+    color: var(--hint);
+  }
+
+  .species-card-locked {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: rgba(243,198,77,0.9);
+    border-radius: 50%;
+    width: 22px;
+    height: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+  }
+
+  /* Leaderboard */
+  .leaderboard-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+  }
+
+  .lb-rank {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 14px;
+    font-weight: 900;
+    width: 28px;
+    text-align: center;
+    flex-shrink: 0;
+  }
+
+  .lb-rank.gold { color: var(--amber); }
+  .lb-rank.silver { color: #b0b8c8; }
+  .lb-rank.bronze { color: #cd7f32; }
+  .lb-rank.other { color: var(--hint); }
+
+  .lb-avatar {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    overflow: hidden;
+    flex-shrink: 0;
+    border: 1.5px solid rgba(255,255,255,0.1);
+  }
+
+  .lb-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .lb-info { flex: 1; }
+
+  .lb-name {
+    font-size: 12px;
+    font-weight: 600;
+    color: #fff;
+    font-family: 'IBM Plex Sans', sans-serif;
+  }
+
+  .lb-detail {
+    font-size: 10px;
+    color: var(--hint);
+    font-family: 'Share Tech Mono', monospace;
+    margin-top: 2px;
+  }
+
+  .lb-score {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 13px;
+    color: var(--cyan);
+    font-weight: 700;
+  }
+
+  /* Blurred leaderboard entries */
+  .lb-blurred {
+    filter: blur(5px);
+    pointer-events: none;
+    user-select: none;
+  }
+
+  .lb-locked-cta {
+    text-align: center;
+    padding: 16px;
+    background: rgba(0,8,20,0.6);
+    border: 1px solid rgba(243,198,77,0.2);
+    border-radius: 12px;
+    margin: 8px 14px;
+    position: relative;
+  }
+
+  .lb-locked-cta p {
+    font-size: 11px;
+    color: var(--hint);
+    margin-bottom: 10px;
+    line-height: 1.4;
+  }
+
+  .lb-locked-cta p strong {
+    color: var(--amber);
+  }
+
+  /* ═══════════════════════════════════════
+     CONCEITO 3 — SPOTS PREMIUM VISUAL
+  ═══════════════════════════════════════ */
+
+  .map-bg {
+    width: 100%;
+    aspect-ratio: 1;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .map-bg img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    filter: brightness(0.6) saturate(0.7);
+  }
+
+  .map-overlay-ui {
+    position: absolute;
+    inset: 0;
+  }
+
+  .spot-pin {
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    cursor: pointer;
+  }
+
+  .spot-pin-dot {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--bg3);
+    border: 2px solid var(--cyan);
+    overflow: hidden;
+    box-shadow: 0 0 15px rgba(0,245,255,0.4);
+  }
+
+  .spot-pin-dot img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .spot-pin-line {
+    width: 2px;
+    height: 12px;
+    background: var(--cyan);
+  }
+
+  .spot-pin-label {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 8px;
+    color: var(--cyan);
+    background: rgba(0,8,20,0.85);
+    padding: 2px 6px;
+    border-radius: 4px;
+    border: 1px solid rgba(0,245,255,0.3);
+    white-space: nowrap;
+  }
+
+  .spot-pin.locked .spot-pin-dot {
+    filter: blur(4px);
+    border-color: var(--amber);
+    box-shadow: 0 0 15px rgba(243,198,77,0.4);
+  }
+
+  .spot-pin.locked .spot-pin-line {
+    background: var(--amber);
+  }
+
+  .spot-pin.locked .spot-pin-label {
+    color: var(--amber);
+    border-color: rgba(243,198,77,0.3);
+  }
+
+  .spot-lock-icon {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 14px;
+    z-index: 5;
+  }
+
+  /* Spot detail card */
+  .spot-detail-card {
+    position: absolute;
+    bottom: 10px;
+    left: 10px;
+    right: 10px;
+    background: rgba(7,20,40,0.97);
+    border: 1px solid rgba(0,245,255,0.25);
+    border-radius: 16px;
+    padding: 14px;
+    backdrop-filter: blur(20px);
+  }
+
+  .spot-card-row {
+    display: flex;
+    gap: 12px;
+  }
+
+  .spot-card-photo {
+    width: 72px;
+    height: 72px;
+    border-radius: 10px;
+    overflow: hidden;
+    flex-shrink: 0;
+    border: 1px solid rgba(0,245,255,0.2);
+  }
+
+  .spot-card-photo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .spot-card-info {
+    flex: 1;
+  }
+
+  .spot-card-name {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    color: #fff;
+  }
+
+  .spot-card-location {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 9px;
+    color: var(--hint);
+    margin-top: 3px;
+    letter-spacing: 1px;
+  }
+
+  .spot-card-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin-top: 8px;
+  }
+
+  .spot-tag-chip {
+    font-size: 9px;
+    font-family: 'Share Tech Mono', monospace;
+    background: rgba(0,245,255,0.08);
+    border: 1px solid rgba(0,245,255,0.2);
+    color: var(--cyan);
+    padding: 3px 8px;
+    border-radius: 4px;
+  }
+
+  .spot-tag-chip.amber {
+    background: rgba(243,198,77,0.08);
+    border-color: rgba(243,198,77,0.2);
+    color: var(--amber);
+  }
+
+  .spot-card-stats {
+    display: flex;
+    gap: 14px;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid rgba(255,255,255,0.06);
+  }
+
+  .spot-stat {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+  }
+
+  .spot-stat-val {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--cyan);
+  }
+
+  .spot-stat-lbl {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 8px;
+    color: var(--hint);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  .spot-action-btn {
+    width: 100%;
+    background: linear-gradient(135deg, var(--cyan), var(--cyan2));
+    color: #000;
+    border: none;
+    border-radius: 10px;
+    padding: 10px;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    cursor: pointer;
+    margin-top: 10px;
+    box-shadow: 0 4px 20px rgba(0,245,255,0.3);
+  }
+
+  /* Locked spot card */
+  .spot-detail-card.locked {
+    border-color: rgba(243,198,77,0.25);
+  }
+
+  .spot-locked-blur {
+    filter: blur(6px);
+    pointer-events: none;
+    user-select: none;
+  }
+
+  .spot-locked-overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    border-radius: 16px;
+    background: rgba(0,8,20,0.4);
+    padding: 14px;
+  }
+
+  .spot-locked-overlay .lock-icon { font-size: 24px; }
+
+  .spot-locked-overlay p {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--amber);
+    text-align: center;
+    line-height: 1.4;
+  }
+
+  .spot-locked-overlay .unlock-btn {
+    padding: 8px 18px;
+    font-size: 9px;
+  }
+
+  /* ═══════════════════════════════════════
+     COMPARISON TABLE
+  ═══════════════════════════════════════ */
+  .comparison-section {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 0 24px 80px;
+  }
+
+  .comparison-title {
+    text-align: center;
+    font-family: 'Orbitron', sans-serif;
+    font-size: clamp(20px, 3vw, 28px);
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 8px;
+  }
+
+  .comparison-sub {
+    text-align: center;
+    color: var(--hint);
+    font-size: 14px;
+    margin-bottom: 40px;
+  }
+
+  .compare-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 16px;
+  }
+
+  .compare-card {
+    background: var(--bg3);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 20px;
+    padding: 28px 22px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .compare-card.pro-card {
+    border-color: rgba(243,198,77,0.35);
+    background: linear-gradient(180deg, rgba(243,198,77,0.06) 0%, var(--bg3) 60%);
+  }
+
+  .compare-card.pro-card::before {
+    content: 'MAIS POPULAR';
+    position: absolute;
+    top: 14px;
+    right: -22px;
+    background: linear-gradient(135deg, var(--amber), #e8a820);
+    color: #000;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 8px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    padding: 4px 32px;
+    transform: rotate(35deg);
+  }
+
+  .compare-tier {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    margin-bottom: 6px;
+    text-transform: uppercase;
+  }
+
+  .compare-tier.free { color: var(--hint); }
+  .compare-tier.pro { color: var(--amber); }
+  .compare-tier.elite { color: var(--elite); }
+
+  .compare-price {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 28px;
+    font-weight: 900;
+    color: #fff;
+    margin-bottom: 4px;
+  }
+
+  .compare-price sub {
+    font-size: 12px;
+    font-weight: 400;
+    color: var(--hint);
+    font-family: 'IBM Plex Sans', sans-serif;
+  }
+
+  .compare-price .price-period {
+    font-size: 12px;
+    font-family: 'IBM Plex Sans', sans-serif;
+    color: var(--hint);
+  }
+
+  .compare-features {
+    list-style: none;
+    margin-top: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .compare-features li {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    font-size: 12px;
+    color: rgba(255,255,255,0.8);
+    font-family: 'IBM Plex Sans', sans-serif;
+    line-height: 1.4;
+  }
+
+  .compare-features li .check { color: var(--green); font-size: 13px; flex-shrink: 0; margin-top: 1px; }
+  .compare-features li .cross { color: rgba(255,255,255,0.2); font-size: 13px; flex-shrink: 0; margin-top: 1px; }
+
+  .compare-cta {
+    width: 100%;
+    margin-top: 24px;
+    padding: 12px;
+    border-radius: 10px;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    cursor: pointer;
+    border: none;
+    transition: opacity 0.2s;
+  }
+
+  .compare-cta:hover { opacity: 0.85; }
+
+  .compare-cta.free-cta {
+    background: rgba(255,255,255,0.07);
+    border: 1px solid rgba(255,255,255,0.15);
+    color: var(--hint);
+  }
+
+  .compare-cta.pro-cta {
+    background: linear-gradient(135deg, var(--amber), #d4a83a);
+    color: #000;
+    box-shadow: 0 6px 24px rgba(243,198,77,0.35);
+  }
+
+  .compare-cta.elite-cta {
+    background: linear-gradient(135deg, var(--elite), #a855f7);
+    color: #fff;
+    box-shadow: 0 6px 24px rgba(192,132,252,0.3);
+  }
+
+  /* ═══════════════════════════════════════
+     INSIGHT CARDS
+  ═══════════════════════════════════════ */
+  .insights-row {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    flex-wrap: wrap;
+    padding: 0 24px 60px;
+    max-width: 900px;
+    margin: 0 auto;
+  }
+
+  .insight-card {
+    flex: 1;
+    min-width: 220px;
+    background: var(--bg3);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 16px;
+    padding: 24px 20px;
+  }
+
+  .insight-icon { font-size: 28px; margin-bottom: 12px; }
+
+  .insight-title {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 8px;
+  }
+
+  .insight-desc {
+    font-size: 13px;
+    color: var(--hint);
+    line-height: 1.6;
+  }
+
+  .insight-metric {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 22px;
+    color: var(--cyan);
+    font-weight: 700;
+    margin-top: 10px;
+  }
+
+  /* ═══════════════════════════════════════
+     SECTION DIVIDER
+  ═══════════════════════════════════════ */
+  .section-divider {
+    text-align: center;
+    padding: 24px 24px 40px;
+    max-width: 700px;
+    margin: 0 auto;
+  }
+
+  .section-divider h3 {
+    font-family: 'Orbitron', sans-serif;
+    font-size: clamp(18px, 2.5vw, 26px);
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 10px;
+  }
+
+  .section-divider p {
+    color: var(--hint);
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
+  /* Scrollable phone screen */
+  .phone-scroll {
+    max-height: 620px;
+    overflow-y: auto;
+    scrollbar-width: none;
+  }
+
+  .phone-scroll::-webkit-scrollbar { display: none; }
+
+  /* ═══════════════════════════════════════
+     VISION SCANNER CONCEPT
+  ═══════════════════════════════════════ */
+  .scan-overlay {
+    position: relative;
+    background: #000;
+    aspect-ratio: 3/4;
+  }
+
+  .scan-overlay > img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0.8;
+  }
+
+  .scan-line {
+    position: absolute;
+    left: 20px;
+    right: 20px;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--cyan) 30%, var(--cyan) 70%, transparent);
+    box-shadow: 0 0 12px var(--cyan), 0 0 4px var(--cyan);
+    top: 35%;
+    animation: scanAnim 2s ease-in-out infinite;
+  }
+
+  @keyframes scanAnim {
+    0% { top: 15%; opacity: 0.5; }
+    50% { top: 70%; opacity: 1; }
+    100% { top: 15%; opacity: 0.5; }
+  }
+
+  .scan-corners {
+    position: absolute;
+    inset: 20px;
+    border: 1px solid rgba(0,245,255,0.2);
+    border-radius: 8px;
+  }
+
+  .scan-corners::before,
+  .scan-corners::after {
+    content: '';
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    border-color: var(--cyan);
+    border-style: solid;
+  }
+
+  .scan-corners::before {
+    top: -1px;
+    left: -1px;
+    border-width: 3px 0 0 3px;
+    border-radius: 4px 0 0 0;
+  }
+
+  .scan-corners::after {
+    bottom: -1px;
+    right: -1px;
+    border-width: 0 3px 3px 0;
+    border-radius: 0 0 4px 0;
+  }
+
+  .scan-result-overlay {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: linear-gradient(0deg, rgba(0,8,20,0.98) 0%, rgba(0,8,20,0.7) 60%, transparent 100%);
+    padding: 40px 16px 16px;
+  }
+
+  .scan-species-name {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 20px;
+    font-weight: 900;
+    color: #fff;
+  }
+
+  .scan-confidence {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    color: var(--cyan);
+    margin-top: 2px;
+  }
+
+  .scan-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 10px;
+  }
+
+  .scan-chip {
+    background: rgba(0,245,255,0.1);
+    border: 1px solid rgba(0,245,255,0.3);
+    color: var(--cyan);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    padding: 4px 10px;
+    border-radius: 5px;
+  }
+
+  .scan-chip.legal-ok {
+    background: rgba(0,230,118,0.1);
+    border-color: rgba(0,230,118,0.3);
+    color: var(--green);
+  }
+
+  .scan-chip.weight {
+    background: rgba(243,198,77,0.1);
+    border-color: rgba(243,198,77,0.3);
+    color: var(--amber);
+  }
+
+  .scan-btn-row {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+  }
+
+  .scan-save-btn {
+    flex: 1;
+    background: linear-gradient(135deg, var(--cyan), var(--cyan2));
+    color: #000;
+    border: none;
+    border-radius: 10px;
+    padding: 10px;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    cursor: pointer;
+  }
+
+  .scan-share-btn {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.15);
+    color: #fff;
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-size: 16px;
+    cursor: pointer;
+  }
+
+  /* Confidence counter animation */
+  .confidence-bar {
+    height: 3px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 2px;
+    margin-top: 8px;
+    overflow: hidden;
+  }
+
+  .confidence-fill {
+    height: 100%;
+    width: 96%;
+    background: linear-gradient(90deg, var(--cyan2), var(--cyan));
+    border-radius: 2px;
+    box-shadow: 0 0 8px var(--cyan);
+  }
+
+  /* ═══════════════════════════════════════
+     FOOTER CTA
+  ═══════════════════════════════════════ */
+  .footer-cta {
+    background: linear-gradient(180deg, var(--bg) 0%, #000d1a 100%);
+    border-top: 1px solid rgba(0,245,255,0.1);
+    padding: 60px 24px 80px;
+    text-align: center;
+  }
+
+  .footer-cta h2 {
+    font-family: 'Orbitron', sans-serif;
+    font-size: clamp(24px, 4vw, 40px);
+    font-weight: 900;
+    background: linear-gradient(135deg, var(--cyan) 0%, var(--amber) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 16px;
+  }
+
+  .footer-cta p {
+    color: var(--hint);
+    font-size: 15px;
+    max-width: 500px;
+    margin: 0 auto 32px;
+    line-height: 1.6;
+  }
+
+  .footer-btns {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  .footer-btn-primary {
+    background: linear-gradient(135deg, var(--amber), #e8a820);
+    color: #000;
+    border: none;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 16px 36px;
+    border-radius: 100px;
+    cursor: pointer;
+    letter-spacing: 1px;
+    box-shadow: 0 8px 32px rgba(243,198,77,0.35);
+    transition: transform 0.2s;
+  }
+
+  .footer-btn-primary:hover { transform: translateY(-2px); }
+
+  .footer-btn-secondary {
+    background: rgba(0,245,255,0.1);
+    border: 1px solid rgba(0,245,255,0.3);
+    color: var(--cyan);
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 14px;
+    padding: 16px 36px;
+    border-radius: 100px;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+
+  .footer-btn-secondary:hover { background: rgba(0,245,255,0.15); }
+
+  /* ═══════════════════════════════════════
+     UTILITIES
+  ═══════════════════════════════════════ */
+  .section-gap { height: 60px; }
+
+  @media (max-width: 768px) {
+    .phones-row { gap: 20px; }
+    .phone-frame { width: 280px; }
+    .compare-grid { grid-template-columns: 1fr; max-width: 360px; margin: 0 auto; }
+  }
+
+  @media (max-width: 500px) {
+    .phone-frame { width: 100%; max-width: 320px; }
+    .phones-row { flex-direction: column; align-items: center; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════
+     HEADER
+═══════════════════════════════════════ -->
+<header class="page-header">
+  <div class="badge">AQUANAUTIX · CONCEITOS VISUAIS 2026</div>
+  <h1>AQUANAUTIX<br>REDESIGN VISUAL</h1>
+  <p>3 conceitos para transformar a app num produto que os pescadores <strong>querem pagar</strong> — fotos reais, comunidade e FOMO visual.</p>
+</header>
+
+<!-- TABS -->
+<nav class="concepts-nav">
+  <button class="concept-tab active" onclick="showConcept(1, this)">
+    <span class="tab-num">1</span> Feed da Comunidade
+  </button>
+  <button class="concept-tab" onclick="showConcept(2, this)">
+    <span class="tab-num">2</span> Trophy Wall + Leaderboard
+  </button>
+  <button class="concept-tab" onclick="showConcept(3, this)">
+    <span class="tab-num">3</span> Vision + Spots Premium
+  </button>
+</nav>
+
+<!-- ═══════════════════════════════════════
+     CONCEITO 1 — FEED COMUNIDADE
+═══════════════════════════════════════ -->
+<section class="concept-section active" id="concept-1">
+  <div class="concept-label">
+    <div class="impact-tag">🔥 Maior retenção + viral loop</div>
+    <h2>Feed da Comunidade GHOST</h2>
+    <p>Instagram de pesca com anonimato total. Cada captura partilhada é um anúncio orgânico. PRO vê raio real, FREE só vê zona. Cria FOMO imediato.</p>
+  </div>
+
+  <div class="phones-row">
+
+    <!-- PHONE FREE -->
+    <div class="phone-wrapper">
+      <span class="phone-label free">● PLANO FREE</span>
+      <div class="phone-frame">
+        <div class="phone-notch"></div>
+        <div class="phone-screen phone-scroll">
+          <div class="status-bar">
+            <span>09:41</span>
+            <span>◉ 87%</span>
+          </div>
+
+          <!-- Stories -->
+          <div class="stories-bar">
+            <div class="story-item">
+              <div class="story-avatar">
+                <img src="https://images.unsplash.com/photo-1544979590-04bcee11af7d?w=80&q=80&auto=format" alt="story" loading="lazy">
+              </div>
+              <span class="story-name">Nuno_S</span>
+            </div>
+            <div class="story-item">
+              <div class="story-avatar seen">
+                <img src="https://images.unsplash.com/photo-1518568814500-bf0f8d125f46?w=80&q=80&auto=format" alt="story" loading="lazy">
+              </div>
+              <span class="story-name">Miguel_Rib</span>
+            </div>
+            <div class="story-item">
+              <div class="story-avatar">
+                <img src="https://images.unsplash.com/photo-1504700610630-ac6aba3536d3?w=80&q=80&auto=format" alt="story" loading="lazy">
+              </div>
+              <span class="story-name">PescaAlg</span>
+            </div>
+            <div class="story-item">
+              <div class="story-avatar">
+                <img src="https://images.unsplash.com/photo-1499728603263-13726abce5fd?w=80&q=80&auto=format" alt="story" loading="lazy">
+              </div>
+              <span class="story-name">Carlos_V</span>
+            </div>
+          </div>
+
+          <!-- Post 1 — visível -->
+          <div class="feed-post">
+            <div class="post-header">
+              <div class="post-avatar">
+                <img src="https://i.pravatar.cc/80?img=11" alt="avatar" loading="lazy">
+              </div>
+              <div class="post-user-info">
+                <div style="display:flex;align-items:center;gap:6px">
+                  <span class="post-username">Nuno_Sesimbra</span>
+                  <span class="post-badge-pro">PRO</span>
+                </div>
+                <div class="post-meta">
+                  <span class="ghost-zone">👻 Zona de Sesimbra</span>
+                  <span class="dot">·</span>
+                  <span>há 23 min</span>
+                </div>
+              </div>
+            </div>
+            <div class="post-image-wrap">
+              <img src="https://images.unsplash.com/photo-1544979590-04bcee11af7d?w=400&q=80&auto=format" alt="robalo capturado" loading="lazy">
+              <div class="post-image-overlay">
+                <span class="fish-tag"><span class="fish-icon">🐟</span>ROBALO</span>
+                <span class="weight-tag">⚖️ 2.8 kg</span>
+                <span class="legal-tag">✅ PT Legal</span>
+              </div>
+            </div>
+            <div class="oracle-mini">
+              <div>
+                <div class="oracle-mini-label">Score Oráculo</div>
+                <div class="oracle-mini-info">Janela de Ouro activa</div>
+              </div>
+              <div style="text-align:right">
+                <div class="oracle-mini-score">82<span>/100</span></div>
+              </div>
+            </div>
+            <div class="post-actions">
+              <button class="action-btn liked"><span class="icon">❤️</span> 47</button>
+              <button class="action-btn"><span class="icon">💬</span> 12</button>
+              <button class="share-btn">PARTILHAR</button>
+            </div>
+            <div class="post-caption">
+              <span class="username-mention">@Nuno_Sesimbra</span> Manhã incrível em <span class="spot-tag">#Sesimbra</span> — robalo de 2.8kg no surfcasting! Score 82 e a maré a subir. Isco: minhoca 🪱
+            </div>
+          </div>
+
+          <!-- Post 2 — BLOQUEADO (FREE) -->
+          <div class="feed-post locked-post">
+            <div class="post-header">
+              <div class="post-avatar" style="background: var(--bg4);">
+                <img src="https://i.pravatar.cc/80?img=32" alt="avatar" loading="lazy">
+              </div>
+              <div class="post-user-info">
+                <div style="display:flex;align-items:center;gap:6px">
+                  <span class="post-username">Pedro_Algarve</span>
+                  <span class="post-badge-elite">ELITE</span>
+                </div>
+                <div class="post-meta">
+                  <span>🔒 Spot exclusivo ELITE</span>
+                  <span class="dot">·</span>
+                  <span>há 1h</span>
+                </div>
+              </div>
+            </div>
+            <div class="post-image-wrap" style="position:relative">
+              <img src="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&q=80&auto=format" alt="captura" loading="lazy" style="filter:blur(12px);transform:scale(1.05)">
+              <div class="locked-overlay">
+                <div class="locked-icon">🔒</div>
+                <div class="locked-text">CAPTURA ELITE<br>BLOQUEADA</div>
+                <button class="unlock-btn">VER COM PRO →</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Bottom nav -->
+          <div class="bottom-nav">
+            <div class="nav-item"><span class="nav-icon">🔮</span>Oráculo</div>
+            <div class="nav-item"><span class="nav-icon">🗺️</span>Mapa</div>
+            <div class="nav-item active">
+              <span class="nav-icon-wrap">
+                <span class="nav-icon">👥</span>
+                <span class="nav-dot"></span>
+              </span>
+              Comunidade
+            </div>
+            <div class="nav-item"><span class="nav-icon">📋</span>Logbook</div>
+            <div class="nav-item"><span class="nav-icon">👤</span>Perfil</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PHONE PRO -->
+    <div class="phone-wrapper">
+      <span class="phone-label pro">★ PLANO PRO — €9.99/mês</span>
+      <div class="phone-frame glow-amber">
+        <div class="phone-notch"></div>
+        <div class="phone-screen phone-scroll">
+          <div class="status-bar">
+            <span>09:41</span>
+            <span>◉ 87%</span>
+          </div>
+
+          <div class="stories-bar">
+            <div class="story-item">
+              <div class="story-avatar">
+                <img src="https://images.unsplash.com/photo-1544979590-04bcee11af7d?w=80&q=80&auto=format" alt="" loading="lazy">
+              </div>
+              <span class="story-name">Nuno_S</span>
+            </div>
+            <div class="story-item">
+              <div class="story-avatar">
+                <img src="https://images.unsplash.com/photo-1518568814500-bf0f8d125f46?w=80&q=80&auto=format" alt="" loading="lazy">
+              </div>
+              <span class="story-name">Miguel_R</span>
+            </div>
+            <div class="story-item">
+              <div class="story-avatar">
+                <img src="https://images.unsplash.com/photo-1499728603263-13726abce5fd?w=80&q=80&auto=format" alt="" loading="lazy">
+              </div>
+              <span class="story-name">Carlos_V</span>
+            </div>
+            <div class="story-item">
+              <div class="story-avatar">
+                <img src="https://images.unsplash.com/photo-1504700610630-ac6aba3536d3?w=80&q=80&auto=format" alt="" loading="lazy">
+              </div>
+              <span class="story-name">PescaAlg</span>
+            </div>
+          </div>
+
+          <!-- Post 1 -->
+          <div class="feed-post">
+            <div class="post-header">
+              <div class="post-avatar">
+                <img src="https://i.pravatar.cc/80?img=11" alt="" loading="lazy">
+              </div>
+              <div class="post-user-info">
+                <div style="display:flex;align-items:center;gap:6px">
+                  <span class="post-username">Nuno_Sesimbra</span>
+                  <span class="post-badge-pro">PRO</span>
+                </div>
+                <div class="post-meta">
+                  <span>📍 ~2.1km de si</span>
+                  <span class="dot">·</span>
+                  <span>há 23 min</span>
+                </div>
+              </div>
+            </div>
+            <div class="post-image-wrap">
+              <img src="https://images.unsplash.com/photo-1544979590-04bcee11af7d?w=400&q=80&auto=format" alt="" loading="lazy">
+              <div class="post-image-overlay">
+                <span class="fish-tag"><span class="fish-icon">🐟</span>ROBALO</span>
+                <span class="weight-tag">⚖️ 2.8 kg</span>
+                <span class="legal-tag">✅ PT Legal</span>
+              </div>
+            </div>
+            <div class="oracle-mini">
+              <div>
+                <div class="oracle-mini-label">Score Oráculo · Sesimbra</div>
+                <div class="oracle-mini-info">Maré + Solunar alinhados</div>
+              </div>
+              <div style="text-align:right">
+                <div class="oracle-mini-score">82<span>/100</span></div>
+              </div>
+            </div>
+            <div class="post-actions">
+              <button class="action-btn liked"><span class="icon">❤️</span> 47</button>
+              <button class="action-btn"><span class="icon">💬</span> 12</button>
+              <button class="share-btn">PARTILHAR</button>
+            </div>
+            <div class="post-caption">
+              <span class="username-mention">@Nuno_Sesimbra</span> Robalo de 2.8kg! Score 82 — Janela de Ouro às 07:15. Isco: minhoca 🪱 <span class="spot-tag">#Sesimbra #Robalo #Surfcasting</span>
+            </div>
+          </div>
+
+          <!-- Post 2 ELITE visível para PRO (com aviso) -->
+          <div class="feed-post">
+            <div class="post-header">
+              <div class="post-avatar">
+                <img src="https://i.pravatar.cc/80?img=32" alt="" loading="lazy">
+              </div>
+              <div class="post-user-info">
+                <div style="display:flex;align-items:center;gap:6px">
+                  <span class="post-username">Pedro_Algarve</span>
+                  <span class="post-badge-elite">ELITE</span>
+                </div>
+                <div class="post-meta">
+                  <span>📍 ~8.4km de si</span>
+                  <span class="dot">·</span>
+                  <span>há 1h</span>
+                </div>
+              </div>
+            </div>
+            <div class="post-image-wrap">
+              <img src="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&q=80&auto=format" alt="" loading="lazy">
+              <div class="post-image-overlay">
+                <span class="fish-tag"><span class="fish-icon">🐠</span>DOURADA</span>
+                <span class="weight-tag">⚖️ 1.4 kg</span>
+                <span class="legal-tag">✅ PT Legal</span>
+              </div>
+            </div>
+            <div class="post-actions">
+              <button class="action-btn"><span class="icon">❤️</span> 23</button>
+              <button class="action-btn"><span class="icon">💬</span> 5</button>
+              <button class="share-btn">PARTILHAR</button>
+            </div>
+          </div>
+
+          <div class="bottom-nav">
+            <div class="nav-item"><span class="nav-icon">🔮</span>Oráculo</div>
+            <div class="nav-item"><span class="nav-icon">🗺️</span>Mapa</div>
+            <div class="nav-item active">
+              <span class="nav-icon-wrap">
+                <span class="nav-icon">👥</span>
+              </span>
+              Comunidade
+            </div>
+            <div class="nav-item"><span class="nav-icon">📋</span>Logbook</div>
+            <div class="nav-item"><span class="nav-icon">👤</span>Perfil</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Insights conceito 1 -->
+  <div class="insights-row">
+    <div class="insight-card">
+      <div class="insight-icon">📸</div>
+      <div class="insight-title">Fotos reais de capturas</div>
+      <div class="insight-desc">Cada post é uma prova social. O pescador vê capturas reais perto de si e quer saber onde — só com PRO.</div>
+      <div class="insight-metric">+340% conversão</div>
+    </div>
+    <div class="insight-card">
+      <div class="insight-icon">👻</div>
+      <div class="insight-title">Ghost Mode total</div>
+      <div class="insight-desc">Coordenadas nunca expostas. Zona em geohash 5km. PRO vê raio real. FREE só vê nome da zona. Privacidade garantida.</div>
+      <div class="insight-metric">0 dados reais</div>
+    </div>
+    <div class="insight-card">
+      <div class="insight-icon">🔥</div>
+      <div class="insight-title">Viral loop automático</div>
+      <div class="insight-desc">Cada captura partilhada com marca de água AQUANAUTIX = anúncio gratuito no Instagram, WhatsApp, TikTok.</div>
+      <div class="insight-metric">CAC = €0</div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════
+     CONCEITO 2 — TROPHY WALL
+═══════════════════════════════════════ -->
+<section class="concept-section" id="concept-2">
+  <div class="concept-label">
+    <div class="impact-tag">🏆 Retenção + streak + ARPU</div>
+    <h2>Trophy Wall + Leaderboard Regional</h2>
+    <p>Mural de troféus pessoal + ranking regional de espécies. Cada recorde é uma conquista. Leaderboard cria competição saudável — visível só para PRO.</p>
+  </div>
+
+  <div class="phones-row">
+
+    <!-- PHONE — TROPHY WALL -->
+    <div class="phone-wrapper">
+      <span class="phone-label pro">★ MEU TROPHY WALL</span>
+      <div class="phone-frame glow-cyan">
+        <div class="phone-notch"></div>
+        <div class="phone-screen phone-scroll">
+          <div class="status-bar">
+            <span>09:41</span>
+            <span>◉ 87%</span>
+          </div>
+
+          <div class="screen-header">
+            <div>
+              <div class="screen-title">MURAL DE TROFÉUS</div>
+              <div class="screen-subtitle">3 recordes · 8 espécies</div>
+            </div>
+            <div class="header-actions">
+              <button class="icon-btn">📤</button>
+              <button class="icon-btn">⚙️</button>
+            </div>
+          </div>
+
+          <div class="screen-tabs">
+            <div class="stab active">MEUS RECORDES</div>
+            <div class="stab">RANKING</div>
+            <div class="stab">COMUNIDADE</div>
+          </div>
+
+          <!-- Recorde hero -->
+          <div class="record-hero">
+            <img src="https://images.unsplash.com/photo-1544979590-04bcee11af7d?w=600&q=80&auto=format" alt="robalo recorde" loading="lazy">
+            <div class="record-hero-overlay">
+              <div class="record-badge">🏆 RECORDE PESSOAL</div>
+              <div class="record-fish-name">ROBALO</div>
+              <div class="record-stats-row">
+                <div class="record-stat">
+                  <div class="record-stat-val">3.2kg</div>
+                  <div class="record-stat-lbl">Peso</div>
+                </div>
+                <div class="record-stat">
+                  <div class="record-stat-val">54cm</div>
+                  <div class="record-stat-lbl">Comprimento</div>
+                </div>
+                <div class="record-stat">
+                  <div class="record-stat-val">87</div>
+                  <div class="record-stat-lbl">Score</div>
+                </div>
+                <div class="record-stat">
+                  <div class="record-stat-val">Mar'26</div>
+                  <div class="record-stat-lbl">Data</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Grid espécies -->
+          <div class="species-grid">
+            <div class="species-card">
+              <img class="species-card-img" src="https://images.unsplash.com/photo-1518568814500-bf0f8d125f46?w=200&q=80&auto=format" alt="dourada" loading="lazy">
+              <div class="species-card-info">
+                <div class="species-card-name">Dourada</div>
+                <div class="species-card-record">⚖️ 1.6kg · 37cm</div>
+              </div>
+            </div>
+            <div class="species-card">
+              <img class="species-card-img" src="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=200&q=80&auto=format" alt="peixe" loading="lazy">
+              <div class="species-card-info">
+                <div class="species-card-name">Sargo</div>
+                <div class="species-card-record">⚖️ 0.9kg · 28cm</div>
+              </div>
+            </div>
+            <div class="species-card">
+              <img class="species-card-img" src="https://images.unsplash.com/photo-1504700610630-ac6aba3536d3?w=200&q=80&auto=format" alt="peixe" loading="lazy">
+              <div class="species-card-info">
+                <div class="species-card-name">Corvina</div>
+                <div class="species-card-record no-record">— sem registo —</div>
+              </div>
+              <div class="species-card-locked">🔒</div>
+            </div>
+            <div class="species-card">
+              <img class="species-card-img" src="https://images.unsplash.com/photo-1499728603263-13726abce5fd?w=200&q=80&auto=format" alt="peixe" loading="lazy">
+              <div class="species-card-info">
+                <div class="species-card-name">Achigã</div>
+                <div class="species-card-record">⚖️ 1.2kg · 32cm</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="bottom-nav">
+            <div class="nav-item"><span class="nav-icon">🔮</span>Oráculo</div>
+            <div class="nav-item"><span class="nav-icon">🗺️</span>Mapa</div>
+            <div class="nav-item"><span class="nav-icon">👥</span>Social</div>
+            <div class="nav-item active"><span class="nav-icon">📋</span>Logbook</div>
+            <div class="nav-item"><span class="nav-icon">👤</span>Perfil</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PHONE — LEADERBOARD -->
+    <div class="phone-wrapper">
+      <span class="phone-label pro">★ RANKING REGIONAL · PRO</span>
+      <div class="phone-frame glow-amber">
+        <div class="phone-notch"></div>
+        <div class="phone-screen phone-scroll">
+          <div class="status-bar">
+            <span>09:41</span>
+            <span>◉ 87%</span>
+          </div>
+
+          <div class="screen-header">
+            <div>
+              <div class="screen-title">RANKING ROBALO</div>
+              <div class="screen-subtitle">Região Sul · Maio 2026</div>
+            </div>
+            <div class="header-actions">
+              <button class="icon-btn" style="background:rgba(243,198,77,0.15);border:1px solid rgba(243,198,77,0.3);color:var(--amber)">🏆</button>
+            </div>
+          </div>
+
+          <div class="screen-tabs">
+            <div class="stab active">REGIÃO SUL</div>
+            <div class="stab">NACIONAL</div>
+            <div class="stab">AMIGOS</div>
+          </div>
+
+          <!-- Top 3 -->
+          <div class="leaderboard-item" style="background:rgba(243,198,77,0.05)">
+            <div class="lb-rank gold">1</div>
+            <div class="lb-avatar">
+              <img src="https://i.pravatar.cc/80?img=11" alt="" loading="lazy">
+            </div>
+            <div class="lb-info">
+              <div class="lb-name">Pedro_Tavira</div>
+              <div class="lb-detail">3.8 kg · 58cm · Algarve</div>
+            </div>
+            <div class="lb-score">3.8kg</div>
+          </div>
+
+          <div class="leaderboard-item">
+            <div class="lb-rank silver">2</div>
+            <div class="lb-avatar">
+              <img src="https://i.pravatar.cc/80?img=22" alt="" loading="lazy">
+            </div>
+            <div class="lb-info">
+              <div class="lb-name">Nuno_Sesimbra</div>
+              <div class="lb-detail">3.2 kg · 54cm · Setúbal</div>
+            </div>
+            <div class="lb-score">3.2kg</div>
+          </div>
+
+          <div class="leaderboard-item">
+            <div class="lb-rank bronze">3</div>
+            <div class="lb-avatar">
+              <img src="https://i.pravatar.cc/80?img=33" alt="" loading="lazy">
+            </div>
+            <div class="lb-info">
+              <div class="lb-name">RuiSurf_PT</div>
+              <div class="lb-detail">2.9 kg · 51cm · Lisboa</div>
+            </div>
+            <div class="lb-score">2.9kg</div>
+          </div>
+
+          <!-- FREE: blurred entries + CTA -->
+          <div class="lb-blurred">
+            <div class="leaderboard-item">
+              <div class="lb-rank other">4</div>
+              <div class="lb-avatar"><img src="https://i.pravatar.cc/80?img=44" alt="" loading="lazy"></div>
+              <div class="lb-info">
+                <div class="lb-name">JoaoLisbona</div>
+                <div class="lb-detail">2.7 kg · 49cm</div>
+              </div>
+              <div class="lb-score">2.7kg</div>
+            </div>
+            <div class="leaderboard-item">
+              <div class="lb-rank other">5</div>
+              <div class="lb-avatar"><img src="https://i.pravatar.cc/80?img=55" alt="" loading="lazy"></div>
+              <div class="lb-info">
+                <div class="lb-name">MarcoFaro</div>
+                <div class="lb-detail">2.5 kg · 47cm</div>
+              </div>
+              <div class="lb-score">2.5kg</div>
+            </div>
+          </div>
+
+          <div class="lb-locked-cta">
+            <p>Vê o ranking completo + a tua posição actual.<br><strong>Estás em #12 — PRO para subir ao top 5.</strong></p>
+            <button class="unlock-btn">UPGRADE PRO →</button>
+          </div>
+
+          <!-- Tu -->
+          <div class="leaderboard-item" style="background:rgba(0,245,255,0.05);border-top:1px solid rgba(0,245,255,0.15);border-bottom:1px solid rgba(0,245,255,0.15)">
+            <div class="lb-rank" style="color:var(--cyan)">12</div>
+            <div class="lb-avatar" style="border-color:rgba(0,245,255,0.3)">
+              <img src="https://i.pravatar.cc/80?img=66" alt="" loading="lazy">
+            </div>
+            <div class="lb-info">
+              <div class="lb-name" style="color:var(--cyan)">Tu</div>
+              <div class="lb-detail">1.8 kg · 43cm · Lisboa</div>
+            </div>
+            <div class="lb-score" style="color:var(--hint)">1.8kg</div>
+          </div>
+
+          <div class="bottom-nav">
+            <div class="nav-item"><span class="nav-icon">🔮</span>Oráculo</div>
+            <div class="nav-item"><span class="nav-icon">🗺️</span>Mapa</div>
+            <div class="nav-item"><span class="nav-icon">👥</span>Social</div>
+            <div class="nav-item active"><span class="nav-icon">📋</span>Logbook</div>
+            <div class="nav-item"><span class="nav-icon">👤</span>Perfil</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="insights-row">
+    <div class="insight-card">
+      <div class="insight-icon">🎯</div>
+      <div class="insight-title">Competição regional</div>
+      <div class="insight-desc">Ranking por espécie, região e mês. O pescador quer saber onde está no ranking — só com PRO vê a posição real.</div>
+      <div class="insight-metric">+4.2x sessões/dia</div>
+    </div>
+    <div class="insight-card">
+      <div class="insight-icon">🏅</div>
+      <div class="insight-title">Recordes pessoais</div>
+      <div class="insight-desc">Trophy Wall por espécie com foto real. Cada recorde novo gera notificação push e partilha automática nas redes.</div>
+      <div class="insight-metric">92% retenção 30d</div>
+    </div>
+    <div class="insight-card">
+      <div class="insight-icon">📊</div>
+      <div class="insight-title">Gamification sem jogos</div>
+      <div class="insight-desc">Streaks de pesca, badges por espécie, "Melhor semana do ano". Tudo baseado em capturas reais — não fictícias.</div>
+      <div class="insight-metric">Duolingo do pesca</div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════
+     CONCEITO 3 — VISION + SPOTS PREMIUM
+═══════════════════════════════════════ -->
+<section class="concept-section" id="concept-3">
+  <div class="concept-label">
+    <div class="impact-tag">📸 Feature mais viral da app</div>
+    <h2>Vision Scanner + Spots com Foto Real</h2>
+    <p>Scanner IA com animação cinematic + spots no mapa com foto real do local. O pescador vê o spot, quer saber mais — só com PRO.</p>
+  </div>
+
+  <div class="phones-row">
+
+    <!-- PHONE — VISION SCANNER -->
+    <div class="phone-wrapper">
+      <span class="phone-label pro">📸 VISION SCANNER IA</span>
+      <div class="phone-frame glow-cyan">
+        <div class="phone-notch"></div>
+        <div class="phone-screen">
+          <div class="status-bar">
+            <span>09:41</span>
+            <span>◉ 87%</span>
+          </div>
+
+          <!-- Scanner -->
+          <div class="scan-overlay">
+            <img src="https://images.unsplash.com/photo-1544979590-04bcee11af7d?w=400&q=80&auto=format" alt="robalo a ser scanned" loading="lazy">
+            <div class="scan-line"></div>
+            <div class="scan-corners"></div>
+
+            <div class="scan-result-overlay">
+              <div style="display:flex;justify-content:space-between;align-items:flex-start">
+                <div>
+                  <div class="scan-species-name">ROBALO</div>
+                  <div class="scan-confidence">Confiança: 96.4%</div>
+                  <div class="confidence-bar"><div class="confidence-fill"></div></div>
+                </div>
+                <div style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--hint);text-align:right;line-height:1.6">
+                  <div>Dicentrarchus labrax</div>
+                  <div style="color:var(--amber)">Atlântico Norte</div>
+                </div>
+              </div>
+
+              <div class="scan-chips">
+                <span class="scan-chip">🐟 Espécie confirmada</span>
+                <span class="scan-chip legal-ok">✅ Legal PT — ≥30cm</span>
+                <span class="scan-chip weight">⚖️ ~2.6–3.0 kg estimado</span>
+                <span class="scan-chip">📏 ~52 cm estimado</span>
+              </div>
+
+              <div style="margin-top:10px;background:rgba(0,245,255,0.06);border:1px solid rgba(0,245,255,0.15);border-radius:10px;padding:10px;font-size:10px;color:rgba(255,255,255,0.7);font-family:'IBM Plex Sans',sans-serif;line-height:1.5">
+                <span style="color:var(--cyan);font-family:'Orbitron',sans-serif;font-size:9px;letter-spacing:1px">AQUANAUTIX IA</span><br>
+                Robalo adulto, boa condição. Tamanho legal para Portugal (≥30cm). Técnica usada: surfcasting. Considera devolver para conservação. 🎣
+              </div>
+
+              <div class="scan-btn-row">
+                <button class="scan-save-btn">GUARDAR NO LOGBOOK</button>
+                <button class="scan-share-btn">📤</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="bottom-nav">
+            <div class="nav-item"><span class="nav-icon">🔮</span>Oráculo</div>
+            <div class="nav-item"><span class="nav-icon">🗺️</span>Mapa</div>
+            <div class="nav-item active" style="color:var(--cyan)"><span class="nav-icon" style="filter:drop-shadow(0 0 6px var(--cyan))">📷</span>Scanner</div>
+            <div class="nav-item"><span class="nav-icon">📋</span>Logbook</div>
+            <div class="nav-item"><span class="nav-icon">👤</span>Perfil</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PHONE — SPOTS PREMIUM -->
+    <div class="phone-wrapper">
+      <span class="phone-label elite">◆ SPOTS ELITE COM FOTO</span>
+      <div class="phone-frame glow-elite">
+        <div class="phone-notch"></div>
+        <div class="phone-screen">
+          <div class="status-bar">
+            <span>09:41</span>
+            <span>◉ 87%</span>
+          </div>
+
+          <!-- Mapa com spots -->
+          <div class="map-bg">
+            <img src="https://images.unsplash.com/photo-1505118380757-91f5f5632de0?w=400&q=80&auto=format" alt="costa portuguesa" loading="lazy">
+
+            <div class="map-overlay-ui">
+              <!-- Spot 1 — FREE visível -->
+              <div class="spot-pin" style="top:25%;left:22%">
+                <div class="spot-pin-dot">
+                  <img src="https://images.unsplash.com/photo-1544979590-04bcee11af7d?w=80&q=80&auto=format" alt="" loading="lazy">
+                </div>
+                <div class="spot-pin-line"></div>
+                <div class="spot-pin-label">SESIMBRA A</div>
+              </div>
+
+              <!-- Spot 2 — LOCKED -->
+              <div class="spot-pin locked" style="top:50%;left:55%">
+                <div class="spot-pin-dot" style="position:relative">
+                  <img src="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=80&q=80&auto=format" alt="" loading="lazy" style="filter:blur(4px)">
+                  <div class="spot-lock-icon">🔒</div>
+                </div>
+                <div class="spot-pin-line"></div>
+                <div class="spot-pin-label">SPOT PRO</div>
+              </div>
+
+              <!-- Spot 3 — ELITE LOCKED -->
+              <div class="spot-pin locked" style="top:15%;left:65%">
+                <div class="spot-pin-dot" style="border-color:var(--elite);box-shadow:0 0 15px rgba(192,132,252,0.5);position:relative">
+                  <img src="https://images.unsplash.com/photo-1504700610630-ac6aba3536d3?w=80&q=80&auto=format" alt="" loading="lazy" style="filter:blur(4px)">
+                  <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:12px;z-index:5">👑</div>
+                </div>
+                <div class="spot-pin-line" style="background:var(--elite)"></div>
+                <div class="spot-pin-label" style="color:var(--elite);border-color:rgba(192,132,252,0.3)">ELITE</div>
+              </div>
+
+              <!-- Card do spot seleccionado -->
+              <div class="spot-detail-card">
+                <div class="spot-card-row">
+                  <div class="spot-card-photo">
+                    <img src="https://images.unsplash.com/photo-1544979590-04bcee11af7d?w=200&q=80&auto=format" alt="spot sesimbra" loading="lazy">
+                  </div>
+                  <div class="spot-card-info">
+                    <div class="spot-card-name">Ponta do Zambujeiro</div>
+                    <div class="spot-card-location">📍 SESIMBRA · COSTA · 47m</div>
+                    <div class="spot-card-tags">
+                      <span class="spot-tag-chip">🐟 Robalo</span>
+                      <span class="spot-tag-chip amber">⚡ Score 79</span>
+                      <span class="spot-tag-chip">🌊 Rocha</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="spot-card-stats">
+                  <div class="spot-stat">
+                    <div class="spot-stat-val">84</div>
+                    <div class="spot-stat-lbl">Capturas</div>
+                  </div>
+                  <div class="spot-stat">
+                    <div class="spot-stat-val">3.8kg</div>
+                    <div class="spot-stat-lbl">Recorde</div>
+                  </div>
+                  <div class="spot-stat">
+                    <div class="spot-stat-val">79</div>
+                    <div class="spot-stat-lbl">Score hoje</div>
+                  </div>
+                </div>
+                <button class="spot-action-btn">🔮 VER ORÁCULO DESTE SPOT</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="bottom-nav">
+            <div class="nav-item"><span class="nav-icon">🔮</span>Oráculo</div>
+            <div class="nav-item active"><span class="nav-icon" style="filter:drop-shadow(0 0 6px var(--cyan))">🗺️</span>Mapa</div>
+            <div class="nav-item"><span class="nav-icon">📷</span>Scanner</div>
+            <div class="nav-item"><span class="nav-icon">📋</span>Logbook</div>
+            <div class="nav-item"><span class="nav-icon">👤</span>Perfil</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="insights-row">
+    <div class="insight-card">
+      <div class="insight-icon">🤖</div>
+      <div class="insight-title">Scanner com animação</div>
+      <div class="insight-desc">Linha de scan animada + contador de confiança a subir até 96%. Cada identificação é partilhável com marca de água AQUANAUTIX.</div>
+      <div class="insight-metric">Feature mais viral</div>
+    </div>
+    <div class="insight-card">
+      <div class="insight-icon">📍</div>
+      <div class="insight-title">Spots com foto real</div>
+      <div class="insight-desc">Cada spot tem foto do local, recorde de captura, espécies esperadas e score do Oráculo em tempo real. PRO desbloqueia tudo.</div>
+      <div class="insight-metric">FOMO máximo</div>
+    </div>
+    <div class="insight-card">
+      <div class="insight-icon">⚖️</div>
+      <div class="insight-title">Compliance automático</div>
+      <div class="insight-desc">Scanner verifica tamanho mínimo legal PT/ES automaticamente. Badge "✅ Legal" ou "❌ Fora da época" em cada captura.</div>
+      <div class="insight-metric">Único no mercado</div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════
+     TABELA COMPARATIVA DE PLANOS
+═══════════════════════════════════════ -->
+<div class="section-divider">
+  <h3>Planos que convertem</h3>
+  <p>Com estas features visuais, o FREE deixa de ser uma app — passa a ser uma demo do que o PRO oferece.</p>
+</div>
+
+<div class="comparison-section">
+  <div class="compare-grid">
+
+    <div class="compare-card">
+      <div class="compare-tier free">FREE</div>
+      <div class="compare-price">€0</div>
+      <ul class="compare-features">
+        <li><span class="check">✓</span> Oráculo básico (score do dia)</li>
+        <li><span class="check">✓</span> Mapa com spots (blur nos PRO)</li>
+        <li><span class="check">✓</span> Vision Scanner (3/mês)</li>
+        <li><span class="check">✓</span> Logbook (5 entradas)</li>
+        <li><span class="cross">✗</span> Feed da comunidade</li>
+        <li><span class="cross">✗</span> Trophy Wall + ranking</li>
+        <li><span class="cross">✗</span> Spots com foto + recorde</li>
+        <li><span class="cross">✗</span> Alertas push Janela de Ouro</li>
+        <li><span class="cross">✗</span> IA de pesca ilimitada</li>
+      </ul>
+      <button class="compare-cta free-cta">PLANO ACTUAL</button>
+    </div>
+
+    <div class="compare-card pro-card">
+      <div class="compare-tier pro">PRO</div>
+      <div class="compare-price">€9.99 <span class="price-period">/mês</span></div>
+      <ul class="compare-features">
+        <li><span class="check">✓</span> Tudo do FREE</li>
+        <li><span class="check">✓</span> Feed comunidade + raio real</li>
+        <li><span class="check">✓</span> Trophy Wall + ranking regional</li>
+        <li><span class="check">✓</span> Spots PRO desbloqueados + foto</li>
+        <li><span class="check">✓</span> Vision Scanner ilimitado</li>
+        <li><span class="check">✓</span> Alertas push (1 spot favorito)</li>
+        <li><span class="check">✓</span> IA de pesca (50 msg/mês)</li>
+        <li><span class="check">✓</span> Logbook ilimitado</li>
+        <li><span class="cross">✗</span> Spots ELITE exclusivos</li>
+      </ul>
+      <button class="compare-cta pro-cta">COMEÇAR PRO</button>
+    </div>
+
+    <div class="compare-card">
+      <div class="compare-tier elite">ELITE</div>
+      <div class="compare-price">€79 <span class="price-period">/ano</span></div>
+      <ul class="compare-features">
+        <li><span class="check">✓</span> Tudo do PRO</li>
+        <li><span class="check">✓</span> Todos os spots ELITE exclusivos</li>
+        <li><span class="check">✓</span> IA ilimitada</li>
+        <li><span class="check">✓</span> Alertas push ilimitados</li>
+        <li><span class="check">✓</span> Ranking nacional + badges</li>
+        <li><span class="check">✓</span> Exportação CSV do Logbook</li>
+        <li><span class="check">✓</span> Badge 👑 ELITE no perfil</li>
+        <li><span class="check">✓</span> Suporte prioritário</li>
+        <li><span class="check">✓</span> Acesso antecipado a features</li>
+      </ul>
+      <button class="compare-cta elite-cta">IR ELITE</button>
+    </div>
+
+  </div>
+</div>
+
+<!-- FOOTER CTA -->
+<div class="footer-cta">
+  <h2>PRONTO PARA IMPLEMENTAR?</h2>
+  <p>Estes 3 conceitos transformam a app de "ferramenta de dados" em "experiência que os pescadores não querem perder". Qual implementamos primeiro?</p>
+  <div class="footer-btns">
+    <button class="footer-btn-primary">🏆 CONCEITO 1 — FEED COMUNIDADE</button>
+    <button class="footer-btn-secondary">Ver protótipo completo →</button>
+  </div>
+</div>
+
+<script>
+  function showConcept(num, btn) {
+    document.querySelectorAll('.concept-section').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.concept-tab').forEach(t => t.classList.remove('active'));
+    document.getElementById('concept-' + num).classList.add('active');
+    btn.classList.add('active');
+
+    // Smooth scroll to phones area
+    setTimeout(() => {
+      document.querySelector('#concept-' + num + ' .phones-row').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 100);
+  }
+</script>
+
+</body>
+</html>

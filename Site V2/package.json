@@ -1,0 +1,20 @@
+{
+  "name": "site-v2",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "screenshot:plans": "node tools/screenshot.js",
+    "screenshot:app5": "node tools/screenshot2.js",
+    "screenshot:app5-alt": "node tools/screenshot3.js",
+    "screenshot:screens": "node tools/screenshot4.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "puppeteer-core": "^24.41.0"
+  }
+}

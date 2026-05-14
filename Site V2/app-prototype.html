@@ -1,0 +1,866 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+<meta name="theme-color" content="#000814"/>
+<title>AQUANAUTIX — Protótipo de ecrãs (app)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=IBM+Plex+Sans:wght@300;400;500;600&family=Share+Tech+Mono&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --bg: #000814;
+  --bg2: #020D1E;
+  --bg3: #071428;
+  --cyan: #00F5FF;
+  --green: #39FF14;
+  --amber: #F3C64D;
+  --teal: #2FE6C8;
+  --white: #FFFFFF;
+  --hint: #8AADBE;
+  --border: rgba(0,245,255,0.12);
+  --glow-c: 0 0 32px rgba(0,245,255,0.45);
+  --font-h: 'Orbitron', sans-serif;
+  --font-m: 'Share Tech Mono', monospace;
+  --font-b: 'IBM Plex Sans', sans-serif;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; }
+body {
+  font-family: var(--font-b);
+  background: var(--bg);
+  color: var(--white);
+  overflow: hidden;
+}
+
+.screen {
+  position: fixed;
+  inset: 0;
+  display: none;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  z-index: 1;
+}
+.screen.active { display: flex; }
+
+.video-bg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: 0;
+}
+.video-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: linear-gradient(180deg, rgba(0,8,20,0.25) 0%, rgba(0,8,20,0.88) 55%, #000814 100%);
+  pointer-events: none;
+}
+
+.welcome-content {
+  position: relative;
+  z-index: 2;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: max(1.25rem, env(safe-area-inset-bottom)) 1.5rem 2rem;
+  max-width: 28rem;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.badge-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-family: var(--font-m);
+  font-size: 0.62rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--cyan);
+  border: 1px solid var(--border);
+  background: rgba(7,20,40,0.75);
+  padding: 0.35rem 0.75rem;
+  border-radius: 2px;
+  margin-bottom: 1rem;
+  backdrop-filter: blur(12px);
+}
+.badge-pill span { color: var(--amber); }
+
+.welcome-title {
+  font-family: var(--font-h);
+  font-weight: 900;
+  font-size: clamp(2.1rem, 8vw, 2.85rem);
+  line-height: 1.05;
+  letter-spacing: 0.04em;
+  background: linear-gradient(135deg, var(--white) 0%, var(--cyan) 45%, var(--teal) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 0.65rem;
+  text-shadow: 0 0 40px rgba(0,245,255,0.15);
+}
+.welcome-sub {
+  font-size: 0.92rem;
+  color: var(--hint);
+  line-height: 1.55;
+  margin-bottom: 1.75rem;
+  max-width: 22rem;
+}
+.welcome-sub em { color: var(--teal); font-style: normal; font-weight: 500; }
+
+.oracle-preview {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+.ring-wrap {
+  width: 88px;
+  height: 88px;
+  flex-shrink: 0;
+  position: relative;
+}
+.ring-wrap svg { width: 100%; height: 100%; filter: drop-shadow(var(--glow-c)); }
+.ring-pulse {
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
+  border: 1px solid rgba(0,245,255,0.35);
+  animation: pulseRing 2.4s ease-out infinite;
+}
+@keyframes pulseRing {
+  0% { transform: scale(0.92); opacity: 0.9; }
+  100% { transform: scale(1.25); opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ring-pulse { animation: none; opacity: 0; }
+}
+
+.btn-primary {
+  font-family: var(--font-m);
+  font-size: 0.72rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--bg);
+  background: var(--cyan);
+  border: none;
+  padding: 1rem 1.25rem;
+  border-radius: 2px;
+  cursor: pointer;
+  width: 100%;
+  box-shadow: var(--glow-c);
+  transition: transform 0.15s, filter 0.2s;
+}
+.btn-primary:hover { filter: brightness(1.08); transform: translateY(-1px); }
+.btn-ghost {
+  font-family: var(--font-m);
+  font-size: 0.65rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--hint);
+  background: transparent;
+  border: 1px solid var(--border);
+  padding: 0.75rem;
+  margin-top: 0.65rem;
+  border-radius: 2px;
+  cursor: pointer;
+  width: 100%;
+}
+.btn-ghost:hover { color: var(--cyan); border-color: rgba(0,245,255,0.35); }
+
+.top-bar {
+  position: relative;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: max(0.6rem, env(safe-area-inset-top)) 1rem 0.5rem;
+  max-width: 28rem;
+  margin: 0 auto;
+  width: 100%;
+}
+.top-bar a {
+  font-family: var(--font-m);
+  font-size: 0.58rem;
+  letter-spacing: 0.12em;
+  color: var(--hint);
+  text-decoration: none;
+  text-transform: uppercase;
+}
+.top-bar a:hover { color: var(--cyan); }
+.logo-mini {
+  font-family: var(--font-h);
+  font-weight: 900;
+  font-size: 0.65rem;
+  letter-spacing: 0.22em;
+  background: linear-gradient(90deg, var(--cyan), var(--teal));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Login */
+.login-card {
+  position: relative;
+  z-index: 2;
+  margin-top: auto;
+  padding: 1.25rem 1.25rem max(1.5rem, env(safe-area-inset-bottom));
+  max-width: 28rem;
+  margin-left: auto;
+  margin-right: auto;
+  width: 100%;
+}
+.login-glass {
+  background: rgba(7,20,40,0.82);
+  backdrop-filter: blur(20px) saturate(1.4);
+  border: 1px solid var(--border);
+  border-radius: 12px 12px 0 0;
+  padding: 1.35rem 1.25rem 1.5rem;
+  box-shadow: 0 -20px 60px rgba(0,0,0,0.5);
+}
+.login-glass h2 {
+  font-family: var(--font-h);
+  font-size: 1.05rem;
+  letter-spacing: 0.08em;
+  margin-bottom: 0.35rem;
+}
+.login-glass p.hint {
+  font-size: 0.78rem;
+  color: var(--hint);
+  margin-bottom: 1.1rem;
+}
+.field {
+  margin-bottom: 0.85rem;
+}
+.field label {
+  display: block;
+  font-family: var(--font-m);
+  font-size: 0.55rem;
+  letter-spacing: 0.12em;
+  color: var(--hint);
+  text-transform: uppercase;
+  margin-bottom: 0.35rem;
+}
+.field input {
+  width: 100%;
+  padding: 0.75rem 0.85rem;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  background: rgba(0,8,20,0.65);
+  color: var(--white);
+  font-family: var(--font-b);
+  font-size: 0.95rem;
+}
+.field input:focus {
+  outline: none;
+  border-color: rgba(0,245,255,0.45);
+  box-shadow: 0 0 0 2px rgba(0,245,255,0.12);
+}
+.mute-row {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+.mute-row button {
+  font-family: var(--font-m);
+  font-size: 0.55rem;
+  letter-spacing: 0.1em;
+  color: var(--hint);
+  background: rgba(0,0,0,0.35);
+  border: 1px solid var(--border);
+  padding: 0.35rem 0.6rem;
+  border-radius: 2px;
+  cursor: pointer;
+  text-transform: uppercase;
+}
+.mute-row button:hover { color: var(--cyan); }
+
+/* Main shell */
+#main-screen {
+  background: var(--bg);
+}
+.main-header {
+  padding: max(0.65rem, env(safe-area-inset-top)) 1rem 0.5rem;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  max-width: 28rem;
+  margin: 0 auto;
+  width: 100%;
+}
+.main-header h1 {
+  font-family: var(--font-h);
+  font-size: 0.72rem;
+  letter-spacing: 0.18em;
+  background: linear-gradient(90deg, var(--cyan), var(--teal));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.main-header .pro-pill {
+  font-family: var(--font-m);
+  font-size: 0.52rem;
+  letter-spacing: 0.12em;
+  color: var(--amber);
+  border: 1px solid rgba(243,198,77,0.35);
+  padding: 0.25rem 0.5rem;
+  border-radius: 2px;
+}
+
+.tab-panels {
+  flex: 1;
+  overflow: auto;
+  max-width: 28rem;
+  margin: 0 auto;
+  width: 100%;
+  padding: 0.85rem 1rem 4.5rem;
+}
+.panel { display: none; }
+.panel.active { display: block; }
+
+.score-big {
+  text-align: center;
+  padding: 1rem 0 1.25rem;
+}
+.score-big .num {
+  font-family: var(--font-h);
+  font-size: 3.2rem;
+  font-weight: 900;
+  color: var(--cyan);
+  line-height: 1;
+  text-shadow: var(--glow-c);
+}
+.score-big .lbl {
+  font-family: var(--font-m);
+  font-size: 0.58rem;
+  letter-spacing: 0.2em;
+  color: var(--hint);
+  text-transform: uppercase;
+  margin-top: 0.35rem;
+}
+.chips {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+.chip {
+  font-family: var(--font-m);
+  font-size: 0.62rem;
+  padding: 0.55rem 0.65rem;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--teal);
+}
+.chip.c2 { color: var(--cyan); }
+.chip.c3 { color: var(--green); }
+
+.tab-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  max-width: 28rem;
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  padding: 0.45rem 0 max(0.5rem, env(safe-area-inset-bottom));
+  background: rgba(7,20,40,0.96);
+  backdrop-filter: blur(16px);
+  border-top: 1px solid var(--border);
+  z-index: 10;
+}
+.tab-btn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--hint);
+  padding: 0.35rem 0;
+  font-family: var(--font-m);
+  font-size: 0.48rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.tab-btn .ico { font-size: 1.15rem; line-height: 1; }
+.tab-btn.active { color: var(--cyan); }
+.tab-btn.active .ico { filter: drop-shadow(0 0 6px rgba(0,245,255,0.55)); }
+
+.map-placeholder {
+  height: 220px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: linear-gradient(160deg, #020D1E 0%, #071428 50%, #001a35 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 1rem;
+}
+.map-placeholder p { font-size: 0.82rem; color: var(--hint); line-height: 1.5; margin-top: 0.5rem; }
+
+.cal-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+}
+.cal-nav button {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  color: var(--cyan);
+  width: 36px;
+  height: 36px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 1rem;
+}
+.cal-nav h2 {
+  font-family: var(--font-h);
+  font-size: 0.85rem;
+  letter-spacing: 0.1em;
+}
+.cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+.cal-dow {
+  font-family: var(--font-m);
+  font-size: 0.5rem;
+  letter-spacing: 0.08em;
+  color: var(--hint);
+  text-align: center;
+  padding: 0.35rem 0;
+  text-transform: uppercase;
+}
+.cal-cell {
+  aspect-ratio: 1;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  cursor: default;
+  background: rgba(7,20,40,0.5);
+}
+.cal-cell.other { opacity: 0.35; }
+.cal-cell .d { font-family: var(--font-h); font-size: 0.85rem; color: var(--white); }
+.cal-cell .s { font-family: var(--font-m); font-size: 0.5rem; margin-top: 2px; }
+.cal-cell.hot { border-color: rgba(57,255,20,0.45); box-shadow: 0 0 12px rgba(57,255,20,0.12); }
+.cal-cell.mid { border-color: rgba(243,198,77,0.4); }
+.cal-cell.cold { border-color: rgba(138,173,190,0.25); }
+
+.chat-wrap {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 140px);
+  max-height: 520px;
+}
+.chat-msgs {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  padding-right: 0.25rem;
+}
+.bubble {
+  max-width: 92%;
+  padding: 0.65rem 0.75rem;
+  border-radius: 8px;
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+.bubble.user {
+  align-self: flex-end;
+  background: rgba(0,245,255,0.12);
+  border: 1px solid rgba(0,245,255,0.25);
+  color: var(--white);
+}
+.bubble.ai {
+  align-self: flex-start;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  color: var(--hint);
+}
+.bubble.ai strong { color: var(--teal); }
+.quick-prompts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-bottom: 0.5rem;
+}
+.quick-prompts button {
+  font-size: 0.65rem;
+  font-family: var(--font-b);
+  padding: 0.4rem 0.55rem;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  background: rgba(0,245,255,0.06);
+  color: var(--cyan);
+  cursor: pointer;
+}
+.quick-prompts button:hover { background: rgba(0,245,255,0.12); }
+.chat-input-row {
+  display: flex;
+  gap: 0.45rem;
+  margin-top: 0.5rem;
+}
+.chat-input-row input {
+  flex: 1;
+  padding: 0.65rem 0.75rem;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: rgba(0,8,20,0.7);
+  color: var(--white);
+  font-size: 0.85rem;
+}
+.chat-input-row button {
+  font-family: var(--font-m);
+  font-size: 0.55rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 0 0.85rem;
+  border: none;
+  border-radius: 4px;
+  background: var(--cyan);
+  color: var(--bg);
+  cursor: pointer;
+}
+
+.profile-list {
+  list-style: none;
+}
+.profile-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.85rem 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.88rem;
+}
+.profile-list span.meta { font-family: var(--font-m); font-size: 0.55rem; color: var(--hint); }
+
+.disclaimer {
+  font-size: 0.68rem;
+  color: var(--hint);
+  line-height: 1.45;
+  margin-top: 1rem;
+  padding: 0.65rem;
+  border: 1px dashed var(--border);
+  border-radius: 4px;
+}
+</style>
+</head>
+<body>
+
+<!-- 1 · Welcome bombástico -->
+<section id="screen-welcome" class="screen active" aria-label="Boas-vindas">
+  <video class="video-bg" id="vid-welcome" autoplay muted loop playsinline>
+    <source src="video_bg.mp4" type="video/mp4"/>
+  </video>
+  <div class="video-overlay"></div>
+  <div class="top-bar">
+    <a href="index.html#app-demo">← Site</a>
+    <span class="logo-mini">AQUANAUTIX</span>
+    <span style="width:3.5rem"></span>
+  </div>
+  <div class="welcome-content">
+    <div class="badge-pill"><span>●</span> Ibéria · PT + ES</div>
+    <h1 class="welcome-title">Pesca com<br/>inteligência.</h1>
+    <p class="welcome-sub">Oráculo táctico, batimetria real, <em>Ghost Mode</em> e assistente de IA — o instrumento que o Atlântico merecia.</p>
+    <div class="oracle-preview">
+      <div class="ring-wrap">
+        <div class="ring-pulse" aria-hidden="true"></div>
+        <svg viewBox="0 0 200 200" aria-hidden="true">
+          <circle fill="none" stroke="rgba(0,245,255,0.08)" stroke-width="10" cx="100" cy="100" r="88"/>
+          <circle fill="none" stroke="var(--cyan)" stroke-width="10" stroke-linecap="round" stroke-dasharray="553" stroke-dashoffset="122" cx="100" cy="100" r="88" transform="rotate(-90 100 100)"/>
+          <text x="100" y="112" text-anchor="middle" font-family="Orbitron,sans-serif" font-size="44" font-weight="900" fill="var(--cyan)">78</text>
+        </svg>
+      </div>
+      <div class="chips" style="flex:1">
+        <div class="chip">🌊 Maré · janela favorável</div>
+        <div class="chip c2">🌙 Lua · Crescente</div>
+        <div class="chip c3">⏱ Solunar · 06:40–08:20</div>
+      </div>
+    </div>
+    <button type="button" class="btn-primary" id="btn-go-login">Entrar</button>
+    <button type="button" class="btn-ghost" id="btn-skip-login">Explorar protótipo (sem login)</button>
+  </div>
+</section>
+
+<!-- 2 · Login com vídeo -->
+<section id="screen-login" class="screen" aria-label="Iniciar sessão">
+  <video class="video-bg" id="vid-login" muted loop playsinline>
+    <source src="video_bg.mp4" type="video/mp4"/>
+  </video>
+  <div class="video-overlay"></div>
+  <div class="top-bar">
+    <a href="#" id="link-back-welcome">← Voltar</a>
+    <span class="logo-mini">AQUANAUTIX</span>
+    <span style="width:3.5rem"></span>
+  </div>
+  <div class="login-card">
+    <div class="login-glass">
+      <h2>Iniciar sessão</h2>
+      <p class="hint">Protótipo visual — sem backend. O vídeo de fundo reforça a identidade subaquática da marca.</p>
+      <div class="field">
+        <label for="email">Email</label>
+        <input type="email" id="email" placeholder="o.teu@email.com" autocomplete="email"/>
+      </div>
+      <div class="field">
+        <label for="password">Palavra-passe</label>
+        <input type="password" id="password" placeholder="••••••••" autocomplete="current-password"/>
+      </div>
+      <button type="button" class="btn-primary" id="btn-login-continue">Continuar</button>
+      <div class="mute-row">
+        <button type="button" id="btn-toggle-sound" aria-pressed="false">Som do vídeo: off</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 3 · App principal (tabs) -->
+<section id="screen-main" class="screen" aria-label="App">
+  <header class="main-header">
+    <h1>AQUANAUTIX</h1>
+    <span class="pro-pill">PROTÓTIPO</span>
+  </header>
+  <div class="tab-panels">
+    <!-- Tab Oráculo -->
+    <div class="panel active" id="panel-oracle" role="tabpanel">
+      <div class="score-big">
+        <div class="num" id="oracle-num">78</div>
+        <div class="lbl">Score Oráculo · hoje</div>
+      </div>
+      <p style="font-size:0.8rem;color:var(--hint);margin-bottom:1rem;line-height:1.5">Pressão estável, maré em enchente e janela solunar matinal alinhada — bom cenário para sessão curta na costa.</p>
+      <div class="chips">
+        <div class="chip">🌊 Maré · Enchente ↑</div>
+        <div class="chip c2">🌙 Lua · Crescente ◑</div>
+        <div class="chip c3">🌡 Pressão · 1013 hPa</div>
+      </div>
+      <p class="disclaimer">Valores ilustrativos neste protótipo. Em produção: IPMA / fontes oficiais PT+ES e o teu histórico alimentam o motor.</p>
+    </div>
+    <!-- Tab Mapa -->
+    <div class="panel" id="panel-map" role="tabpanel">
+      <h3 style="font-family:var(--font-h);font-size:0.75rem;letter-spacing:0.12em;color:var(--cyan);margin-bottom:0.65rem">MAPA</h3>
+      <div class="map-placeholder">
+        <span style="font-size:2rem">🗺️</span>
+        <p>Mapa Mapbox 3D + batimetria GEBCO no site principal (<code style="font-size:0.7rem;color:var(--teal)">index.html</code> · secção <strong style="color:var(--white)">#mapa-live</strong>).</p>
+      </div>
+    </div>
+    <!-- Tab Calendário -->
+    <div class="panel" id="panel-cal" role="tabpanel">
+      <h3 style="font-family:var(--font-h);font-size:0.75rem;letter-spacing:0.12em;color:var(--cyan);margin-bottom:0.65rem">MELHORES DIAS</h3>
+      <div class="cal-nav">
+        <button type="button" id="cal-prev" aria-label="Mês anterior">‹</button>
+        <h2 id="cal-title">—</h2>
+        <button type="button" id="cal-next" aria-label="Mês seguinte">›</button>
+      </div>
+      <div class="cal-grid" id="cal-dow"></div>
+      <div class="cal-grid" id="cal-days"></div>
+      <p class="disclaimer">Cores = score ilustrativo por dia (verde melhor). Produção: agregar Oráculo + marés + histórico pessoal (PRO).</p>
+    </div>
+    <!-- Tab IA -->
+    <div class="panel" id="panel-ai" role="tabpanel">
+      <h3 style="font-family:var(--font-h);font-size:0.75rem;letter-spacing:0.12em;color:var(--cyan);margin-bottom:0.5rem">ASSISTENTE</h3>
+      <p style="font-size:0.75rem;color:var(--hint);margin-bottom:0.65rem">Pergunta sobre técnica, iscos, espécies ibéricas ou condições. Demo sem API.</p>
+      <div class="quick-prompts">
+        <button type="button" class="qp">Melhor hora hoje para robalo?</button>
+        <button type="button" class="qp">Diferença entre veda PT e ES?</button>
+        <button type="button" class="qp">Surfcasting com maré vazia — dicas</button>
+      </div>
+      <div class="chat-wrap">
+        <div class="chat-msgs" id="chat-msgs"></div>
+        <div class="chat-input-row">
+          <input type="text" id="chat-in" placeholder="Escreve a tua pergunta…" maxlength="500"/>
+          <button type="button" id="chat-send">Enviar</button>
+        </div>
+      </div>
+      <p class="disclaimer">Em produção: Edge Function + RAG com guia legal/espécies; nunca substituir fontes oficiais.</p>
+    </div>
+    <!-- Tab Perfil -->
+    <div class="panel" id="panel-profile" role="tabpanel">
+      <h3 style="font-family:var(--font-h);font-size:0.75rem;letter-spacing:0.12em;color:var(--cyan);margin-bottom:0.85rem">PERFIL</h3>
+      <ul class="profile-list">
+        <li><span>Conta & segurança</span><span class="meta">›</span></li>
+        <li><span>Ghost Mode & privacidade</span><span class="meta">›</span></li>
+        <li><span>Subscrição PRO</span><span class="meta">FREE</span></li>
+        <li><span>Idioma</span><span class="meta">PT · ES</span></li>
+        <li><span>Terminar sessão</span><span class="meta">›</span></li>
+      </ul>
+      <p class="disclaimer">Lista estática para layout. Fluxos reais ligam a Supabase / RevenueCat.</p>
+    </div>
+  </div>
+  <nav class="tab-bar" role="tablist" aria-label="Navegação principal">
+    <button type="button" class="tab-btn active" data-tab="oracle" role="tab" aria-selected="true"><span class="ico">⚡</span>Oráculo</button>
+    <button type="button" class="tab-btn" data-tab="map" role="tab" aria-selected="false"><span class="ico">🗺️</span>Mapa</button>
+    <button type="button" class="tab-btn" data-tab="cal" role="tab" aria-selected="false"><span class="ico">📅</span>Dias</button>
+    <button type="button" class="tab-btn" data-tab="ai" role="tab" aria-selected="false"><span class="ico">💬</span>IA</button>
+    <button type="button" class="tab-btn" data-tab="profile" role="tab" aria-selected="false"><span class="ico">👤</span>Eu</button>
+  </nav>
+</section>
+
+<script>
+(function () {
+  const $ = (sel, root = document) => root.querySelector(sel);
+  const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
+
+  function showScreen(id) {
+    $$('.screen').forEach(s => s.classList.remove('active'));
+    $('#' + id).classList.add('active');
+    if (id === 'screen-login') {
+      const v = $('#vid-login');
+      v.currentTime = 0;
+      v.play().catch(() => {});
+    }
+    if (id === 'screen-welcome') {
+      const v = $('#vid-welcome');
+      v.play().catch(() => {});
+    }
+  }
+
+  $('#btn-go-login').addEventListener('click', () => showScreen('screen-login'));
+  $('#btn-skip-login').addEventListener('click', () => showScreen('screen-main'));
+  $('#link-back-welcome').addEventListener('click', (e) => { e.preventDefault(); showScreen('screen-welcome'); });
+  $('#btn-login-continue').addEventListener('click', () => showScreen('screen-main'));
+
+  const vidWelcome = $('#vid-welcome');
+  const vidLogin = $('#vid-login');
+  let soundOn = false;
+  $('#btn-toggle-sound').addEventListener('click', () => {
+    soundOn = !soundOn;
+    [vidWelcome, vidLogin].forEach(v => { v.muted = !soundOn; });
+    const b = $('#btn-toggle-sound');
+    b.textContent = soundOn ? 'Som do vídeo: on' : 'Som do vídeo: off';
+    b.setAttribute('aria-pressed', soundOn ? 'true' : 'false');
+  });
+
+  $$('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const tab = btn.dataset.tab;
+      $$('.tab-btn').forEach(x => { x.classList.remove('active'); x.setAttribute('aria-selected', 'false'); });
+      btn.classList.add('active');
+      btn.setAttribute('aria-selected', 'true');
+      $$('.panel').forEach(p => p.classList.remove('active'));
+      $('#panel-' + (tab === 'oracle' ? 'oracle' : tab === 'map' ? 'map' : tab === 'cal' ? 'cal' : tab === 'ai' ? 'ai' : 'profile')).classList.add('active');
+    });
+  });
+
+  /* Calendário */
+  const calTitle = $('#cal-title');
+  const calDow = $('#cal-dow');
+  const calDays = $('#cal-days');
+  let calView = new Date();
+  const DOW = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
+
+  function scoreForSeed(y, m, d) {
+    let n = (y * 37 + (m + 1) * 13 + d * 7) % 100;
+    return n < 0 ? n + 100 : n;
+  }
+
+  function renderCal() {
+    const y = calView.getFullYear();
+    const m = calView.getMonth();
+    calTitle.textContent = calView.toLocaleDateString('pt-PT', { month: 'long', year: 'numeric' });
+    calDow.innerHTML = '';
+    DOW.forEach(d => {
+      const c = document.createElement('div');
+      c.className = 'cal-dow';
+      c.textContent = d;
+      calDow.appendChild(c);
+    });
+    calDays.innerHTML = '';
+    const first = new Date(y, m, 1);
+    const startPad = (first.getDay() + 6) % 7;
+    const lastDate = new Date(y, m + 1, 0).getDate();
+    const prevLast = new Date(y, m, 0).getDate();
+
+    for (let i = 0; i < startPad; i++) {
+      const day = prevLast - startPad + i + 1;
+      const cell = document.createElement('div');
+      cell.className = 'cal-cell other';
+      cell.innerHTML = '<span class="d">' + day + '</span>';
+      calDays.appendChild(cell);
+    }
+    for (let d = 1; d <= lastDate; d++) {
+      const sc = scoreForSeed(y, m, d);
+      const cell = document.createElement('div');
+      cell.className = 'cal-cell' + (sc >= 72 ? ' hot' : sc >= 48 ? ' mid' : ' cold');
+      cell.innerHTML = '<span class="d">' + d + '</span><span class="s">' + sc + '</span>';
+      calDays.appendChild(cell);
+    }
+    const totalCells = startPad + lastDate;
+    const rem = totalCells % 7 === 0 ? 0 : 7 - (totalCells % 7);
+    for (let i = 1; i <= rem; i++) {
+      const cell = document.createElement('div');
+      cell.className = 'cal-cell other';
+      cell.innerHTML = '<span class="d">' + i + '</span>';
+      calDays.appendChild(cell);
+    }
+  }
+  $('#cal-prev').addEventListener('click', () => { calView.setMonth(calView.getMonth() - 1); renderCal(); });
+  $('#cal-next').addEventListener('click', () => { calView.setMonth(calView.getMonth() + 1); renderCal(); });
+  renderCal();
+
+  /* Chat demo */
+  const chatMsgs = $('#chat-msgs');
+  function addBubble(text, who) {
+    const d = document.createElement('div');
+    d.className = 'bubble ' + (who === 'user' ? 'user' : 'ai');
+    d.innerHTML = who === 'ai' ? text : escapeHtml(text);
+    chatMsgs.appendChild(d);
+    chatMsgs.scrollTop = chatMsgs.scrollHeight;
+  }
+  function escapeHtml(s) {
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+  const canned = {
+    'default': 'Obrigado pela pergunta. Neste protótipo não há API — em produção o assistente cruza o <strong>guia PT+ES</strong>, condições e o teu contexto (com consentimento), com aviso para confirmares sempre tamanhos mínimos e vedas nas <strong>fontes oficiais</strong>.',
+    'robalo': 'Para <strong>robalo</strong> em costa atlântica: costumo priorizar <strong>maré em movimento</strong> (subida ou descida acentuada) e <strong>baixa luminosidade</strong> — muitos pescadores relatam melhores sessões ao anoitecer/antes do amanhecer. Confirma sempre medidas legais no organismo competente da tua região.',
+    'veda': 'PT e ES têm <strong>calendários e espécies distintos</strong>. A app deve mostrar sempre a fonte (ex.: legislação actualizada) e nunca substituir a leitura oficial. Queres que o produto tenha alerta por espécie + região?',
+    'surf': 'Com <strong>maré vazia</strong> em surfcasting: reduz distância ao canal, atenção a pedras expostas, e iscos com presença em água rasa (vibração / cheiro). A segurança vem primeiro — nunca pescar só em zonas que não dominas com maré baixa.'
+  };
+  function replyFor(text) {
+    const t = text.toLowerCase();
+    if (t.includes('robalo')) return canned.robalo;
+    if (t.includes('veda') || t.includes('portugal') && t.includes('espanha')) return canned.veda;
+    if (t.includes('surf') || t.includes('vazia')) return canned.surf;
+    return canned.default;
+  }
+  $('#chat-send').addEventListener('click', sendChat);
+  $('#chat-in').addEventListener('keydown', (e) => { if (e.key === 'Enter') sendChat(); });
+  function sendChat() {
+    const inp = $('#chat-in');
+    const t = inp.value.trim();
+    if (!t) return;
+    addBubble(t, 'user');
+    inp.value = '';
+    setTimeout(() => addBubble(replyFor(t), 'ai'), 550);
+  }
+  $$('.qp').forEach(b => {
+    b.addEventListener('click', () => {
+      $('#chat-in').value = b.textContent;
+      sendChat();
+    });
+  });
+  addBubble('Olá, capitão. Sou o <strong>assistente AQUANAUTIX</strong> (demo). Pergunta o que quiser sobre pesca no mercado ibérico — lembra-te sempre de validar leis e medidas nas fontes oficiais.', 'ai');
+})();
+</script>
+</body>
+</html>

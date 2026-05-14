@@ -1,0 +1,57 @@
+# Secrets
+.env
+.env.*
+
+# Flutter build outputs
+build/
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+
+# Flutter Windows ephemeral
+windows/flutter/ephemeral/
+
+# IDE
+.idea/
+.vscode/
+.cursor/
+
+# Android keystore (NEVER commit)
+android/key.properties
+android/local.properties
+android/gradle.properties
+android/.gradle/
+*.keystore
+*.jks
+androidkey.properties.txt
+
+# iOS
+ios/Pods/
+
+# Dart generated files
+*.g.dart
+*.freezed.dart
+
+# Large binary files
+*.mp4
+*.aar
+*.apk
+*.aab
+*.so
+*.pdb
+
+# Supabase
+supabase/.temp/
+
+# Node
+Site V2/node_modules/
+
+# Vercel local
+.vercel/
+Site V2/.vercel/
+
+# Claude Code local config
+.claude/settings.local.json
+
+# Windows
+desktop.ini

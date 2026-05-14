@@ -1,0 +1,1056 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AQUANAUTIX — App Protótipo 5 Ecrãs</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=IBM+Plex+Sans:wght@300;400;600&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:    #000814;
+  --bg2:   #040f24;
+  --bg3:   #071428;
+  --bg4:   #0a1c35;
+  --cyan:  #00F5FF;
+  --amber: #F3C64D;
+  --hint:  #8AADBE;
+  --green: #00FF9F;
+  --red:   #FF4D6D;
+  --pro:   #00F5FF;
+  --elite: #F3C64D;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  background: #000610;
+  font-family: 'IBM Plex Sans', sans-serif;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* ── HEADER ── */
+.header {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 2rem;
+  background: rgba(0,6,16,0.95);
+  border-bottom: 1px solid rgba(0,245,255,0.1);
+  position: sticky; top:0; z-index:100;
+}
+.logo { font-family:'Orbitron',sans-serif; font-weight:900; font-size:1.1rem; letter-spacing:.15em; color:var(--cyan); }
+.logo span { color:var(--amber); }
+.proto-tag { font-family:'Share Tech Mono',monospace; font-size:.65rem; color:var(--amber); border:1px solid rgba(243,198,77,.35); padding:.25rem .7rem; border-radius:3px; letter-spacing:.1em; }
+
+/* ── SCENE ── */
+.scene {
+  display: flex;
+  gap: 3rem;
+  padding: 2.5rem 2rem;
+  align-items: flex-start;
+  justify-content: center;
+  flex-wrap: wrap;
+  width: 100%;
+  max-width: 1400px;
+}
+
+/* ── PHONE ── */
+.phone-wrap { display:flex; flex-direction:column; align-items:center; gap:.8rem; }
+.screen-label {
+  font-family:'Share Tech Mono',monospace;
+  font-size:.65rem;
+  letter-spacing:.15em;
+  color:var(--hint);
+  text-align:center;
+}
+.screen-label strong { color:var(--cyan); display:block; font-size:.75rem; margin-bottom:.15rem; }
+
+.phone {
+  width: 230px;
+  height: 460px;
+  background: #050e1e;
+  border-radius: 32px;
+  border: 2px solid rgba(255,255,255,.12);
+  box-shadow: 0 30px 70px rgba(0,0,0,.7), 0 0 40px rgba(0,245,255,.05);
+  overflow: hidden;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+.phone-notch {
+  width:70px; height:16px;
+  background:#050e1e;
+  border-radius:0 0 10px 10px;
+  border:1.5px solid rgba(255,255,255,.08);
+  border-top:none;
+  margin:0 auto;
+  flex-shrink:0;
+  position:relative; z-index:5;
+}
+.phone-status {
+  display:flex; justify-content:space-between;
+  padding:.3rem .8rem;
+  font-family:'Share Tech Mono',monospace;
+  font-size:.52rem;
+  color:rgba(255,255,255,.4);
+  flex-shrink:0;
+}
+.phone-body {
+  flex:1;
+  overflow:hidden;
+  position:relative;
+}
+.phone-nav {
+  display:flex;
+  border-top:1px solid rgba(255,255,255,.06);
+  background:#050e1e;
+  flex-shrink:0;
+}
+.pnav-item {
+  flex:1; display:flex; flex-direction:column; align-items:center;
+  padding:.45rem 0;
+  font-family:'Share Tech Mono',monospace;
+  font-size:.42rem;
+  letter-spacing:.05em;
+  color:rgba(255,255,255,.3);
+  gap:.15rem;
+}
+.pnav-item .ni { font-size:.9rem; }
+.pnav-item.active { color:var(--cyan); }
+.pnav-item.active .ni-dot {
+  width:3px; height:3px; border-radius:50%; background:var(--cyan);
+  margin-top:.1rem;
+}
+
+/* ════════════════════════════════
+   ECRÃ 1 — ORÁCULO / DASHBOARD
+════════════════════════════════ */
+.s1-bg {
+  background: linear-gradient(180deg, #000f28 0%, #000814 100%);
+  height:100%; overflow-y:auto; padding:.6rem .7rem;
+}
+.s1-top { display:flex; justify-content:space-between; align-items:center; margin-bottom:.5rem; }
+.s1-greeting { font-family:'Orbitron',sans-serif; font-size:.6rem; color:var(--hint); letter-spacing:.08em; }
+.s1-city { font-family:'Orbitron',sans-serif; font-size:.75rem; color:#fff; font-weight:700; }
+.s1-alert-btn {
+  width:22px; height:22px; border-radius:50%;
+  background:rgba(0,245,255,.1);
+  border:1px solid rgba(0,245,255,.3);
+  display:flex; align-items:center; justify-content:center;
+  font-size:.7rem;
+}
+
+/* Score ring */
+.score-hero {
+  background: rgba(0,245,255,.04);
+  border:1px solid rgba(0,245,255,.2);
+  border-radius:12px;
+  padding:.7rem;
+  display:flex;
+  align-items:center;
+  gap:.7rem;
+  margin-bottom:.5rem;
+}
+.mini-ring { position:relative; width:52px; height:52px; flex-shrink:0; }
+.mini-ring svg { width:100%; height:100%; transform:rotate(-90deg); }
+.ring-track { fill:none; stroke:rgba(0,245,255,.1); stroke-width:5; }
+.ring-fill  { fill:none; stroke:var(--cyan); stroke-width:5; stroke-linecap:round;
+               stroke-dasharray:138; stroke-dashoffset:22; }
+.ring-fill.amber { stroke:var(--amber); stroke-dashoffset:48; }
+.ring-num {
+  position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+  font-family:'Orbitron',sans-serif; font-size:.85rem; font-weight:900; color:var(--cyan);
+  text-align:center; line-height:1;
+}
+.score-info {}
+.score-verdict { font-family:'Orbitron',sans-serif; font-size:.58rem; font-weight:700; color:var(--cyan); letter-spacing:.05em; }
+.score-desc { font-size:.6rem; color:var(--hint); line-height:1.4; margin-top:.2rem; }
+.score-window {
+  display:inline-block; margin-top:.3rem;
+  font-family:'Share Tech Mono',monospace; font-size:.52rem;
+  background:rgba(0,245,255,.1); color:var(--cyan);
+  padding:.1rem .4rem; border-radius:3px;
+}
+
+/* Data strip */
+.data-strip { display:grid; grid-template-columns:repeat(4,1fr); gap:.3rem; margin-bottom:.5rem; }
+.ds-cell {
+  background:var(--bg3);
+  border:1px solid rgba(255,255,255,.05);
+  border-radius:7px;
+  padding:.4rem .3rem;
+  text-align:center;
+}
+.ds-icon { font-size:.75rem; }
+.ds-val { font-family:'Share Tech Mono',monospace; font-size:.6rem; color:#fff; }
+.ds-key { font-size:.48rem; color:var(--hint); }
+
+/* 5-day */
+.five-label { font-family:'Share Tech Mono',monospace; font-size:.5rem; color:var(--hint); letter-spacing:.12em; margin-bottom:.3rem; }
+.five-row { display:flex; gap:.25rem; }
+.five-day {
+  flex:1; background:var(--bg3); border:1px solid rgba(255,255,255,.05);
+  border-radius:7px; padding:.35rem .2rem; text-align:center; cursor:pointer;
+}
+.five-day.best { border-color:var(--cyan); background:rgba(0,245,255,.05); }
+.fd-d { font-family:'Share Tech Mono',monospace; font-size:.45rem; color:var(--hint); margin-bottom:.15rem; }
+.fd-s { font-family:'Orbitron',sans-serif; font-size:.65rem; font-weight:700; color:#fff; }
+.five-day.best .fd-s { color:var(--cyan); }
+.fd-i { font-size:.6rem; }
+
+/* Janela de ouro */
+.gold-alert {
+  margin-top:.5rem;
+  background:rgba(243,198,77,.07);
+  border:1px solid rgba(243,198,77,.3);
+  border-radius:8px;
+  padding:.5rem .6rem;
+  display:flex; align-items:center; gap:.5rem;
+}
+.ga-icon { font-size:.9rem; }
+.ga-text { font-size:.58rem; color:#fff; line-height:1.4; }
+.ga-text strong { color:var(--amber); }
+
+/* ════════════════════════════════
+   ECRÃ 2 — MAPA + SPOTS
+════════════════════════════════ */
+.s2-bg { background:#000814; height:100%; position:relative; overflow:hidden; }
+.map-placeholder {
+  width:100%; height:62%;
+  background:
+    radial-gradient(ellipse 60% 40% at 40% 60%, rgba(0,40,80,.8) 0%, transparent 70%),
+    radial-gradient(ellipse 80% 60% at 60% 40%, rgba(0,20,50,.9) 0%, transparent 80%),
+    linear-gradient(180deg, #000c1e 0%, #001428 50%, #000814 100%);
+  position:relative;
+  overflow:hidden;
+}
+.map-grid {
+  position:absolute; inset:0;
+  background-image:
+    linear-gradient(rgba(0,245,255,.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,245,255,.04) 1px, transparent 1px);
+  background-size:20px 20px;
+}
+.map-contours {
+  position:absolute; inset:0;
+  background:
+    radial-gradient(ellipse 50% 30% at 35% 55%, rgba(0,100,160,.15) 0%, transparent 60%),
+    radial-gradient(ellipse 30% 20% at 70% 40%, rgba(0,80,130,.1) 0%, transparent 50%);
+}
+.map-spot {
+  position:absolute;
+  display:flex; flex-direction:column; align-items:center;
+}
+.spot-pin {
+  width:10px; height:10px; border-radius:50%;
+  border:1.5px solid;
+  display:flex; align-items:center; justify-content:center;
+  font-size:.35rem;
+  cursor:pointer;
+}
+.spot-pin.free  { background:rgba(0,245,255,.2); border-color:var(--cyan); color:var(--cyan); }
+.spot-pin.pro   { background:rgba(0,245,255,.3); border-color:var(--cyan); color:var(--cyan); }
+.spot-pin.elite { background:rgba(243,198,77,.3); border-color:var(--amber); color:var(--amber); }
+.spot-pin-label {
+  font-family:'Share Tech Mono',monospace; font-size:.38rem;
+  background:rgba(0,8,20,.85); color:#fff;
+  padding:.05rem .25rem; border-radius:2px; white-space:nowrap; margin-top:.1rem;
+}
+
+.map-controls {
+  position:absolute; top:.5rem; right:.5rem;
+  display:flex; flex-direction:column; gap:.3rem;
+}
+.mc-btn {
+  width:20px; height:20px;
+  background:rgba(0,8,20,.8);
+  border:1px solid rgba(255,255,255,.15);
+  border-radius:4px;
+  display:flex; align-items:center; justify-content:center;
+  font-size:.55rem; color:var(--hint); cursor:pointer;
+}
+
+.map-score-chip {
+  position:absolute; top:.5rem; left:.5rem;
+  background:rgba(0,8,20,.85);
+  border:1px solid rgba(0,245,255,.3);
+  border-radius:6px; padding:.3rem .5rem;
+  font-family:'Share Tech Mono',monospace; font-size:.5rem; color:var(--cyan);
+}
+
+.spots-drawer {
+  position:absolute; bottom:0; left:0; right:0;
+  background:var(--bg3);
+  border-top:1px solid rgba(255,255,255,.08);
+  border-radius:12px 12px 0 0;
+  padding:.5rem .6rem;
+  height:38%;
+  overflow-y:auto;
+}
+.drawer-handle {
+  width:28px; height:3px; background:rgba(255,255,255,.15);
+  border-radius:2px; margin:0 auto .4rem;
+}
+.drawer-title {
+  font-family:'Orbitron',sans-serif; font-size:.55rem; color:#fff; letter-spacing:.08em; margin-bottom:.4rem;
+}
+.spot-row {
+  display:flex; align-items:center; gap:.4rem;
+  padding:.35rem 0; border-bottom:1px solid rgba(255,255,255,.04);
+}
+.spot-row:last-child { border-bottom:none; }
+.sr-dot { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
+.sr-dot.free  { background:rgba(0,245,255,.5); border:1px solid var(--cyan); }
+.sr-dot.pro   { background:rgba(0,245,255,.7); border:1px solid var(--cyan); }
+.sr-dot.elite { background:rgba(243,198,77,.7); border:1px solid var(--amber); }
+.sr-dot.locked { background:rgba(255,255,255,.1); border:1px solid rgba(255,255,255,.2); }
+.sr-info { flex:1; }
+.sr-name { font-size:.58rem; color:#fff; }
+.sr-loc  { font-size:.5rem; color:var(--hint); }
+.sr-score {
+  font-family:'Share Tech Mono',monospace; font-size:.55rem;
+  color:var(--cyan);
+}
+.sr-lock { font-size:.6rem; opacity:.4; }
+.ghost-chip {
+  font-family:'Share Tech Mono',monospace; font-size:.42rem;
+  color:var(--amber); background:rgba(243,198,77,.08);
+  border:1px solid rgba(243,198,77,.25); padding:.05rem .3rem; border-radius:2px;
+}
+
+/* ════════════════════════════════
+   ECRÃ 3 — VISION SCANNER
+════════════════════════════════ */
+.s3-bg { background:#000814; height:100%; overflow-y:auto; }
+.scanner-area {
+  height:52%;
+  background:
+    radial-gradient(ellipse 60% 50% at 50% 50%, rgba(0,245,255,.06) 0%, transparent 70%),
+    linear-gradient(180deg, #000c20 0%, #000814 100%);
+  position:relative;
+  display:flex; align-items:center; justify-content:center;
+  flex-direction:column; gap:.4rem;
+  overflow:hidden;
+}
+.scanner-frame {
+  width:120px; height:90px;
+  border:1.5px solid rgba(0,245,255,.5);
+  border-radius:8px;
+  position:relative;
+}
+.sf-corner {
+  position:absolute; width:10px; height:10px;
+  border-color:var(--cyan); border-style:solid;
+}
+.sf-tl { top:-1px; left:-1px; border-width:2px 0 0 2px; border-radius:3px 0 0 0; }
+.sf-tr { top:-1px; right:-1px; border-width:2px 2px 0 0; border-radius:0 3px 0 0; }
+.sf-bl { bottom:-1px; left:-1px; border-width:0 0 2px 2px; border-radius:0 0 0 3px; }
+.sf-br { bottom:-1px; right:-1px; border-width:0 2px 2px 0; border-radius:0 0 3px 0; }
+.scan-line {
+  position:absolute; top:30%; left:2px; right:2px; height:1.5px;
+  background:linear-gradient(90deg, transparent, var(--cyan), transparent);
+  animation: scanMove 2s ease-in-out infinite;
+  opacity:.7;
+}
+@keyframes scanMove {
+  0%,100% { top:10%; } 50% { top:80%; }
+}
+.fish-silhouette { position:absolute; font-size:2.5rem; opacity:.25; }
+.scanner-label {
+  font-family:'Share Tech Mono',monospace; font-size:.55rem;
+  color:var(--hint); letter-spacing:.1em;
+}
+.scan-btn {
+  width:36px; height:36px; border-radius:50%;
+  background:var(--cyan); border:none;
+  display:flex; align-items:center; justify-content:center;
+  font-size:1rem; cursor:pointer;
+  box-shadow:0 0 20px rgba(0,245,255,.4);
+}
+.scan-source { display:flex; gap:.5rem; }
+.scan-src-btn {
+  font-family:'Share Tech Mono',monospace; font-size:.5rem;
+  color:var(--hint); background:rgba(255,255,255,.05);
+  border:1px solid rgba(255,255,255,.1); border-radius:4px;
+  padding:.25rem .5rem; cursor:pointer;
+}
+
+/* Result card */
+.vision-result {
+  padding:.6rem .7rem;
+}
+.vr-label { font-family:'Share Tech Mono',monospace; font-size:.5rem; color:var(--hint); letter-spacing:.12em; margin-bottom:.4rem; }
+.vr-card {
+  background:var(--bg3); border:1px solid rgba(0,245,255,.2);
+  border-radius:10px; padding:.6rem;
+}
+.vr-header { display:flex; align-items:center; gap:.5rem; margin-bottom:.5rem; }
+.vr-fish-icon { font-size:1.4rem; }
+.vr-name { font-family:'Orbitron',sans-serif; font-size:.7rem; color:#fff; font-weight:700; }
+.vr-sci  { font-size:.5rem; color:var(--hint); font-style:italic; }
+.vr-conf {
+  margin-left:auto;
+  font-family:'Share Tech Mono',monospace; font-size:.55rem;
+  color:var(--green); background:rgba(0,255,159,.1);
+  border:1px solid rgba(0,255,159,.3); padding:.1rem .35rem; border-radius:3px;
+}
+.vr-rows { display:flex; flex-direction:column; gap:.3rem; }
+.vr-row { display:flex; justify-content:space-between; align-items:center; }
+.vr-key { font-size:.55rem; color:var(--hint); }
+.vr-val { font-family:'Share Tech Mono',monospace; font-size:.55rem; color:#fff; }
+.vr-legal {
+  margin-top:.4rem;
+  display:flex; align-items:center; gap:.35rem;
+  background:rgba(0,255,159,.07); border:1px solid rgba(0,255,159,.25);
+  border-radius:5px; padding:.3rem .4rem;
+}
+.vr-legal.warn {
+  background:rgba(255,77,109,.07); border-color:rgba(255,77,109,.25);
+}
+.vr-legal-icon { font-size:.75rem; }
+.vr-legal-text { font-size:.55rem; color:var(--green); line-height:1.3; }
+.vr-legal.warn .vr-legal-text { color:var(--red); }
+.vr-actions { display:flex; gap:.4rem; margin-top:.5rem; }
+.vr-btn {
+  flex:1; padding:.35rem; border-radius:5px;
+  font-family:'Orbitron',sans-serif; font-size:.5rem; font-weight:700;
+  letter-spacing:.05em; cursor:pointer; border:none; text-align:center;
+}
+.vr-btn.primary { background:var(--cyan); color:#000; }
+.vr-btn.secondary { background:rgba(255,255,255,.07); color:var(--hint); border:1px solid rgba(255,255,255,.1); }
+
+/* ════════════════════════════════
+   ECRÃ 4 — LOGBOOK + PB
+════════════════════════════════ */
+.s4-bg { background:#000814; height:100%; overflow-y:auto; padding:.6rem .7rem; }
+.s4-top { display:flex; justify-content:space-between; align-items:center; margin-bottom:.5rem; }
+.s4-title { font-family:'Orbitron',sans-serif; font-size:.75rem; color:#fff; font-weight:700; }
+.add-btn {
+  width:20px; height:20px; border-radius:50%;
+  background:var(--cyan); border:none;
+  font-size:.75rem; color:#000; cursor:pointer;
+  display:flex; align-items:center; justify-content:center;
+}
+
+/* PB strip */
+.pb-strip { margin-bottom:.5rem; }
+.pb-label { font-family:'Share Tech Mono',monospace; font-size:.5rem; color:var(--amber); letter-spacing:.12em; margin-bottom:.3rem; }
+.pb-scroll { display:flex; gap:.35rem; overflow-x:auto; padding-bottom:.2rem; }
+.pb-scroll::-webkit-scrollbar { display:none; }
+.pb-card {
+  flex-shrink:0; width:65px;
+  background:rgba(243,198,77,.06);
+  border:1px solid rgba(243,198,77,.2);
+  border-radius:8px; padding:.4rem;
+  text-align:center;
+}
+.pb-fish { font-size:1rem; }
+.pb-species { font-size:.45rem; color:var(--hint); margin:.1rem 0; }
+.pb-weight { font-family:'Orbitron',sans-serif; font-size:.65rem; color:var(--amber); font-weight:700; }
+.pb-date { font-size:.42rem; color:var(--hint); }
+
+/* Catch log */
+.log-label { font-family:'Share Tech Mono',monospace; font-size:.5rem; color:var(--hint); letter-spacing:.12em; margin-bottom:.35rem; }
+.catch-card {
+  background:var(--bg3); border:1px solid rgba(255,255,255,.06);
+  border-radius:9px; padding:.5rem; margin-bottom:.35rem;
+  display:flex; align-items:center; gap:.5rem;
+}
+.catch-card.pb-record { border-color:rgba(243,198,77,.35); background:rgba(243,198,77,.04); }
+.cc-fish { font-size:1.1rem; }
+.cc-info { flex:1; }
+.cc-name { font-size:.6rem; color:#fff; font-weight:600; }
+.cc-meta { font-size:.5rem; color:var(--hint); }
+.cc-right { text-align:right; }
+.cc-weight { font-family:'Orbitron',sans-serif; font-size:.65rem; color:#fff; font-weight:700; }
+.cc-score { font-family:'Share Tech Mono',monospace; font-size:.48rem; color:var(--cyan); }
+.pb-crown { font-size:.65rem; }
+
+/* Share btn */
+.share-row { display:flex; gap:.35rem; margin-top:.5rem; }
+.share-btn {
+  flex:1; padding:.3rem; border-radius:5px; text-align:center;
+  font-family:'Share Tech Mono',monospace; font-size:.5rem;
+  cursor:pointer; border:none;
+}
+.share-btn.main { background:rgba(0,245,255,.1); color:var(--cyan); border:1px solid rgba(0,245,255,.25); }
+.share-btn.insta { background:rgba(255,255,255,.05); color:var(--hint); border:1px solid rgba(255,255,255,.1); }
+
+/* ════════════════════════════════
+   ECRÃ 5 — PERFIL + PLANOS
+════════════════════════════════ */
+.s5-bg { background:#000814; height:100%; overflow-y:auto; }
+.s5-hero {
+  background:linear-gradient(180deg, rgba(0,245,255,.06) 0%, transparent 100%);
+  padding:.8rem .7rem .5rem;
+  display:flex; align-items:center; gap:.6rem;
+  border-bottom:1px solid rgba(255,255,255,.05);
+}
+.avatar {
+  width:38px; height:38px; border-radius:50%;
+  background:linear-gradient(135deg, #071428, #0d2040);
+  border:1.5px solid rgba(0,245,255,.4);
+  display:flex; align-items:center; justify-content:center;
+  font-size:1rem;
+}
+.s5-name { font-family:'Orbitron',sans-serif; font-size:.7rem; color:#fff; font-weight:700; }
+.s5-plan {
+  font-family:'Share Tech Mono',monospace; font-size:.5rem;
+  color:var(--amber);
+  background:rgba(243,198,77,.1); border:1px solid rgba(243,198,77,.3);
+  padding:.1rem .35rem; border-radius:3px; display:inline-block; margin-top:.15rem;
+}
+.trial-banner {
+  margin:.5rem .7rem;
+  background:rgba(0,245,255,.06);
+  border:1px solid rgba(0,245,255,.25);
+  border-radius:8px;
+  padding:.45rem .6rem;
+  display:flex; align-items:center; gap:.4rem;
+}
+.tb-icon { font-size:.85rem; }
+.tb-text { font-size:.55rem; color:#fff; line-height:1.4; }
+.tb-text strong { color:var(--cyan); }
+.tb-cta {
+  margin-left:auto;
+  font-family:'Orbitron',sans-serif; font-size:.45rem; font-weight:700;
+  color:#000; background:var(--cyan);
+  padding:.2rem .4rem; border-radius:3px; white-space:nowrap;
+  cursor:pointer;
+}
+
+/* Stats */
+.s5-stats { display:grid; grid-template-columns:repeat(3,1fr); gap:.3rem; padding:.4rem .7rem; }
+.s5-stat {
+  background:var(--bg3); border:1px solid rgba(255,255,255,.05);
+  border-radius:7px; padding:.4rem .3rem; text-align:center;
+}
+.ss-val { font-family:'Orbitron',sans-serif; font-size:.75rem; color:var(--cyan); font-weight:900; }
+.ss-key { font-size:.45rem; color:var(--hint); }
+
+/* Plan cards */
+.s5-plans { padding:.4rem .7rem; }
+.sp-label { font-family:'Share Tech Mono',monospace; font-size:.5rem; color:var(--hint); letter-spacing:.12em; margin-bottom:.35rem; }
+.s5-plan-card {
+  border-radius:8px; padding:.5rem; margin-bottom:.35rem;
+  border:1px solid;
+}
+.spc-free  { background:var(--bg3); border-color:rgba(255,255,255,.08); }
+.spc-pro   { background:rgba(0,245,255,.05); border-color:rgba(0,245,255,.35); }
+.spc-elite { background:rgba(243,198,77,.05); border-color:rgba(243,198,77,.35); }
+.spc-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:.35rem; }
+.spc-name { font-family:'Orbitron',sans-serif; font-size:.6rem; font-weight:700; }
+.spc-free  .spc-name { color:var(--hint); }
+.spc-pro   .spc-name { color:var(--cyan); }
+.spc-elite .spc-name { color:var(--amber); }
+.spc-price { font-family:'Orbitron',sans-serif; font-size:.7rem; color:#fff; font-weight:900; }
+.spc-period { font-size:.48rem; color:var(--hint); }
+.spc-features { display:flex; flex-direction:column; gap:.15rem; margin-bottom:.4rem; }
+.spc-feat { font-size:.52rem; color:var(--hint); display:flex; align-items:center; gap:.3rem; }
+.spc-feat .f-icon { font-size:.55rem; }
+.spc-feat.on { color:#dde8f0; }
+.spc-btn {
+  width:100%; padding:.28rem; border-radius:4px;
+  font-family:'Orbitron',sans-serif; font-size:.5rem; font-weight:700;
+  letter-spacing:.05em; cursor:pointer; border:none;
+}
+.spc-btn.current { background:rgba(255,255,255,.06); color:var(--hint); border:1px solid rgba(255,255,255,.1); }
+.spc-btn.upgrade-pro   { background:var(--cyan); color:#000; }
+.spc-btn.upgrade-elite { background:var(--amber); color:#000; }
+
+/* ── BOTTOM NAV ── */
+.pnav-dot { width:3px; height:3px; border-radius:50%; background:var(--cyan); margin-top:.1rem; }
+
+/* ── CONNECTOR LABELS ── */
+.connector {
+  display:flex; flex-direction:column; align-items:center;
+  justify-content:center; gap:.4rem; padding-top:3rem;
+}
+.conn-arrow { font-size:1.4rem; color:rgba(0,245,255,.2); }
+.conn-label {
+  font-family:'Share Tech Mono',monospace; font-size:.62rem;
+  color:var(--hint); letter-spacing:.1em; text-align:center; max-width:80px;
+}
+
+/* ── FOOTER ── */
+.footer {
+  width:100%; text-align:center; padding:1.5rem;
+  border-top:1px solid rgba(255,255,255,.04);
+  font-family:'Share Tech Mono',monospace; font-size:.65rem; color:var(--hint);
+}
+.footer span { color:var(--cyan); }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo">AQUA<span>NAUTIX</span></div>
+  <div class="proto-tag">APP — 5 ECRÃS CORE</div>
+</div>
+
+<div class="scene">
+
+  <!-- ═══ ECRÃ 1 — ORÁCULO ═══ -->
+  <div class="phone-wrap">
+    <div class="phone">
+      <div class="phone-notch"></div>
+      <div class="phone-status"><span>09:42</span><span>▲▲▲ 5G 🔋</span></div>
+      <div class="phone-body">
+        <div class="s1-bg">
+          <div class="s1-top">
+            <div>
+              <div class="s1-greeting">BOM DIA, JOÃO</div>
+              <div class="s1-city">📍 Sesimbra</div>
+            </div>
+            <div class="s1-alert-btn">🔔</div>
+          </div>
+
+          <div class="score-hero">
+            <div class="mini-ring">
+              <svg viewBox="0 0 46 46">
+                <circle class="ring-track" cx="23" cy="23" r="18"/>
+                <circle class="ring-fill" cx="23" cy="23" r="18"/>
+              </svg>
+              <div class="ring-num">84</div>
+            </div>
+            <div class="score-info">
+              <div class="score-verdict">⚡ EXCELENTE</div>
+              <div class="score-desc">Maré vazante + lua crescente + vento NW fraco</div>
+              <div class="score-window">06:30 – 09:00</div>
+            </div>
+          </div>
+
+          <div class="data-strip">
+            <div class="ds-cell">
+              <div class="ds-icon">🌊</div>
+              <div class="ds-val">1.8m</div>
+              <div class="ds-key">MARÉ</div>
+            </div>
+            <div class="ds-cell">
+              <div class="ds-icon">💨</div>
+              <div class="ds-val">12km</div>
+              <div class="ds-key">VENTO</div>
+            </div>
+            <div class="ds-cell">
+              <div class="ds-icon">🌡️</div>
+              <div class="ds-val">17°C</div>
+              <div class="ds-key">ÁGUA</div>
+            </div>
+            <div class="ds-cell">
+              <div class="ds-icon">🌙</div>
+              <div class="ds-val">72%</div>
+              <div class="ds-key">LUA</div>
+            </div>
+          </div>
+
+          <div class="five-label">// PREVISÃO 5 DIAS</div>
+          <div class="five-row">
+            <div class="five-day best">
+              <div class="fd-d">HOJE</div>
+              <div class="fd-s">84</div>
+              <div class="fd-i">⚡</div>
+            </div>
+            <div class="five-day">
+              <div class="fd-d">SEX</div>
+              <div class="fd-s" style="color:#fff">71</div>
+              <div class="fd-i">🎣</div>
+            </div>
+            <div class="five-day">
+              <div class="fd-d">SÁB</div>
+              <div class="fd-s" style="color:var(--hint)">44</div>
+              <div class="fd-i">🌧️</div>
+            </div>
+            <div class="five-day">
+              <div class="fd-d">DOM</div>
+              <div class="fd-s" style="color:#fff">68</div>
+              <div class="fd-i">🎣</div>
+            </div>
+            <div class="five-day">
+              <div class="fd-d">SEG</div>
+              <div class="fd-s" style="color:var(--amber)">79</div>
+              <div class="fd-i">⭐</div>
+            </div>
+          </div>
+
+          <div class="gold-alert">
+            <div class="ga-icon">👑</div>
+            <div class="ga-text"><strong>Janela de Ouro</strong> amanhã 07:15 — Score 79 em Ericeira. Activa alertas PRO.</div>
+          </div>
+        </div>
+      </div>
+      <div class="phone-nav">
+        <div class="pnav-item active"><span class="ni">🎯</span><span>ORÁCULO</span><div class="pnav-dot"></div></div>
+        <div class="pnav-item"><span class="ni">🗺️</span><span>MAPA</span></div>
+        <div class="pnav-item"><span class="ni">📷</span><span>VISION</span></div>
+        <div class="pnav-item"><span class="ni">📖</span><span>LOG</span></div>
+        <div class="pnav-item"><span class="ni">👤</span><span>PERFIL</span></div>
+      </div>
+    </div>
+    <div class="screen-label"><strong>01 — ORÁCULO</strong>Dashboard principal · Score + Previsão 5 dias · Janela de Ouro</div>
+  </div>
+
+  <!-- ═══ ECRÃ 2 — MAPA ═══ -->
+  <div class="phone-wrap">
+    <div class="phone">
+      <div class="phone-notch"></div>
+      <div class="phone-status"><span>09:43</span><span>▲▲▲ 5G 🔋</span></div>
+      <div class="phone-body">
+        <div class="s2-bg">
+          <div class="map-placeholder">
+            <div class="map-grid"></div>
+            <div class="map-contours"></div>
+
+            <div class="map-score-chip">SCORE ÁREA: 84</div>
+
+            <!-- spots -->
+            <div class="map-spot" style="top:38%;left:28%">
+              <div class="spot-pin free">●</div>
+              <div class="spot-pin-label">Comporta</div>
+            </div>
+            <div class="map-spot" style="top:52%;left:45%">
+              <div class="spot-pin pro">★</div>
+              <div class="spot-pin-label">Espichel</div>
+            </div>
+            <div class="map-spot" style="top:25%;left:60%">
+              <div class="spot-pin pro">★</div>
+              <div class="spot-pin-label">Ericeira</div>
+            </div>
+            <div class="map-spot" style="top:65%;left:70%">
+              <div class="spot-pin elite">♛</div>
+              <div class="spot-pin-label">Elite #7</div>
+            </div>
+
+            <div class="map-controls">
+              <div class="mc-btn">+</div>
+              <div class="mc-btn">−</div>
+              <div class="mc-btn">🗺</div>
+              <div class="mc-btn">👻</div>
+            </div>
+          </div>
+
+          <div class="spots-drawer">
+            <div class="drawer-handle"></div>
+            <div class="drawer-title">SPOTS PRÓXIMOS</div>
+            <div class="spot-row">
+              <div class="sr-dot free"></div>
+              <div class="sr-info">
+                <div class="sr-name">Praia da Comporta</div>
+                <div class="sr-loc">Setúbal · FREE</div>
+              </div>
+              <div class="sr-score">71</div>
+            </div>
+            <div class="spot-row">
+              <div class="sr-dot pro"></div>
+              <div class="sr-info">
+                <div class="sr-name">Cabo Espichel N.</div>
+                <div class="sr-loc">Sesimbra · PRO <span class="ghost-chip">👻 GHOST</span></div>
+              </div>
+              <div class="sr-score">84</div>
+            </div>
+            <div class="spot-row">
+              <div class="sr-dot pro"></div>
+              <div class="sr-info">
+                <div class="sr-name">Pedra Branca</div>
+                <div class="sr-loc">Ericeira · PRO</div>
+              </div>
+              <div class="sr-score">68</div>
+            </div>
+            <div class="spot-row">
+              <div class="sr-dot locked"></div>
+              <div class="sr-info">
+                <div class="sr-name">Spot Secreto #ES-07</div>
+                <div class="sr-loc" style="color:var(--amber)">Costa Vicentina · ELITE</div>
+              </div>
+              <div class="sr-lock">🔒</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="phone-nav">
+        <div class="pnav-item"><span class="ni">🎯</span><span>ORÁCULO</span></div>
+        <div class="pnav-item active"><span class="ni">🗺️</span><span>MAPA</span><div class="pnav-dot"></div></div>
+        <div class="pnav-item"><span class="ni">📷</span><span>VISION</span></div>
+        <div class="pnav-item"><span class="ni">📖</span><span>LOG</span></div>
+        <div class="pnav-item"><span class="ni">👤</span><span>PERFIL</span></div>
+      </div>
+    </div>
+    <div class="screen-label"><strong>02 — MAPA + SPOTS</strong>Mapbox batimetria · Ghost Mode · Tiers FREE/PRO/Elite</div>
+  </div>
+
+  <!-- ═══ ECRÃ 3 — VISION ═══ -->
+  <div class="phone-wrap">
+    <div class="phone">
+      <div class="phone-notch"></div>
+      <div class="phone-status"><span>09:44</span><span>▲▲▲ 5G 🔋</span></div>
+      <div class="phone-body">
+        <div class="s3-bg">
+          <div class="scanner-area">
+            <div class="scanner-frame">
+              <div class="sf-corner sf-tl"></div>
+              <div class="sf-corner sf-tr"></div>
+              <div class="sf-corner sf-bl"></div>
+              <div class="sf-corner sf-br"></div>
+              <div class="fish-silhouette">🐟</div>
+              <div class="scan-line"></div>
+            </div>
+            <div class="scanner-label">APONTAR PARA O PEIXE</div>
+            <div class="scan-source">
+              <div class="scan-src-btn">📷 CÂMARA</div>
+              <div class="scan-src-btn">🖼️ GALERIA</div>
+            </div>
+            <button class="scan-btn">📷</button>
+          </div>
+
+          <div class="vision-result">
+            <div class="vr-label">// ÚLTIMO RESULTADO</div>
+            <div class="vr-card">
+              <div class="vr-header">
+                <div class="vr-fish-icon">🐟</div>
+                <div>
+                  <div class="vr-name">Robalo Europeu</div>
+                  <div class="vr-sci">Dicentrarchus labrax</div>
+                </div>
+                <div class="vr-conf">98% conf.</div>
+              </div>
+              <div class="vr-rows">
+                <div class="vr-row">
+                  <span class="vr-key">Comprimento estimado</span>
+                  <span class="vr-val">42 cm</span>
+                </div>
+                <div class="vr-row">
+                  <span class="vr-key">Peso estimado</span>
+                  <span class="vr-val">~1.2 kg</span>
+                </div>
+                <div class="vr-row">
+                  <span class="vr-key">Mínimo legal PT</span>
+                  <span class="vr-val">36 cm ✓</span>
+                </div>
+                <div class="vr-row">
+                  <span class="vr-key">Isco ideal</span>
+                  <span class="vr-val">Shad 10–14cm</span>
+                </div>
+              </div>
+              <div class="vr-legal">
+                <div class="vr-legal-icon">✅</div>
+                <div class="vr-legal-text">Dentro do tamanho legal em Portugal e Espanha. Pode guardar.</div>
+              </div>
+              <div class="vr-actions">
+                <div class="vr-btn primary">GUARDAR LOG</div>
+                <div class="vr-btn secondary">PARTILHAR</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="phone-nav">
+        <div class="pnav-item"><span class="ni">🎯</span><span>ORÁCULO</span></div>
+        <div class="pnav-item"><span class="ni">🗺️</span><span>MAPA</span></div>
+        <div class="pnav-item active"><span class="ni">📷</span><span>VISION</span><div class="pnav-dot"></div></div>
+        <div class="pnav-item"><span class="ni">📖</span><span>LOG</span></div>
+        <div class="pnav-item"><span class="ni">👤</span><span>PERFIL</span></div>
+      </div>
+    </div>
+    <div class="screen-label"><strong>03 — VISION SCANNER</strong>IA identifica espécie · compliance PT/ES · isco ideal</div>
+  </div>
+
+  <!-- ═══ ECRÃ 4 — LOGBOOK ═══ -->
+  <div class="phone-wrap">
+    <div class="phone">
+      <div class="phone-notch"></div>
+      <div class="phone-status"><span>09:45</span><span>▲▲▲ 5G 🔋</span></div>
+      <div class="phone-body">
+        <div class="s4-bg">
+          <div class="s4-top">
+            <div class="s4-title">LOGBOOK</div>
+            <button class="add-btn">+</button>
+          </div>
+
+          <div class="pb-strip">
+            <div class="pb-label">// RECORDES PESSOAIS</div>
+            <div class="pb-scroll">
+              <div class="pb-card">
+                <div class="pb-fish">🐟</div>
+                <div class="pb-species">Robalo</div>
+                <div class="pb-weight">4.2kg</div>
+                <div class="pb-date">Mar 2026</div>
+              </div>
+              <div class="pb-card">
+                <div class="pb-fish">🐠</div>
+                <div class="pb-species">Dourada</div>
+                <div class="pb-weight">2.8kg</div>
+                <div class="pb-date">Jan 2026</div>
+              </div>
+              <div class="pb-card">
+                <div class="pb-fish">🦈</div>
+                <div class="pb-species">Pargo</div>
+                <div class="pb-weight">6.1kg</div>
+                <div class="pb-date">Dez 2025</div>
+              </div>
+              <div class="pb-card">
+                <div class="pb-fish">🐡</div>
+                <div class="pb-species">Garoupa</div>
+                <div class="pb-weight">3.4kg</div>
+                <div class="pb-date">Nov 2025</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="log-label">// ÚLTIMAS CAPTURAS</div>
+
+          <div class="catch-card pb-record">
+            <div class="cc-fish">🐟</div>
+            <div class="cc-info">
+              <div class="cc-name">Robalo Europeu <span class="pb-crown">👑</span></div>
+              <div class="cc-meta">Cabo Espichel · Shad 14cm · 17 Abr</div>
+            </div>
+            <div class="cc-right">
+              <div class="cc-weight">4.2kg</div>
+              <div class="cc-score">RECORDE!</div>
+            </div>
+          </div>
+
+          <div class="catch-card">
+            <div class="cc-fish">🐠</div>
+            <div class="cc-info">
+              <div class="cc-name">Dourada</div>
+              <div class="cc-meta">Comporta · Minhoca · 14 Abr</div>
+            </div>
+            <div class="cc-right">
+              <div class="cc-weight">1.8kg</div>
+              <div class="cc-score">Score 71</div>
+            </div>
+          </div>
+
+          <div class="catch-card">
+            <div class="cc-fish">🐡</div>
+            <div class="cc-info">
+              <div class="cc-name">Garoupa</div>
+              <div class="cc-meta">Espichel Norte · Jig · 10 Abr</div>
+            </div>
+            <div class="cc-right">
+              <div class="cc-weight">2.1kg</div>
+              <div class="cc-score">Score 84</div>
+            </div>
+          </div>
+
+          <div class="share-row">
+            <div class="share-btn main">📤 EXPORTAR</div>
+            <div class="share-btn insta">📸 PARTILHAR</div>
+          </div>
+        </div>
+      </div>
+      <div class="phone-nav">
+        <div class="pnav-item"><span class="ni">🎯</span><span>ORÁCULO</span></div>
+        <div class="pnav-item"><span class="ni">🗺️</span><span>MAPA</span></div>
+        <div class="pnav-item"><span class="ni">📷</span><span>VISION</span></div>
+        <div class="pnav-item active"><span class="ni">📖</span><span>LOG</span><div class="pnav-dot"></div></div>
+        <div class="pnav-item"><span class="ni">👤</span><span>PERFIL</span></div>
+      </div>
+    </div>
+    <div class="screen-label"><strong>04 — LOGBOOK + PB</strong>Recordes pessoais · Histórico · Partilha com watermark</div>
+  </div>
+
+  <!-- ═══ ECRÃ 5 — PERFIL ═══ -->
+  <div class="phone-wrap">
+    <div class="phone">
+      <div class="phone-notch"></div>
+      <div class="phone-status"><span>09:46</span><span>▲▲▲ 5G 🔋</span></div>
+      <div class="phone-body">
+        <div class="s5-bg">
+          <div class="s5-hero">
+            <div class="avatar">🎣</div>
+            <div>
+              <div class="s5-name">João Henriques</div>
+              <div class="s5-plan">TRIAL — 2 DIAS RESTANTES</div>
+            </div>
+          </div>
+
+          <div class="trial-banner">
+            <div class="tb-icon">⏱️</div>
+            <div class="tb-text"><strong>Trial a terminar em 2 dias.</strong> Garante o PRO e não percas o Oráculo.</div>
+            <div class="tb-cta">PRO →</div>
+          </div>
+
+          <div class="s5-stats">
+            <div class="s5-stat">
+              <div class="ss-val">23</div>
+              <div class="ss-key">SESSÕES</div>
+            </div>
+            <div class="s5-stat">
+              <div class="ss-val">41</div>
+              <div class="ss-key">CAPTURAS</div>
+            </div>
+            <div class="s5-stat">
+              <div class="ss-val">4.2kg</div>
+              <div class="ss-key">MAIOR PB</div>
+            </div>
+          </div>
+
+          <div class="s5-plans">
+            <div class="sp-label">// PLANOS</div>
+
+            <div class="s5-plan-card spc-free">
+              <div class="spc-header">
+                <div class="spc-name">FREE</div>
+                <div><span class="spc-price">€0</span></div>
+              </div>
+              <div class="spc-features">
+                <div class="spc-feat on"><span class="f-icon">✓</span> 1 spot · previsão básica</div>
+                <div class="spc-feat"><span class="f-icon">✗</span> Oráculo completo</div>
+                <div class="spc-feat"><span class="f-icon">✗</span> Alertas push</div>
+              </div>
+              <button class="spc-btn current">PLANO ACTUAL</button>
+            </div>
+
+            <div class="s5-plan-card spc-pro">
+              <div class="spc-header">
+                <div class="spc-name">PRO</div>
+                <div><span class="spc-price">€9</span><span class="spc-period">.99/mês</span></div>
+              </div>
+              <div class="spc-features">
+                <div class="spc-feat on"><span class="f-icon">✓</span> Oráculo completo + dados reais</div>
+                <div class="spc-feat on"><span class="f-icon">✓</span> Todos os spots PT + ES</div>
+                <div class="spc-feat on"><span class="f-icon">✓</span> Alertas push + previsão 5 dias</div>
+              </div>
+              <button class="spc-btn upgrade-pro">UPGRADE PRO →</button>
+            </div>
+
+            <div class="s5-plan-card spc-elite">
+              <div class="spc-header">
+                <div class="spc-name">ELITE</div>
+                <div><span class="spc-price">€19</span><span class="spc-period">.99/mês</span></div>
+              </div>
+              <div class="spc-features">
+                <div class="spc-feat on"><span class="f-icon">✓</span> Spots Elite verificados (Ghost Mode activo)</div>
+                <div class="spc-feat on"><span class="f-icon">✓</span> IA personalizada + relatórios</div>
+                <div class="spc-feat on"><span class="f-icon">✓</span> Alertas prioritários em tempo real</div>
+              </div>
+              <button class="spc-btn upgrade-elite">TORNAR-ME ELITE →</button>
+            </div>
+
+          </div>
+        </div>
+      </div>
+      <div class="phone-nav">
+        <div class="pnav-item"><span class="ni">🎯</span><span>ORÁCULO</span></div>
+        <div class="pnav-item"><span class="ni">🗺️</span><span>MAPA</span></div>
+        <div class="pnav-item"><span class="ni">📷</span><span>VISION</span></div>
+        <div class="pnav-item"><span class="ni">📖</span><span>LOG</span></div>
+        <div class="pnav-item active"><span class="ni">👤</span><span>PERFIL</span><div class="pnav-dot"></div></div>
+      </div>
+    </div>
+    <div class="screen-label"><strong>05 — PERFIL + PLANOS</strong>Trial 2 dias · Stats · Upgrade PRO/Elite</div>
+  </div>
+
+</div>
+
+<div class="footer">
+  AQUANAUTIX · ESTRUTURA APP 5 ECRÃS · <span>MIDNIGHT DEEP SEA</span> · Orbitron · IBM Plex Sans
+</div>
+
+</body>
+</html>
