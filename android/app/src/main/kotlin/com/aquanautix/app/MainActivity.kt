@@ -1,4 +1,4 @@
-package com.example.aquanautix
+package com.aquanautix.app
 
 import io.flutter.embedding.android.FlutterActivity
 
