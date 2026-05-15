@@ -531,17 +531,24 @@ class _LoginModuleScreenState extends State<LoginModuleScreen> {
   Future<void> _signInWithGoogle() async {
     try {
       setState(() => _loading = true);
-      final rawNonce = Supabase.instance.client.auth.generateRawNonce();
       final googleUser = await GoogleSignIn(
         scopes: ['email', 'profile'],
+        serverClientId: '141446877512-0ibqum1ik8hkpao5mquohe14eu42kmtb.apps.googleusercontent.com',
       ).signIn();
       if (googleUser == null) return;
       final googleAuth = await googleUser.authentication;
+      if (googleAuth.idToken == null) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Google Sign-In: idToken não disponível. Configura o Web Client ID.')),
+          );
+        }
+        return;
+      }
       await Supabase.instance.client.auth.signInWithIdToken(
         provider: OAuthProvider.google,
         idToken: googleAuth.idToken!,
         accessToken: googleAuth.accessToken,
-        nonce: rawNonce,
       );
       if (mounted) {
         Navigator.pushReplacement(
