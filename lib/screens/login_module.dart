@@ -567,9 +567,11 @@ class _LoginModuleScreenState extends State<LoginModuleScreen> {
   }
 
   void _enterAsGuest() {
-    _showSnack('Modo convidado ativo.');
     if (!mounted) return;
-    Navigator.of(context).pop();
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (_) => const AquanautixHome()),
+    );
   }
 
   void _refreshSessionState() {
