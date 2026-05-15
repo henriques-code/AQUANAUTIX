@@ -529,28 +529,32 @@ class _LoginModuleScreenState extends State<LoginModuleScreen> {
   }
 
   Future<void> _signInWithGoogle() async {
-    final client = _ensureClient();
-    if (client == null) return;
-    setState(() => _loading = true);
     try {
-      final googleSignIn = GoogleSignIn();
-      final googleUser = await googleSignIn.signIn();
-      if (googleUser == null) return; // utilizador cancelou
+      setState(() => _loading = true);
+      final rawNonce = Supabase.instance.client.auth.generateRawNonce();
+      final googleUser = await GoogleSignIn(
+        scopes: ['email', 'profile'],
+      ).signIn();
+      if (googleUser == null) return;
       final googleAuth = await googleUser.authentication;
-      await client.auth.signInWithIdToken(
+      await Supabase.instance.client.auth.signInWithIdToken(
         provider: OAuthProvider.google,
         idToken: googleAuth.idToken!,
         accessToken: googleAuth.accessToken,
+        nonce: rawNonce,
       );
-      if (!mounted) return;
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const AquanautixHome()),
-      );
-    } on AuthException catch (e) {
-      _showSnack(e.message);
+      if (mounted) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const AquanautixHome()),
+        );
+      }
     } catch (e) {
-      _showSnack('Falha no Google Sign-In: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erro Google: $e')),
+        );
+      }
     } finally {
       if (mounted) setState(() => _loading = false);
     }
