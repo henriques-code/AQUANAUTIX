@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/l10n/aqx_l10n.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/widgets/aqua_card.dart';
 import '../../domain/entities/weather_data.dart';
@@ -82,8 +83,67 @@ class WeatherCard extends StatelessWidget {
               ),
             ],
           ),
+          const SizedBox(height: AppSpacing.sm),
+          Divider(height: 1, color: AppColors.accent.withValues(alpha: 0.10)),
+          const SizedBox(height: 10),
+          _SolunarBar(score: weather.solunarScore, label: t.homeStatSolunar, qualityLabel: t.scoreLabel(weather.solunarScore)),
         ],
       ),
+    );
+  }
+}
+
+class _SolunarBar extends StatelessWidget {
+  const _SolunarBar({
+    required this.score,
+    required this.label,
+    required this.qualityLabel,
+  });
+
+  final int score;
+  final String label;
+  final String qualityLabel;
+
+  Color get _barColor {
+    if (score >= 75) return const Color(0xFFF3C64D);
+    if (score >= 50) return AppColors.accent;
+    return AppColors.accent.withValues(alpha: 0.45);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final fraction = (score / 100).clamp(0.0, 1.0);
+    return Row(
+      children: [
+        Icon(Icons.auto_awesome_rounded, size: 13, color: _barColor),
+        const SizedBox(width: 5),
+        Text(
+          label.toUpperCase(),
+          style: AppTextStyles.ibmSans(10, color: AppColors.textSecondary, fw: FontWeight.w600),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(3),
+            child: LinearProgressIndicator(
+              value: fraction,
+              minHeight: 5,
+              backgroundColor: AppColors.accent.withValues(alpha: 0.12),
+              valueColor: AlwaysStoppedAnimation<Color>(_barColor),
+            ),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Text(
+          '$score',
+          style: AppTextStyles.orbitron(13, fw: FontWeight.w700),
+        ),
+        const SizedBox(width: 4),
+        Text(
+          qualityLabel,
+          style: AppTextStyles.ibmSans(10, color: _barColor, fw: FontWeight.w600),
+        ),
+      ],
     );
   }
 }

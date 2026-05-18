@@ -1,5 +1,6 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../core/tides/moon_phase.dart';
 import '../domain/entities/community_activity.dart';
 import '../domain/entities/featured_spot.dart';
 import '../domain/entities/hourly_condition.dart';
@@ -17,7 +18,7 @@ class HomeRepositoryImpl implements HomeRepository {
     final now = DateTime.now();
     return HomeDashboardData(
       userDisplayName: _getUserDisplayName(),
-      weather: const WeatherData(
+      weather: WeatherData(
         location: 'Cascais, Portugal',
         temperature: 18,
         condition: 'Céu limpo',
@@ -28,6 +29,7 @@ class HomeRepositoryImpl implements HomeRepository {
         tideRising: true,
         moonPhase: 'Crescente',
         moonIcon: '🌙',
+        solunarScore: (moonFishingFactor(now) * 100).round(),
       ),
       hourlyConditions: const [
         HourlyCondition(hour: '07:00', weatherIcon: '☀️', temperature: 18),

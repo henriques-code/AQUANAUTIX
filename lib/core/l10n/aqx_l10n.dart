@@ -199,6 +199,7 @@ class AqxL10n {
   String get homeStatWaves => es ? 'Oleaje' : 'Ondas';
   String get homeStatTide => es ? 'Marea' : 'Maré';
   String get homeStatMoon => es ? 'Luna' : 'Lua';
+  String get homeStatSolunar => es ? 'Actividad Solunar' : 'Actividade Solunar';
 
   /// Saudação dinâmica (hora local) + emoji, alinhada ao mockup Início.
   String homeGreetingLine(int hour) {

@@ -10,6 +10,7 @@ class WeatherData {
     required this.tideRising,
     required this.moonPhase,
     required this.moonIcon,
+    this.solunarScore = 0,
   });
 
   final String location;
@@ -22,4 +23,5 @@ class WeatherData {
   final bool tideRising;
   final String moonPhase;
   final String moonIcon;
+  final int solunarScore;
 }
