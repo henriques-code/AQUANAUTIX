@@ -24,7 +24,6 @@ class _LoginModuleScreenState extends State<LoginModuleScreen> {
   bool _showPassword = false;
   bool _rememberMe = true;
   bool _loading = false;
-  bool _sessionActive = false;
 
   VideoPlayerController? _video;
 
@@ -39,8 +38,20 @@ class _LoginModuleScreenState extends State<LoginModuleScreen> {
   @override
   void initState() {
     super.initState();
-    _refreshSessionState();
+    unawaited(_checkExistingSession());
     unawaited(_initVideo());
+  }
+
+  Future<void> _checkExistingSession() async {
+    await Future.delayed(Duration.zero);
+    if (!mounted) return;
+    final session = Supabase.instance.client.auth.currentSession;
+    if (session != null) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const AquanautixHome()),
+      );
+    }
   }
 
   Future<void> _initVideo() async {
@@ -96,23 +107,6 @@ class _LoginModuleScreenState extends State<LoginModuleScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  if (_sessionActive) ...[
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                      margin: const EdgeInsets.only(bottom: 12),
-                      decoration: BoxDecoration(
-                        color: kGreen.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: kGreen.withValues(alpha: 0.45)),
-                      ),
-                      child: Text(
-                        'SESSÃO ATIVA · ${supabaseCurrentUserEmail ?? 'UTILIZADOR'}',
-                        style: mono(9, c: kGreen, ls: 0.8),
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
-                  ],
                   Text(
                     'AQUANAUTIX',
                     style: GoogleFonts.orbitron(
@@ -287,7 +281,7 @@ class _LoginModuleScreenState extends State<LoginModuleScreen> {
                     children: [
                       Expanded(
                         child: GestureDetector(
-                          onTap: _loading ? null : _signUp,
+                          onTap: _loading ? null : _showRegisterDialog,
                           child: Text.rich(
                             TextSpan(
                               style: ibm(12, c: Colors.white54),
@@ -303,7 +297,7 @@ class _LoginModuleScreenState extends State<LoginModuleScreen> {
                         ),
                       ),
                       GestureDetector(
-                        onTap: _loading ? null : _recoverPassword,
+                        onTap: _loading ? null : _showResetPasswordDialog,
                         child: Text('Recuperar password', style: ibm(12, c: _cyan, fw: FontWeight.w600)),
                       ),
                     ],
@@ -486,61 +480,281 @@ class _LoginModuleScreenState extends State<LoginModuleScreen> {
     }
   }
 
-  Future<void> _signUp() async {
-    final validationError = _validateInputs(requirePassword: true);
-    if (validationError != null) {
-      _showSnack(validationError);
-      return;
-    }
+  void _showRegisterDialog() {
+    final emailCtrl = TextEditingController();
+    final passCtrl = TextEditingController();
+    final confirmCtrl = TextEditingController();
 
-    final client = _ensureClient();
-    if (client == null) {
-      _enterAsGuest();
-      return;
-    }
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: const Color(0xFF0A1628),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) {
+        bool loading = false;
+        bool showPass = false;
+        bool showConfirm = false;
 
-    setState(() => _loading = true);
-    try {
-      final response = await client.auth.signUp(
-        email: _emailCtrl.text.trim(),
-        password: _passwordCtrl.text,
-        emailRedirectTo: null,
-      );
-      if (response.user == null) throw Exception('Registo falhou');
-      _showSnack('Conta criada. Confirma o teu email para continuar.');
-    } on AuthException catch (e) {
-      _showSnack(e.message);
-    } catch (e) {
-      _showSnack('Falha ao criar conta.');
-    } finally {
-      if (mounted) setState(() => _loading = false);
-    }
+        return StatefulBuilder(
+          builder: (ctx, setModalState) => Padding(
+            padding: EdgeInsets.only(
+              left: 24, right: 24, top: 24,
+              bottom: MediaQuery.of(ctx).viewInsets.bottom + 24,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('CRIAR CONTA',
+                    style: GoogleFonts.orbitron(fontSize: 16, color: kCyan, letterSpacing: 2)),
+                const SizedBox(height: 20),
+                TextField(
+                  controller: emailCtrl,
+                  keyboardType: TextInputType.emailAddress,
+                  style: const TextStyle(color: Colors.white),
+                  decoration: InputDecoration(
+                    labelText: 'EMAIL',
+                    labelStyle: const TextStyle(color: Colors.white70, fontSize: 11),
+                    enabledBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: kCyan.withValues(alpha: 0.4)),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderSide: const BorderSide(color: kCyan),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: passCtrl,
+                  obscureText: !showPass,
+                  style: const TextStyle(color: Colors.white),
+                  decoration: InputDecoration(
+                    labelText: 'PASSWORD',
+                    labelStyle: const TextStyle(color: Colors.white70, fontSize: 11),
+                    enabledBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: kCyan.withValues(alpha: 0.4)),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderSide: const BorderSide(color: kCyan),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    suffixIcon: IconButton(
+                      icon: Icon(showPass ? Icons.visibility_off : Icons.visibility,
+                          color: Colors.white54, size: 20),
+                      onPressed: () => setModalState(() => showPass = !showPass),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: confirmCtrl,
+                  obscureText: !showConfirm,
+                  style: const TextStyle(color: Colors.white),
+                  decoration: InputDecoration(
+                    labelText: 'CONFIRMAR PASSWORD',
+                    labelStyle: const TextStyle(color: Colors.white70, fontSize: 11),
+                    enabledBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: kCyan.withValues(alpha: 0.4)),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderSide: const BorderSide(color: kCyan),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    suffixIcon: IconButton(
+                      icon: Icon(showConfirm ? Icons.visibility_off : Icons.visibility,
+                          color: Colors.white54, size: 20),
+                      onPressed: () => setModalState(() => showConfirm = !showConfirm),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: kCyan,
+                      foregroundColor: Colors.black,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    onPressed: loading ? null : () async {
+                      if (emailCtrl.text.trim().isEmpty) {
+                        _showSnack('Insere o teu email.');
+                        return;
+                      }
+                      if (passCtrl.text.length < 6) {
+                        _showSnack('Password deve ter pelo menos 6 caracteres.');
+                        return;
+                      }
+                      if (passCtrl.text != confirmCtrl.text) {
+                        _showSnack('As passwords não coincidem.');
+                        return;
+                      }
+                      setModalState(() => loading = true);
+                      try {
+                        final response = await Supabase.instance.client.auth.signUp(
+                          email: emailCtrl.text.trim(),
+                          password: passCtrl.text,
+                          emailRedirectTo: null,
+                        );
+                        debugPrint('[REGISTER] user: ${response.user?.email}');
+                        if (!ctx.mounted) return;
+                        Navigator.pop(ctx);
+                        _showSnack('Conta criada! Verifica o teu email para confirmar.');
+                      } on AuthException catch (e) {
+                        debugPrint('[REGISTER] AuthException: ${e.message}');
+                        _showSnack(_translateAuthError(e.message));
+                      } catch (e) {
+                        debugPrint('[REGISTER] Error: $e');
+                        _showSnack('Erro ao criar conta: $e');
+                      } finally {
+                        if (ctx.mounted) setModalState(() => loading = false);
+                      }
+                    },
+                    child: loading
+                        ? const SizedBox(height: 18, width: 18,
+                            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black))
+                        : Text('CRIAR CONTA',
+                            style: GoogleFonts.orbitron(fontSize: 12, letterSpacing: 1.5)),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
   }
 
-  Future<void> _recoverPassword() async {
-    final validationError = _validateInputs(requirePassword: false);
-    if (validationError != null) {
-      _showSnack(validationError);
-      return;
-    }
+  void _showResetPasswordDialog() {
+    final emailCtrl = TextEditingController(text: _emailCtrl.text.trim());
 
-    final client = _ensureClient();
-    if (client == null) return;
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: const Color(0xFF0A1628),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) {
+        bool loading = false;
+        bool sent = false;
 
-    setState(() => _loading = true);
-    try {
-      await client.auth.resetPasswordForEmail(
-        _emailCtrl.text.trim(),
-        redirectTo: resetRedirectUrl,
-      );
-      _showSnack('Email de recuperação enviado.');
-    } on AuthException catch (e) {
-      _showSnack(e.message);
-    } catch (_) {
-      _showSnack('Falha ao enviar recuperação.');
-    } finally {
-      if (mounted) setState(() => _loading = false);
-    }
+        return StatefulBuilder(
+          builder: (ctx, setModalState) => Padding(
+            padding: EdgeInsets.only(
+              left: 24, right: 24, top: 24,
+              bottom: MediaQuery.of(ctx).viewInsets.bottom + 24,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('RECUPERAR PASSWORD',
+                    style: GoogleFonts.orbitron(fontSize: 14, color: kCyan, letterSpacing: 1.5)),
+                const SizedBox(height: 8),
+                const Text(
+                  'Insere o teu email e recebes um link para redefinir a password.',
+                  style: TextStyle(color: Colors.white60, fontSize: 12),
+                ),
+                const SizedBox(height: 20),
+                TextField(
+                  controller: emailCtrl,
+                  keyboardType: TextInputType.emailAddress,
+                  enabled: !sent,
+                  style: const TextStyle(color: Colors.white),
+                  decoration: InputDecoration(
+                    labelText: 'EMAIL',
+                    labelStyle: const TextStyle(color: Colors.white70, fontSize: 11),
+                    enabledBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: kCyan.withValues(alpha: 0.4)),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderSide: const BorderSide(color: kCyan),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    disabledBorder: OutlineInputBorder(
+                      borderSide: const BorderSide(color: Colors.white24),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                if (sent)
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.green.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: Colors.green.withValues(alpha: 0.4)),
+                    ),
+                    child: const Text(
+                      '✓ Email enviado! Verifica a tua caixa de entrada.',
+                      style: TextStyle(color: Colors.greenAccent, fontSize: 12),
+                      textAlign: TextAlign.center,
+                    ),
+                  )
+                else
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: kCyan,
+                        foregroundColor: Colors.black,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                      onPressed: loading ? null : () async {
+                        final email = emailCtrl.text.trim();
+                        if (email.isEmpty) {
+                          _showSnack('Insere o teu email.');
+                          return;
+                        }
+                        setModalState(() => loading = true);
+                        try {
+                          await Supabase.instance.client.auth.resetPasswordForEmail(
+                            email,
+                            redirectTo: null,
+                          );
+                          if (ctx.mounted) {
+                            setModalState(() { loading = false; sent = true; });
+                          }
+                        } on AuthException catch (e) {
+                          debugPrint('[RESET] AuthException: ${e.message}');
+                          if (ctx.mounted) {
+                            _showSnack(_translateAuthError(e.message));
+                            setModalState(() => loading = false);
+                          }
+                        } catch (e) {
+                          debugPrint('[RESET] Error: $e');
+                          if (ctx.mounted) {
+                            _showSnack('Erro ao enviar email.');
+                            setModalState(() => loading = false);
+                          }
+                        }
+                      },
+                      child: loading
+                          ? const SizedBox(height: 18, width: 18,
+                              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black))
+                          : Text('ENVIAR LINK',
+                              style: GoogleFonts.orbitron(fontSize: 12, letterSpacing: 1.5)),
+                    ),
+                  ),
+                const SizedBox(height: 8),
+              ],
+            ),
+          ),
+        );
+      },
+    );
   }
 
   Future<void> _signInWithGoogle() async {
@@ -637,12 +851,6 @@ class _LoginModuleScreenState extends State<LoginModuleScreen> {
     );
   }
 
-  void _refreshSessionState() {
-    if (!mounted) return;
-    setState(() {
-      _sessionActive = isSupabaseAuthenticated;
-    });
-  }
 }
 
 /// Ícone Google — paths SVG oficiais (viewBox 24×24) escalados para o canvas.
