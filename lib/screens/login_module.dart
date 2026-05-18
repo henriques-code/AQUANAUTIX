@@ -443,6 +443,9 @@ class _LoginModuleScreenState extends State<LoginModuleScreen> {
   }
 
   Future<void> _signIn() async {
+    // DEBUG — remover antes de produção
+    debugPrint('[AUTH] _signIn called — email: ${_emailCtrl.text.trim()}');
+
     final validationError = _validateInputs(requirePassword: true);
     if (validationError != null) {
       _showSnack(validationError);
@@ -457,16 +460,23 @@ class _LoginModuleScreenState extends State<LoginModuleScreen> {
 
     setState(() => _loading = true);
     try {
-      await client.auth.signInWithPassword(
+      final response = await client.auth.signInWithPassword(
         email: _emailCtrl.text.trim(),
         password: _passwordCtrl.text,
       );
-      _refreshSessionState();
-      _showSnack('Sessão iniciada com sucesso.');
+      debugPrint('[AUTH] signInWithPassword result — user: ${response.user?.email}');
+      if (mounted) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const AquanautixHome()),
+        );
+      }
     } on AuthException catch (e) {
-      _showSnack(e.message);
-    } catch (_) {
-      _showSnack('Falha ao iniciar sessão.');
+      debugPrint('[AUTH] AuthException: ${e.message} | statusCode: ${e.statusCode}');
+      _showSnack(_translateAuthError(e.message));
+    } catch (e) {
+      debugPrint('[AUTH] Unexpected error: $e');
+      _showSnack('Erro inesperado: $e');
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -487,15 +497,16 @@ class _LoginModuleScreenState extends State<LoginModuleScreen> {
 
     setState(() => _loading = true);
     try {
-      await client.auth.signUp(
+      final response = await client.auth.signUp(
         email: _emailCtrl.text.trim(),
         password: _passwordCtrl.text,
+        emailRedirectTo: null,
       );
-      _refreshSessionState();
-      _showSnack('Conta criada. Verifica o email para confirmação.');
+      if (response.user == null) throw Exception('Registo falhou');
+      _showSnack('Conta criada. Confirma o teu email para continuar.');
     } on AuthException catch (e) {
       _showSnack(e.message);
-    } catch (_) {
+    } catch (e) {
       _showSnack('Falha ao criar conta.');
     } finally {
       if (mounted) setState(() => _loading = false);
@@ -529,20 +540,19 @@ class _LoginModuleScreenState extends State<LoginModuleScreen> {
   }
 
   Future<void> _signInWithGoogle() async {
+    setState(() => _loading = true);
     try {
-      setState(() => _loading = true);
-      final googleUser = await GoogleSignIn(
-        scopes: ['email', 'profile'],
+      final gsi = GoogleSignIn(
+        clientId: '141446877512-vjt42b2otvsch6292i2mrb129koko7jj.apps.googleusercontent.com',
         serverClientId: '141446877512-0ibqum1ik8hkpao5mquohe14eu42kmtb.apps.googleusercontent.com',
-      ).signIn();
+        scopes: ['email'],
+      );
+      await gsi.signOut(); // força o picker a aparecer sempre
+      final googleUser = await gsi.signIn();
       if (googleUser == null) return;
       final googleAuth = await googleUser.authentication;
       if (googleAuth.idToken == null) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Google Sign-In: idToken não disponível. Configura o Web Client ID.')),
-          );
-        }
+        _showSnack('Google Sign-In: idToken não disponível.');
         return;
       }
       await Supabase.instance.client.auth.signInWithIdToken(
@@ -557,14 +567,30 @@ class _LoginModuleScreenState extends State<LoginModuleScreen> {
         );
       }
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erro Google: $e')),
-        );
-      }
+      _showSnack('Erro Google: $e');
     } finally {
       if (mounted) setState(() => _loading = false);
     }
+  }
+
+  String _translateAuthError(String supabaseMsg) {
+    final msg = supabaseMsg.toLowerCase();
+    if (msg.contains('email not confirmed')) {
+      return 'Email não confirmado. Verifica a tua caixa de entrada.';
+    }
+    if (msg.contains('invalid login credentials') || msg.contains('invalid password')) {
+      return 'Email ou password incorrectos.';
+    }
+    if (msg.contains('user not found')) {
+      return 'Conta não encontrada. Faz registo primeiro.';
+    }
+    if (msg.contains('too many requests') || msg.contains('rate limit')) {
+      return 'Demasiadas tentativas. Aguarda alguns minutos.';
+    }
+    if (msg.contains('network') || msg.contains('connection')) {
+      return 'Sem ligação à internet. Verifica a tua rede.';
+    }
+    return supabaseMsg;
   }
 
   void _showSnack(String msg) {

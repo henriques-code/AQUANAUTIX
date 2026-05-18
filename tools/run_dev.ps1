@@ -48,6 +48,12 @@ if ($mapboxDownloadsToken) {
     $env:MAPBOX_DOWNLOADS_TOKEN = $mapboxDownloadsToken
 }
 
+# Garante que o ADB (Android SDK platform-tools) está no PATH
+$adbPath = "$env:LOCALAPPDATA\Android\Sdk\platform-tools"
+if ((Test-Path $adbPath) -and ($env:PATH -notlike "*platform-tools*")) {
+    $env:PATH += ";$adbPath"
+}
+
 $deviceFlag = if ($d) { @("-d", $d) } else { @() }
 
 Write-Host "▶  flutter run $($deviceFlag -join ' ') [+ dart-defines]" -ForegroundColor Cyan
