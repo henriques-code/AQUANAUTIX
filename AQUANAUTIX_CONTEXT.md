@@ -1,6 +1,6 @@
 # AQUANAUTIX — Central de contexto
 
-**Última revisão estrutural:** Maio 2026 (alinhar com `lib/screens` + `lib/core`).
+**Última revisão estrutural:** 15 Mai 2026 — sessão Google Sign-In + applicationId.
 
 ## Estrutura do repositório (mono-repo)
 
@@ -49,6 +49,42 @@ AQUANAUTIX/
 - Design system Midnight Deep Sea (`screens/_shared.dart`).
 - Pendente: monetização RC estável em produção, gates PRO/Elite completos; extender i18n a ecrãs fora de Oráculo/Home se o produto o exigir.
 
+### Sessão 15 Mai 2026
+
+**Splash Screen (`lib/screens/splash_screen.dart`)**
+- Vídeo de fundo: `assets/video_bg.mp4` via `video_player`
+- Barra de progresso ciano 3 px (sem dots de paginação)
+- Navega directamente para `LoginModuleScreen`
+
+**Login Screen (`lib/screens/login_module.dart`)**
+- Redesign completo com vídeo de fundo e overlay escuro
+- **Google Sign-In real** via `google_sign_in: ^6.3.0` + Supabase `signInWithIdToken`
+- `serverClientId` = Web Client ID do Google Cloud Console
+- `idToken` null-check explícito (sem crash)
+- Sem nonce (removido — causa erro "nonce mismatch" no Android)
+- Botão "Entrar como Convidado" corrigido → `Navigator.pushReplacement` para `AquanautixHome`
+- Apple Sign-In: placeholder "Em breve"
+
+**Android**
+- `applicationId` mudado de `com.example.aquanautix` → `com.aquanautix.app`
+- `namespace` actualizado em `build.gradle.kts`
+- `package="com.aquanautix.app"` no `AndroidManifest.xml`
+- `MainActivity.kt` movido para `kotlin/com/aquanautix/app/`
+- Meta-data Google Play Services adicionada ao `AndroidManifest.xml`
+
+**Google Cloud Console / Supabase**
+- OAuth Client ID Android: `com.aquanautix.app` + SHA-1 debug keystore
+- SHA-1 debug: `EF:B4:5A:36:17:EF:BA:5D:4E:FE:C3:A9:20:EC:80:98:41:61:90:23`
+- OAuth Client ID Web (serverClientId): `141446877512-0ibqum1ik8hkpao5mquohe14eu42kmtb.apps.googleusercontent.com`
+- Supabase Dashboard: Google provider activado com ambos os Client IDs
+
+**Packages adicionados**
+- `google_sign_in: ^6.2.1` (resolvido como 6.3.0)
+- `crypto: ^3.0.3` (resolvido como 3.0.7 — transitivo, mantido)
+
+**Atenção**
+- `android/app/google-services.json` é uma **pasta vazia** criada por engano — deve ser substituída pelo ficheiro JSON real do Firebase/Google Cloud Console e adicionada ao `.gitignore`
+
 ## Estado Site V2
 
 - Mapa 3D, spots PT/ES, lojas de isco, Oráculo, waitlist (localStorage-first)
@@ -56,11 +92,12 @@ AQUANAUTIX/
 
 ## Próximos passos (sugestão)
 
-1. Batimetria / opacidade terra — afinar se ainda em curso
-2. Formspree — endpoint `formspree.io/f/…`
-3. RevenueCat — produtos PRO
-4. Ecrã monetização Flutter
-5. Domínio `aquanautix.com`
+1. **Google Sign-In** — testar em dispositivo com SHA-1 registado; confirmar login end-to-end
+2. **`google-services.json`** — substituir pasta por ficheiro JSON real; adicionar ao `.gitignore`
+3. **RevenueCat** — configurar produtos PRO/ELITE no dashboard e testar gates
+4. **Onboarding Flutter** — ecrãs de boas-vindas pós-login
+5. Formspree — endpoint `formspree.io/f/…`
+6. Domínio `aquanautix.app`
 
 ## Regras de trabalho
 

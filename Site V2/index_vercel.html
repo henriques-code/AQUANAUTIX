@@ -1,0 +1,5265 @@
+﻿<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+
+<!-- SEO PRIMARY -->
+<title>AQUANAUTIX â€” App de Pesca de Elite | OrÃ¡culo Â· Batimetria Â· IA VisÃ£o</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8E%A3%3C/text%3E%3C/svg%3E" type="image/svg+xml"/>
+<meta name="description" content="A app de pesca mais avanÃ§ada do mercado ibÃ©rico. OrÃ¡culo de previsÃ£o solunar, mapa com batimetria GEBCO, identificaÃ§Ã£o de espÃ©cies por IA GPT-4o. Offline-first. Ghost Mode. GrÃ¡tis."/>
+<meta name="keywords" content="app pesca Portugal, aplicaÃ§Ã£o pesca, fishing app, pesca desportiva, batimetria, surfcasting, robalo, dourada, AQUANAUTIX"/>
+<meta name="author" content="AQUANAUTIX"/>
+<meta name="robots" content="index, follow"/>
+<link rel="canonical" href="https://aquanautix.app/"/>
+
+<!-- OPEN GRAPH -->
+<meta property="og:type" content="website"/>
+<meta property="og:url" content="https://aquanautix.app/"/>
+<meta property="og:title" content="AQUANAUTIX â€” Instrumento de Pesca de Elite"/>
+<meta property="og:description" content="OrÃ¡culo de previsÃ£o, batimetria GEBCO, IA GPT-4o para identificaÃ§Ã£o de espÃ©cies. A app que os pescadores europeus sempre mereceram."/>
+<meta property="og:image" content="https://aquanautix.app/og-image.jpg"/>
+<meta property="og:locale" content="pt_PT"/>
+<meta property="og:site_name" content="AQUANAUTIX"/>
+
+<!-- TWITTER CARD -->
+<meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:title" content="AQUANAUTIX â€” App de Pesca de Elite"/>
+<meta name="twitter:description" content="OrÃ¡culo Â· Batimetria GEBCO Â· IA GPT-4o Â· Ghost Mode Â· Offline-first"/>
+<meta name="twitter:image" content="https://aquanautix.app/og-image.jpg"/>
+
+<!-- SCHEMA.ORG -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "MobileApplication",
+  "name": "AQUANAUTIX",
+  "description": "App de pesca desportiva de elite com OrÃ¡culo de previsÃ£o, batimetria GEBCO e IA GPT-4o",
+  "applicationCategory": "SportsApplication",
+  "operatingSystem": "iOS, Android",
+  "offers": {"@type": "Offer", "price": "0", "priceCurrency": "EUR"},
+  "aggregateRating": {"@type": "AggregateRating", "ratingValue": "4.9", "reviewCount": "847"},
+  "url": "https://aquanautix.app",
+  "inLanguage": ["pt", "en", "es"]
+}
+</script>
+
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Share+Tech+Mono&family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/suncalc/1.9.0/suncalc.min.js"></script>
+<link href="https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.css" rel="stylesheet"/>
+<script src="https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.js"></script>
+
+<style>
+:root {
+  --bg:     #000814;
+  --bg2:    #020D1E;
+  --bg3:    #071428;
+  --cyan:   #00F5FF;
+  --green:  #39FF14;
+  --amber:  #F3C64D;
+  --teal:   #2FE6C8;
+  --red:    #E84D4D;
+  --white:  #FFFFFF;
+  --hint:   #8AADBE;
+  --border: rgba(0,245,255,0.1);
+  --border2:rgba(0,245,255,0.22);
+  --glow-c: 0 0 24px rgba(0,245,255,0.5), 0 0 80px rgba(0,245,255,0.15);
+  --glow-g: 0 0 24px rgba(57,255,20,0.5), 0 0 80px rgba(57,255,20,0.12);
+  --font-h: 'Orbitron', sans-serif;
+  --font-m: 'Share Tech Mono', monospace;
+  --font-b: 'IBM Plex Sans', sans-serif;
+  --ocean-h: 100vh;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  background: var(--bg);
+  color: var(--white);
+  font-family: var(--font-b);
+  overflow-x: hidden;
+}
+::selection { background: var(--cyan); color: var(--bg); }
+::-webkit-scrollbar { width: 3px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--cyan); border-radius: 2px; }
+
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+   NAV
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+nav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 200;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 2.5rem; height: 62px;
+  background: rgba(0,8,20,0.7);
+  backdrop-filter: blur(20px) saturate(1.5);
+  border-bottom: 1px solid var(--border);
+  transition: background 0.4s;
+}
+nav.scrolled { background: rgba(0,8,20,0.95); }
+.nav-logo {
+  font-family: var(--font-h); font-size: 1rem; font-weight: 900;
+  letter-spacing: 0.18em;
+  background: linear-gradient(90deg, var(--cyan) 0%, var(--teal) 100%);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  text-decoration: none; flex-shrink: 0;
+}
+.nav-links { display: flex; gap: 2rem; list-style: none; }
+.nav-links a {
+  font-family: var(--font-m); font-size: 0.65rem; letter-spacing: 0.1em;
+  color: var(--hint); text-decoration: none; text-transform: uppercase;
+  transition: color 0.2s;
+}
+.nav-links a:hover { color: var(--cyan); }
+.nav-cta {
+  font-family: var(--font-m); font-size: 0.65rem; letter-spacing: 0.12em;
+  color: var(--bg); background: var(--cyan); border: none;
+  padding: 0.5rem 1.4rem; border-radius: 2px; cursor: pointer;
+  text-transform: uppercase; text-decoration: none; white-space: nowrap;
+  transition: box-shadow 0.25s, transform 0.1s;
+}
+.nav-cta:hover { box-shadow: var(--glow-c); transform: translateY(-1px); }
+
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+   HERO â€” OCEAN BACKGROUND
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+#hero {
+  position: relative; min-height: 100vh;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 7rem 2rem 5rem; text-align: center; overflow: hidden;
+}
+
+/* Real ocean photo */
+.ocean-bg {
+  position: absolute; inset: 0; z-index: 0; overflow: hidden;
+}
+.bg-video {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  object-fit: cover;
+  object-position: center center;
+  background: #000814;
+  filter: brightness(0.9) saturate(1.12) contrast(1.22);
+}
+@media (max-width: 768px) {
+  .bg-video {
+    object-position: center center;
+    width: 100%; height: 100%;
+  }
+}
+
+/* Deep overlay layers */
+.ocean-overlay-1 {
+  position: absolute; inset: 0; z-index: 1;
+  background: linear-gradient(180deg,
+    rgba(0,8,20,0.55) 0%,
+    rgba(0,15,40,0.30) 35%,
+    rgba(0,20,60,0.25) 65%,
+    rgba(0,8,20,0.85) 100%
+  );
+}
+.ocean-overlay-2 {
+  position: absolute; inset: 0; z-index: 2;
+  background: radial-gradient(ellipse 70% 60% at 50% 35%, rgba(0,245,255,0.06) 0%, transparent 70%);
+}
+
+/* Light caustics effect */
+.caustics {
+  position: absolute; inset: 0; z-index: 3; pointer-events: none; overflow: hidden;
+}
+.caustic {
+  position: absolute; border-radius: 50%;
+  background: radial-gradient(ellipse, rgba(0,245,255,0.06) 0%, transparent 70%);
+  animation: caustic-move linear infinite;
+}
+.caustic:nth-child(1) { width:300px; height:200px; top:15%; left:10%; animation-duration:8s; }
+.caustic:nth-child(2) { width:200px; height:150px; top:30%; left:55%; animation-duration:11s; animation-delay:-4s; }
+.caustic:nth-child(3) { width:250px; height:180px; top:55%; left:30%; animation-duration:9s; animation-delay:-2s; }
+@keyframes caustic-move {
+  0%,100% { transform: translate(0,0) scale(1); opacity: 0.4; }
+  33%      { transform: translate(30px,-20px) scale(1.1); opacity: 0.7; }
+  66%      { transform: translate(-20px,15px) scale(0.9); opacity: 0.3; }
+}
+
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+   FISH ANIMATIONS
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+.fish-layer { position: absolute; inset: 0; z-index: 4; pointer-events: none; overflow: hidden; }
+
+.fish {
+  position: absolute;
+  animation: swim-right linear infinite;
+  filter: drop-shadow(0 0 6px rgba(0,245,255,0.3));
+}
+.fish svg { display: block; }
+
+/* Fish swimming right */
+@keyframes swim-right {
+  0%   { transform: translateX(-120px) translateY(0px); }
+  25%  { transform: translateX(25vw) translateY(-12px); }
+  50%  { transform: translateX(50vw) translateY(8px); }
+  75%  { transform: translateX(75vw) translateY(-6px); }
+  100% { transform: translateX(calc(100vw + 120px)) translateY(0px); }
+}
+/* Fish swimming left (flipped) */
+@keyframes swim-left {
+  0%   { transform: translateX(calc(100vw + 120px)) translateY(0px) scaleX(-1); }
+  25%  { transform: translateX(75vw) translateY(10px) scaleX(-1); }
+  50%  { transform: translateX(50vw) translateY(-8px) scaleX(-1); }
+  75%  { transform: translateX(25vw) translateY(6px) scaleX(-1); }
+  100% { transform: translateX(-120px) translateY(0px) scaleX(-1); }
+}
+/* Small fish bob */
+@keyframes fish-bob { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-4px)} }
+
+.fish-1 { top: 28%; animation: swim-right 22s linear infinite; opacity: 0.55; }
+.fish-2 { top: 48%; animation: swim-left 28s linear 5s infinite; opacity: 0.45; }
+.fish-3 { top: 62%; animation: swim-right 18s linear 10s infinite; opacity: 0.6; }
+.fish-4 { top: 36%; animation: swim-left 35s linear 2s infinite; opacity: 0.35; }
+.fish-5 { top: 72%; animation: swim-right 25s linear 14s infinite; opacity: 0.5; }
+.fish-6 { top: 20%; animation: swim-left 40s linear 8s infinite; opacity: 0.3; }
+
+/* Bubbles */
+.bubbles { position: absolute; inset: 0; z-index: 4; pointer-events: none; overflow: hidden; }
+.bubble {
+  position: absolute; bottom: -20px; border-radius: 50%;
+  border: 1px solid rgba(0,245,255,0.25);
+  background: rgba(0,245,255,0.04);
+  animation: rise linear infinite;
+}
+@keyframes rise {
+  0%   { transform: translateY(0) translateX(0) scale(1); opacity: 0; }
+  10%  { opacity: 1; }
+  80%  { opacity: 0.5; }
+  100% { transform: translateY(-110vh) translateX(20px) scale(0.7); opacity: 0; }
+}
+.b1  { width:6px;  height:6px;  left:10%; animation-duration:9s;  animation-delay:0s;   }
+.b2  { width:10px; height:10px; left:25%; animation-duration:12s; animation-delay:2s;   }
+.b3  { width:4px;  height:4px;  left:40%; animation-duration:8s;  animation-delay:5s;   }
+.b4  { width:8px;  height:8px;  left:55%; animation-duration:14s; animation-delay:1s;   }
+.b5  { width:5px;  height:5px;  left:70%; animation-duration:10s; animation-delay:7s;   }
+.b6  { width:12px; height:12px; left:80%; animation-duration:16s; animation-delay:3s;   }
+.b7  { width:4px;  height:4px;  left:90%; animation-duration:7s;  animation-delay:9s;   }
+.b8  { width:7px;  height:7px;  left:15%; animation-duration:11s; animation-delay:4s;   }
+.b9  { width:9px;  height:9px;  left:60%; animation-duration:13s; animation-delay:6s;   }
+.b10 { width:5px;  height:5px;  left:35%; animation-duration:9s;  animation-delay:11s;  }
+
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+   HERO CONTENT
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+.hero-content { position: relative; z-index: 10; max-width: 860px; }
+
+.hero-tag {
+  display: inline-flex; align-items: center; gap: 0.5rem;
+  font-family: var(--font-m); font-size: 0.62rem; letter-spacing: 0.2em;
+  color: var(--cyan); border: 1px solid var(--border2);
+  padding: 0.4rem 1.1rem; margin-bottom: 2rem; border-radius: 2px;
+  animation: fadeUp 1s ease both;
+}
+.hero-tag-dot {
+  width: 6px; height: 6px; border-radius: 50%; background: var(--green);
+  box-shadow: var(--glow-g); animation: blink 1.5s ease-in-out infinite;
+}
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+h1 {
+  font-family: var(--font-h); font-weight: 900;
+  font-size: clamp(2.8rem, 7.5vw, 5.8rem);
+  line-height: 1.0; letter-spacing: -0.02em;
+  margin-bottom: 1.5rem;
+  animation: fadeUp 1s 0.15s ease both;
+  text-shadow: 0 2px 40px rgba(0,8,20,0.8);
+}
+h1 em { color: var(--cyan); font-style: normal; text-shadow: var(--glow-c); }
+h1 span { display: block; font-size: 0.32em; letter-spacing: 0.08em; color: var(--hint); font-weight: 300; margin-top: 0.4em; opacity: 0.85; }
+
+.hero-sub {
+  font-size: 1.1rem; color: rgba(255,255,255,0.75); max-width: 580px;
+  margin: 0 auto 2.5rem; line-height: 1.7; font-weight: 300;
+  animation: fadeUp 1s 0.25s ease both;
+  text-shadow: 0 1px 20px rgba(0,8,20,0.9);
+}
+
+/* Download CTA buttons */
+.store-ctas {
+  display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;
+  margin-bottom: 1.5rem;
+  animation: fadeUp 1s 0.35s ease both;
+}
+.store-btn-hero {
+  display: flex; align-items: center; gap: 0.8rem;
+  padding: 0.9rem 1.8rem; border-radius: 4px;
+  text-decoration: none; transition: all 0.25s; cursor: pointer; border: none;
+}
+.store-btn-hero.primary {
+  background: var(--cyan); color: var(--bg);
+}
+.store-btn-hero.primary:hover { box-shadow: var(--glow-c); transform: translateY(-2px); }
+.store-btn-hero.secondary {
+  background: rgba(255,255,255,0.05); border: 1px solid var(--border2); color: var(--white);
+  backdrop-filter: blur(10px);
+}
+.store-btn-hero.secondary:hover { border-color: var(--cyan); background: rgba(0,245,255,0.06); }
+.store-btn-icon { font-size: 1.5rem; line-height: 1; flex-shrink: 0; }
+.store-btn-text { text-align: left; }
+.store-btn-sub { font-family: var(--font-m); font-size: 0.52rem; letter-spacing: 0.1em; text-transform: uppercase; opacity: 0.7; }
+.store-btn-name { font-family: var(--font-h); font-size: 0.85rem; font-weight: 700; margin-top: 2px; }
+.store-btn-hero.primary .store-btn-sub,
+.store-btn-hero.primary .store-btn-name { color: var(--bg); }
+
+.hero-alt-cta {
+  animation: fadeUp 1s 0.4s ease both;
+  font-family: var(--font-m); font-size: 0.6rem; letter-spacing: 0.12em;
+  color: var(--hint); text-transform: uppercase;
+}
+.hero-alt-cta a { color: var(--cyan); text-decoration: none; border-bottom: 1px solid var(--border2); transition: color 0.2s; }
+.hero-alt-cta a:hover { color: var(--white); }
+
+/* HERO METRICS */
+.hero-metrics {
+  display: flex; justify-content: center; gap: 0; margin-top: 4rem; flex-wrap: wrap;
+  animation: fadeUp 1s 0.5s ease both;
+}
+.metric {
+  text-align: center; padding: 1rem 2.5rem; position: relative;
+}
+.metric:not(:last-child)::after {
+  content: ''; position: absolute; right: 0; top: 25%; bottom: 25%;
+  width: 1px; background: var(--border);
+}
+.metric-val {
+  font-family: var(--font-h); font-size: 1.9rem; font-weight: 700;
+  color: var(--cyan); text-shadow: var(--glow-c); display: block;
+  filter: drop-shadow(0 0 10px rgba(0,245,255,0.4));
+}
+.metric-lbl { font-family: var(--font-m); font-size: 0.55rem; letter-spacing: 0.14em; color: var(--hint); text-transform: uppercase; margin-top: 0.25rem; }
+
+/* Scroll indicator */
+.scroll-ind {
+  position: absolute; bottom: 1.5rem; left: 50%; transform: translateX(-50%); z-index: 10;
+  display: flex; flex-direction: column; align-items: center; gap: 0.4rem;
+  animation: fadeUp 1s 1.2s ease both;
+}
+.scroll-ind span { font-family: var(--font-m); font-size: 0.55rem; letter-spacing: 0.15em; color: var(--hint); text-transform: uppercase; }
+.scroll-arrow { width: 1px; height: 36px; background: linear-gradient(180deg, var(--cyan), transparent); animation: scroll-drop 1.8s ease-in-out infinite; }
+@keyframes scroll-drop { 0%,100%{opacity:0.2;transform:scaleY(0.6)} 50%{opacity:1;transform:scaleY(1)} }
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(28px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+   WAITLIST SECTION
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+#waitlist {
+  position: relative; z-index: 20;
+  scroll-margin-top: 72px;
+  background: linear-gradient(180deg, var(--bg) 0%, var(--bg2) 100%);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  padding: 5rem 2rem;
+  text-align: center;
+}
+.waitlist-inner { max-width: 600px; margin: 0 auto; }
+.waitlist-label {
+  font-family: var(--font-m); font-size: 0.6rem; letter-spacing: 0.2em;
+  color: var(--green); text-transform: uppercase; margin-bottom: 0.75rem;
+  display: flex; align-items: center; justify-content: center; gap: 0.5rem;
+}
+.waitlist-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); box-shadow: var(--glow-g); animation: blink 1.5s ease-in-out infinite; }
+.waitlist-inner h2 {
+  font-family: var(--font-h); font-size: clamp(1.5rem, 3vw, 2.2rem);
+  font-weight: 700; margin-bottom: 0.75rem;
+}
+.waitlist-inner p { font-size: 0.95rem; color: var(--hint); margin-bottom: 2rem; line-height: 1.6; }
+.waitlist-form { display: flex; gap: 0; max-width: 480px; margin: 0 auto 1rem; }
+.waitlist-input {
+  flex: 1; background: rgba(0,245,255,0.04); border: 1px solid var(--border2);
+  border-right: none; color: var(--white); font-family: var(--font-b); font-size: 0.9rem;
+  padding: 0.85rem 1.25rem; outline: none; border-radius: 3px 0 0 3px;
+  transition: border-color 0.2s, background 0.2s;
+}
+.waitlist-input::placeholder { color: var(--hint); font-size: 0.85rem; }
+.waitlist-input:focus { border-color: var(--cyan); background: rgba(0,245,255,0.07); }
+.waitlist-btn {
+  font-family: var(--font-m); font-size: 0.65rem; letter-spacing: 0.12em;
+  text-transform: uppercase; color: var(--bg); background: var(--cyan);
+  border: none; padding: 0.85rem 1.5rem; cursor: pointer; border-radius: 0 3px 3px 0;
+  transition: box-shadow 0.2s, background 0.2s; white-space: nowrap;
+}
+.waitlist-btn:hover { box-shadow: var(--glow-c); }
+.waitlist-btn.success { background: var(--green); }
+.waitlist-note { font-family: var(--font-m); font-size: 0.55rem; letter-spacing: 0.08em; color: var(--hint); text-transform: uppercase; }
+.waitlist-count {
+  display: inline-flex; align-items: center; gap: 0.5rem; margin-top: 1.5rem;
+  font-family: var(--font-m); font-size: 0.6rem; letter-spacing: 0.1em; color: var(--hint); text-transform: uppercase;
+}
+.waitlist-avatars { display: flex; }
+.waitlist-avatar {
+  width: 28px; height: 28px; border-radius: 50%; border: 2px solid var(--bg);
+  background: var(--bg3); margin-left: -8px; overflow: hidden;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-m); font-size: 0.55rem; color: var(--cyan);
+}
+.waitlist-avatar:first-child { margin-left: 0; }
+
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+   STATS BAR
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+#stats {
+  background: var(--bg3); border-bottom: 1px solid var(--border);
+  display: flex; justify-content: center; overflow: hidden;
+}
+.stat-item {
+  flex: 1; max-width: 250px; text-align: center;
+  padding: 1.5rem 2rem; position: relative;
+}
+.stat-item:not(:last-child)::after {
+  content:''; position:absolute; right:0; top:20%; bottom:20%; width:1px; background:var(--border);
+}
+.stat-num { font-family: var(--font-h); font-size: 0.85rem; font-weight: 700; color: var(--cyan); letter-spacing: 0.05em; }
+.stat-lbl { font-family: var(--font-m); font-size: 0.55rem; letter-spacing: 0.1em; color: var(--hint); text-transform: uppercase; margin-top: 0.3rem; }
+
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+   SHARED SECTION STYLES
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+.section-inner { max-width: 1100px; margin: 0 auto; padding: 7rem 2rem; }
+.section-label {
+  font-family: var(--font-m); font-size: 0.58rem; letter-spacing: 0.2em;
+  color: var(--cyan); text-transform: uppercase; margin-bottom: 0.75rem;
+}
+h2 {
+  font-family: var(--font-h); font-size: clamp(1.8rem, 4vw, 2.8rem);
+  font-weight: 700; line-height: 1.1; margin-bottom: 1.2rem;
+}
+h2 em { color: var(--cyan); font-style: normal; }
+.lead { font-size: 1rem; color: var(--hint); max-width: 520px; line-height: 1.75; font-weight: 300; }
+.pill-row { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 1.75rem 0; }
+.pill {
+  font-family: var(--font-m); font-size: 0.58rem; letter-spacing: 0.1em;
+  padding: 0.32rem 0.8rem; border: 1px solid var(--border); color: var(--hint);
+  border-radius: 2px; text-transform: uppercase;
+}
+.pill.on { border-color: var(--cyan); color: var(--cyan); background: rgba(0,245,255,0.05); }
+.btn-main {
+  display: inline-block; font-family: var(--font-m); font-size: 0.68rem;
+  letter-spacing: 0.12em; text-transform: uppercase; color: var(--bg);
+  background: linear-gradient(135deg, var(--cyan), var(--teal));
+  border: none; padding: 0.85rem 2rem; cursor: pointer; text-decoration: none;
+  border-radius: 2px; transition: box-shadow 0.2s, transform 0.1s;
+}
+.btn-main:hover { box-shadow: var(--glow-c); transform: translateY(-2px); }
+.btn-outline {
+  display: inline-block; font-family: var(--font-m); font-size: 0.68rem;
+  letter-spacing: 0.12em; text-transform: uppercase; color: var(--cyan);
+  background: transparent; border: 1px solid var(--border2);
+  padding: 0.85rem 2rem; cursor: pointer; text-decoration: none;
+  border-radius: 2px; transition: all 0.2s;
+}
+.btn-outline:hover { background: rgba(0,245,255,0.06); box-shadow: var(--glow-c); }
+
+/* Reveal animation */
+.reveal { opacity: 0; transform: translateY(30px); transition: opacity 0.75s ease, transform 0.75s ease; }
+.reveal.visible { opacity: 1; transform: translateY(0); }
+.reveal-delay-1 { transition-delay: 0.1s; }
+.reveal-delay-2 { transition-delay: 0.2s; }
+.reveal-delay-3 { transition-delay: 0.3s; }
+
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+   FEATURE: ORACULAR
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+#oraculo { background: linear-gradient(180deg, var(--bg) 0%, var(--bg2) 60%, var(--bg) 100%); }
+.feat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5rem; align-items: center; margin-top: 4rem; }
+.feat-grid.reverse { direction: rtl; }
+.feat-grid.reverse > * { direction: ltr; }
+
+/* Score ring */
+.score-wrap {
+  position: relative; display: flex; align-items: center; justify-content: center;
+}
+.score-ring-container {
+  position: relative; width: 260px; height: 260px; flex-shrink: 0;
+}
+.score-svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+.score-track { fill: none; stroke: rgba(0,245,255,0.08); stroke-width: 10; }
+.score-fill {
+  fill: none; stroke: var(--cyan); stroke-width: 10;
+  stroke-linecap: round; stroke-dasharray: 691;
+  stroke-dashoffset: 152; /* 78% filled = 0.78 * 691 â‰ˆ 539; offset = 691-539 = 152 */
+  filter: drop-shadow(0 0 8px rgba(0,245,255,0.6));
+  animation: ring-draw 2s ease forwards;
+}
+@keyframes ring-draw {
+  from { stroke-dashoffset: 691; }
+  to   { stroke-dashoffset: 152; }
+}
+.score-inner {
+  position: absolute; inset: 20px; border-radius: 50%;
+  background: radial-gradient(ellipse at center, var(--bg3) 60%, var(--bg) 100%);
+  border: 1px solid var(--border);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+}
+.score-num { font-family: var(--font-h); font-size: 3.2rem; font-weight: 900; color: var(--cyan); text-shadow: var(--glow-c); line-height: 1; }
+.score-lbl { font-family: var(--font-m); font-size: 0.55rem; letter-spacing: 0.15em; color: var(--hint); text-transform: uppercase; margin-top: 0.3rem; }
+
+/* Tele cards floating */
+.tele-wrap {
+  position: absolute; right: -80px; top: 0; bottom: 0;
+  display: flex; flex-direction: column; justify-content: space-around;
+}
+.tele {
+  background: rgba(7,20,40,0.95); border: 1px solid var(--border);
+  backdrop-filter: blur(10px); padding: 0.6rem 1rem; border-radius: 3px; min-width: 140px;
+  transition: border-color 0.2s;
+}
+.tele:hover { border-color: var(--cyan); }
+.tele-key { font-family: var(--font-m); font-size: 0.52rem; letter-spacing: 0.1em; color: var(--hint); text-transform: uppercase; }
+.tele-val { font-family: var(--font-h); font-size: 0.85rem; font-weight: 700; color: var(--teal); margin-top: 0.2rem; }
+.tele-bar { height: 2px; background: var(--border); margin-top: 0.5rem; border-radius: 1px; }
+.tele-bar-fill { height: 100%; border-radius: 1px; animation: bar-grow 2s ease forwards; }
+@keyframes bar-grow { from { width: 0; } }
+
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+   FEATURE: MAPA SONAR
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+#mapa { background: var(--bg); }
+.mapa-screen {
+  border: 1px solid var(--border); border-radius: 6px; overflow: hidden;
+  aspect-ratio: 4/3; background: #010D1F; position: relative;
+  box-shadow: 0 0 60px rgba(0,245,255,0.06), inset 0 0 60px rgba(0,20,60,0.5);
+}
+.mapa-screen svg { width: 100%; height: 100%; }
+.mapa-tag {
+  position: absolute; top: 12px; left: 12px;
+  font-family: var(--font-m); font-size: 0.52rem; letter-spacing: 0.1em;
+  color: var(--cyan); background: rgba(0,8,20,0.85); border: 1px solid var(--border);
+  padding: 0.3rem 0.7rem; border-radius: 2px; text-transform: uppercase;
+}
+.depth-leg {
+  position: absolute; bottom: 12px; right: 12px;
+  background: rgba(0,8,20,0.9); border: 1px solid var(--border);
+  padding: 0.6rem 0.9rem; border-radius: 3px;
+}
+.depth-leg-title { font-family: var(--font-m); font-size: 0.5rem; letter-spacing: 0.1em; color: var(--hint); text-transform: uppercase; margin-bottom: 0.4rem; }
+.depth-grad { width: 90px; height: 7px; border-radius: 2px; background: linear-gradient(90deg, #001440, #003B8F, #0080D4, #00C4F0, #00F5FF); }
+.depth-range { display: flex; justify-content: space-between; font-family: var(--font-m); font-size: 0.48rem; color: var(--hint); margin-top: 0.25rem; }
+
+/* Pulsing spot markers on map */
+@keyframes spot-pulse {
+  0%,100% { opacity: 0.9; r: 5; }
+  50%      { opacity: 0.4; r: 7; }
+}
+
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+   FEATURE: IA VISION
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+#vision { background: linear-gradient(180deg, var(--bg) 0%, var(--bg2) 100%); }
+.vision-card {
+  border: 1px solid var(--border); border-radius: 6px; overflow: hidden;
+  background: var(--bg3);
+  box-shadow: 0 0 60px rgba(0,245,255,0.05);
+}
+.vision-photo {
+  position: relative; height: 220px; overflow: hidden;
+  background: linear-gradient(135deg, #051525 0%, #0A1E3A 100%);
+  display: flex; align-items: center; justify-content: center;
+  border-bottom: 1px solid var(--border);
+}
+.fish-display {
+  font-size: 7rem; line-height: 1;
+  filter: drop-shadow(0 0 30px rgba(0,245,255,0.5));
+  animation: fish-bob 3s ease-in-out infinite;
+}
+@keyframes fish-bob { 0%,100%{transform:translateY(0) rotate(-2deg)} 50%{transform:translateY(-8px) rotate(2deg)} }
+.scan-beam {
+  position: absolute; left: 0; right: 0; height: 2px;
+  background: linear-gradient(90deg, transparent 0%, rgba(0,245,255,0.3) 20%, rgba(0,245,255,0.9) 50%, rgba(0,245,255,0.3) 80%, transparent 100%);
+  box-shadow: 0 0 12px var(--cyan), 0 0 24px rgba(0,245,255,0.4);
+  animation: scan 2.2s linear infinite;
+}
+@keyframes scan { 0%{top:0%;opacity:0} 8%{opacity:1} 85%{opacity:1} 100%{top:100%;opacity:0} }
+/* Corner brackets */
+.bk { position:absolute; width:22px; height:22px; }
+.bk-tl { top:10px; left:10px; border-top:2px solid var(--cyan); border-left:2px solid var(--cyan); }
+.bk-tr { top:10px; right:10px; border-top:2px solid var(--cyan); border-right:2px solid var(--cyan); }
+.bk-bl { bottom:10px; left:10px; border-bottom:2px solid var(--cyan); border-left:2px solid var(--cyan); }
+.bk-br { bottom:10px; right:10px; border-bottom:2px solid var(--cyan); border-right:2px solid var(--cyan); }
+.ai-label {
+  position: absolute; font-family: var(--font-m); font-size: 0.5rem;
+  letter-spacing: 0.1em; text-transform: uppercase;
+}
+.ai-tl { top:12px; left:38px; color:var(--cyan); }
+.ai-tr { top:12px; right:38px; color:var(--green); }
+.ai-bl { bottom:12px; left:38px; color:var(--hint); animation: blink 1.5s infinite; }
+.ai-br { bottom:12px; right:38px; color:var(--amber); }
+
+.vision-data { padding: 1.25rem; }
+.vrow {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 0.65rem 0; border-bottom: 1px solid rgba(0,245,255,0.06);
+}
+.vrow:last-child { border-bottom: none; }
+.vkey { font-family: var(--font-m); font-size: 0.58rem; letter-spacing: 0.1em; color: var(--hint); text-transform: uppercase; }
+.vval { font-family: var(--font-h); font-size: 0.82rem; font-weight: 700; color: var(--cyan); }
+.vval.g { color: var(--green); }
+.vval.a { color: var(--amber); }
+.conf-wrap { display: flex; align-items: center; gap: 0.5rem; }
+.conf-track { width: 64px; height: 3px; background: var(--border); border-radius: 2px; overflow: hidden; }
+.conf-fill { height: 100%; background: linear-gradient(90deg, var(--teal), var(--green)); border-radius: 2px; animation: bar-grow 2s ease forwards; }
+
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+   GHOST MODE
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+#ghost {
+  background: var(--bg);
+  border-top: 1px solid var(--border);
+}
+.ghost-vis {
+  position: relative; height: 340px; border-radius: 6px; overflow: hidden;
+  border: 1px solid var(--border); background: #010D1F;
+}
+.ghost-vis svg { width: 100%; height: 100%; }
+.ghost-label-bottom {
+  position: absolute; bottom: 14px; left: 0; right: 0; text-align: center;
+  font-family: var(--font-m); font-size: 0.55rem; letter-spacing: 0.12em;
+  color: var(--hint); text-transform: uppercase;
+}
+.ghost-label-bottom span { color: var(--cyan); }
+.priv-list { display: flex; flex-direction: column; gap: 0.85rem; margin-top: 2rem; }
+.priv-item {
+  display: flex; gap: 1rem; align-items: flex-start;
+  padding: 1rem 1.1rem; border: 1px solid var(--border);
+  border-radius: 3px; background: var(--bg2);
+  transition: border-color 0.2s;
+}
+.priv-item:hover { border-color: var(--cyan); }
+.priv-code { font-family: var(--font-m); font-size: 0.62rem; color: var(--cyan); white-space: nowrap; padding-top: 2px; }
+.priv-title { font-size: 0.9rem; font-weight: 500; margin-bottom: 0.25rem; }
+.priv-desc { font-size: 0.8rem; color: var(--hint); line-height: 1.5; }
+
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+   VS FISHBRAIN
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+#compare {
+  background: var(--bg2);
+  border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);
+}
+.compare-wrap { overflow-x: auto; margin-top: 2.5rem; border: 1px solid var(--border); border-radius: 4px; }
+table { width: 100%; border-collapse: collapse; }
+thead tr { background: rgba(0,245,255,0.04); border-bottom: 1px solid var(--border2); }
+th {
+  font-family: var(--font-m); font-size: 0.58rem; letter-spacing: 0.12em;
+  text-transform: uppercase; padding: 0.85rem 1.25rem; text-align: left; color: var(--hint);
+}
+th.th-aqua { color: var(--cyan); font-size: 0.65rem; }
+th.th-fish { color: #555; }
+tbody tr { border-bottom: 1px solid rgba(0,245,255,0.04); transition: background 0.15s; }
+tbody tr:last-child { border-bottom: none; }
+tbody tr:hover { background: rgba(0,245,255,0.025); }
+td { font-size: 0.85rem; padding: 0.8rem 1.25rem; }
+td.fn { color: var(--white); font-weight: 400; }
+.ck  { color: var(--cyan); font-family: var(--font-m); font-size: 0.72rem; }
+.ckG { color: var(--green); font-family: var(--font-m); font-size: 0.72rem; font-weight: 700; }
+.cx  { color: #333; }
+.cp  { color: var(--amber); font-family: var(--font-m); font-size: 0.65rem; }
+.badge-free {
+  display: inline-block; font-family: var(--font-m); font-size: 0.48rem;
+  letter-spacing: 0.1em; padding: 0.18rem 0.5rem;
+  background: rgba(57,255,20,0.1); color: var(--green);
+  border: 1px solid rgba(57,255,20,0.2); border-radius: 2px;
+  text-transform: uppercase; margin-left: 0.4rem; vertical-align: middle;
+}
+
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+   PLANS
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+#plans { background: var(--bg); }
+.plans-wrap { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.25rem; margin-top: 3rem; }
+.plan {
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: 5px; padding: 2rem; position: relative;
+  transition: border-color 0.25s, transform 0.25s;
+}
+.plan:hover { transform: translateY(-4px); }
+.plan.star { border-color: var(--cyan); box-shadow: 0 0 40px rgba(0,245,255,0.07), inset 0 0 40px rgba(0,245,255,0.015); }
+.plan-tag {
+  position: absolute; top: -11px; left: 50%; transform: translateX(-50%);
+  font-family: var(--font-m); font-size: 0.52rem; letter-spacing: 0.15em;
+  background: var(--cyan); color: var(--bg);
+  padding: 0.2rem 1rem; border-radius: 2px; text-transform: uppercase; white-space: nowrap;
+}
+.plan-name { font-family: var(--font-h); font-size: 0.75rem; letter-spacing: 0.15em; color: var(--hint); text-transform: uppercase; margin-bottom: 1rem; }
+.plan-price { font-family: var(--font-h); font-size: 2.4rem; font-weight: 900; line-height: 1; }
+.plan-price sup { font-size: 1rem; vertical-align: top; padding-top: 0.6rem; color: var(--hint); }
+.plan-price sub { font-size: 1rem; font-weight: 400; color: var(--hint); }
+.plan-period { font-family: var(--font-m); font-size: 0.55rem; color: var(--hint); margin: 0.5rem 0 1.5rem; letter-spacing: 0.1em; text-transform: uppercase; }
+.plan-hr { height: 1px; background: var(--border); margin: 1.5rem 0; }
+.plan-feats { list-style: none; display: flex; flex-direction: column; gap: 0.7rem; }
+.plan-feats li { display: flex; gap: 0.7rem; align-items: flex-start; font-size: 0.83rem; color: var(--hint); }
+.plan-feats li .ic  { color: var(--cyan); flex-shrink: 0; font-family: var(--font-m); }
+.plan-feats li .ico { color: #2a2a2a; flex-shrink: 0; }
+.plan-feats li span { color: #333; }
+.plan-action {
+  position: relative; z-index: 2;
+  display: block; width: 100%; margin-top: 2rem; text-align: center;
+  font-family: var(--font-m); font-size: 0.65rem; letter-spacing: 0.12em;
+  text-transform: uppercase; padding: 0.8rem; border-radius: 3px;
+  cursor: pointer; text-decoration: none; transition: all 0.2s;
+}
+.plan-action.outline { color: var(--cyan); border: 1px solid var(--border2); }
+.plan-action.outline:hover { background: rgba(0,245,255,0.05); }
+.plan-action.solid { color: var(--bg); background: var(--cyan); border: none; }
+.plan-action.solid:hover { box-shadow: var(--glow-c); }
+
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+   TESTIMONIALS
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+#testimonials { background: var(--bg2); border-top: 1px solid var(--border); }
+.testi-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.25rem; margin-top: 3rem; }
+.testi {
+  background: var(--bg3); border: 1px solid var(--border);
+  border-radius: 4px; padding: 1.75rem;
+  transition: border-color 0.2s, transform 0.2s;
+}
+.testi:hover { border-color: rgba(0,245,255,0.25); transform: translateY(-3px); }
+.testi-stars { color: var(--amber); font-size: 0.75rem; letter-spacing: 0.1em; margin-bottom: 1rem; }
+.testi-quote {
+  font-size: 0.88rem; color: rgba(255,255,255,0.7); line-height: 1.65; margin-bottom: 1.5rem;
+  border-left: 2px solid var(--cyan); padding-left: 1rem; font-weight: 300; font-style: italic;
+}
+.testi-name { font-family: var(--font-m); font-size: 0.6rem; letter-spacing: 0.1em; color: var(--cyan); text-transform: uppercase; }
+.testi-loc { font-family: var(--font-m); font-size: 0.55rem; letter-spacing: 0.08em; color: var(--hint); margin-top: 0.25rem; }
+
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+   DOWNLOAD
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+#download {
+  position: relative; overflow: hidden;
+  background: var(--bg);
+  border-top: 1px solid var(--border);
+}
+.download-ocean {
+  position: absolute; inset: 0; z-index: 0;
+background-image: url('https://images.unsplash.com/photo-1559827291-72ee739d0d9a?auto=format&fit=crop&w=1920&q=80');
+  background-size: cover; background-position: center;
+  opacity: 0.12;
+}
+.download-overlay { position: absolute; inset: 0; z-index: 1; background: linear-gradient(180deg, var(--bg) 0%, rgba(0,8,20,0.5) 50%, var(--bg) 100%); }
+.download-inner { position: relative; z-index: 2; max-width: 720px; margin: 0 auto; padding: 8rem 2rem; text-align: center; }
+.download-inner h2 { margin-bottom: 1rem; }
+.download-inner .lead { margin: 0 auto 3rem; }
+.dl-btns { display: flex; justify-content: center; gap: 1rem; flex-wrap: wrap; }
+.dl-btn {
+  display: flex; align-items: center; gap: 0.9rem;
+  background: rgba(0,245,255,0.04); border: 1px solid var(--border2);
+  padding: 1rem 2rem; border-radius: 5px; cursor: pointer;
+  text-decoration: none; transition: all 0.25s;
+}
+.dl-btn:hover { border-color: var(--cyan); background: rgba(0,245,255,0.07); box-shadow: 0 0 30px rgba(0,245,255,0.08); transform: translateY(-2px); }
+.dl-icon { font-size: 1.8rem; line-height: 1; }
+.dl-text { text-align: left; }
+.dl-sub  { font-family: var(--font-m); font-size: 0.52rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--hint); }
+.dl-name { font-family: var(--font-h); font-size: 0.95rem; font-weight: 700; margin-top: 3px; }
+.dl-rating { font-family: var(--font-m); font-size: 0.5rem; color: var(--amber); margin-top: 2px; letter-spacing: 0.05em; }
+
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+   FOOTER
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+footer {
+  background: var(--bg2); border-top: 1px solid var(--border);
+  padding: 4rem 2rem 2rem;
+}
+.footer-inner { max-width: 1100px; margin: 0 auto; }
+.footer-top { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 3rem; margin-bottom: 3rem; }
+.foot-logo {
+  font-family: var(--font-h); font-size: 0.95rem; font-weight: 900; letter-spacing: 0.18em;
+  background: linear-gradient(90deg, var(--cyan), var(--teal));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 0.75rem;
+}
+.foot-desc { font-size: 0.8rem; color: var(--hint); line-height: 1.65; max-width: 260px; font-weight: 300; }
+.foot-col h4 { font-family: var(--font-m); font-size: 0.58rem; letter-spacing: 0.15em; color: var(--cyan); text-transform: uppercase; margin-bottom: 1rem; }
+.foot-col ul { list-style: none; display: flex; flex-direction: column; gap: 0.6rem; }
+.foot-col a { font-size: 0.82rem; color: var(--hint); text-decoration: none; transition: color 0.2s; font-weight: 300; }
+.foot-col a:hover { color: var(--white); }
+.foot-bottom {
+  border-top: 1px solid var(--border); padding-top: 2rem;
+  display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;
+}
+.foot-copy { font-family: var(--font-m); font-size: 0.58rem; letter-spacing: 0.08em; color: var(--hint); text-transform: uppercase; }
+.foot-langs { display: flex; gap: 0.75rem; }
+.foot-lang {
+  font-family: var(--font-m); font-size: 0.58rem; letter-spacing: 0.1em; color: var(--hint);
+  cursor: pointer; text-transform: uppercase; padding: 0.3rem 0.6rem;
+  border: 1px solid transparent; border-radius: 2px; transition: all 0.2s;
+}
+.foot-lang.active, .foot-lang:hover { color: var(--cyan); border-color: var(--border2); }
+
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+   FEATURES GRID (ALL)
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+#features-all {
+  background: var(--bg2);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+.featall-head {
+  text-align: center;
+  margin-bottom: 0.5rem;
+}
+.featall-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.25rem;
+  margin-top: 3rem;
+}
+.featall-card {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 1.5rem 1.35rem;
+  transition: border-color 0.25s, transform 0.25s, box-shadow 0.25s;
+}
+.featall-card:hover {
+  border-color: var(--cyan);
+  transform: translateY(-4px);
+  box-shadow: 0 0 30px rgba(0, 245, 255, 0.06);
+}
+.featall-emoji {
+  font-size: 2rem;
+  line-height: 1;
+  margin-bottom: 0.85rem;
+  display: block;
+  filter: drop-shadow(0 0 8px rgba(0, 245, 255, 0.15));
+}
+.featall-card h3 {
+  font-family: var(--font-h);
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: var(--cyan);
+  margin-bottom: 0.5rem;
+  letter-spacing: 0.04em;
+  line-height: 1.25;
+}
+.featall-card p {
+  font-family: var(--font-b);
+  font-size: 0.82rem;
+  color: var(--hint);
+  line-height: 1.55;
+  font-weight: 300;
+  margin-bottom: 0.85rem;
+}
+.featall-card-footer {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.featall-badge-pro {
+  display: inline-block;
+  font-family: var(--font-m);
+  font-size: 0.48rem;
+  letter-spacing: 0.1em;
+  padding: 0.18rem 0.5rem;
+  background: rgba(0, 245, 255, 0.08);
+  color: var(--cyan);
+  border: 1px solid var(--border2);
+  border-radius: 2px;
+  text-transform: uppercase;
+}
+@media (max-width: 900px) {
+  .featall-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+   DEMO ORÃCULO (interactivo)
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+#demo-oraculo {
+  background: linear-gradient(180deg, var(--bg) 0%, var(--bg2) 50%, var(--bg) 100%);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+.demo-orac-head {
+  text-align: center;
+  margin-bottom: 0.5rem;
+}
+.demo-orac-wrap {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3rem;
+  align-items: center;
+  margin-top: 3rem;
+  max-width: 960px;
+  margin-left: auto;
+  margin-right: auto;
+}
+.demo-orac-ring-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.demo-orac-ring-container {
+  position: relative;
+  width: 260px;
+  height: 260px;
+  flex-shrink: 0;
+}
+.demo-orac-svg {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+.demo-orac-track {
+  fill: none;
+  stroke: rgba(0, 245, 255, 0.08);
+  stroke-width: 10;
+}
+.demo-orac-fill {
+  fill: none;
+  stroke-width: 10;
+  stroke-linecap: round;
+  stroke-dasharray: 691;
+  stroke-dashoffset: 691;
+  transition: stroke-dashoffset 0.35s ease, stroke 0.35s ease, filter 0.35s ease;
+  filter: drop-shadow(0 0 8px rgba(0, 245, 255, 0.45));
+}
+.demo-orac-inner {
+  position: absolute;
+  inset: 20px;
+  border-radius: 50%;
+  background: radial-gradient(ellipse at center, var(--bg3) 60%, var(--bg) 100%);
+  border: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.demo-orac-num {
+  font-family: var(--font-h);
+  font-size: 3.2rem;
+  font-weight: 900;
+  line-height: 1;
+  transition: color 0.35s ease, text-shadow 0.35s ease;
+}
+.demo-orac-lbl {
+  font-family: var(--font-m);
+  font-size: 0.55rem;
+  letter-spacing: 0.15em;
+  color: var(--hint);
+  text-transform: uppercase;
+  margin-top: 0.35rem;
+}
+.demo-orac-slider-wrap {
+  width: 100%;
+  max-width: 280px;
+  margin-top: 1.75rem;
+}
+.demo-orac-slider-wrap label {
+  font-family: var(--font-m);
+  font-size: 0.52rem;
+  letter-spacing: 0.12em;
+  color: var(--hint);
+  text-transform: uppercase;
+  display: block;
+  margin-bottom: 0.5rem;
+  text-align: center;
+}
+.demo-orac-slider {
+  width: 100%;
+  height: 6px;
+  border-radius: 3px;
+  background: rgba(0, 245, 255, 0.08);
+  accent-color: var(--cyan);
+  cursor: pointer;
+}
+.demo-orac-panel {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 1.5rem 1.35rem;
+  transition: border-color 0.25s;
+}
+.demo-orac-panel:hover {
+  border-color: rgba(0, 245, 255, 0.22);
+}
+.demo-orac-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1.25rem;
+}
+.demo-orac-chips .pill {
+  cursor: default;
+}
+.demo-orac-chips .pill.on {
+  border-color: var(--cyan);
+  color: var(--cyan);
+  background: rgba(0, 245, 255, 0.05);
+}
+.demo-orac-tactical {
+  font-family: var(--font-b);
+  font-size: 0.95rem;
+  color: var(--white);
+  line-height: 1.65;
+  font-weight: 400;
+  min-height: 4.5rem;
+  transition: color 0.35s ease;
+}
+.demo-orac-tactical em {
+  color: var(--cyan);
+  font-style: normal;
+  font-weight: 600;
+}
+@media (max-width: 900px) {
+  .demo-orac-wrap {
+    grid-template-columns: 1fr;
+    gap: 2.5rem;
+  }
+}
+
+/* APP DEMO MOCKUPS */
+#app-demo {
+  background: var(--bg);
+  border-top: 1px solid var(--border);
+}
+.app-demo-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2rem;
+  margin-top: 3rem;
+}
+.phone-frame {
+  border: 2px solid var(--border2);
+  border-radius: 36px;
+  padding: 12px;
+  background: var(--bg3);
+  box-shadow: 0 0 40px rgba(0,245,255,0.06);
+  transition: transform 0.3s, box-shadow 0.3s;
+  max-width: 240px;
+  margin: 0 auto;
+}
+.phone-frame:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 0 60px rgba(0,245,255,0.12);
+  border-color: var(--cyan);
+}
+.phone-screen {
+  background: var(--bg);
+  border-radius: 26px;
+  overflow: hidden;
+  aspect-ratio: 9/19;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+.phone-status {
+  height: 28px;
+  background: var(--bg);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  border-bottom: 1px solid var(--border);
+}
+.phone-status span {
+  font-family: var(--font-m);
+  font-size: 0.48rem;
+  color: var(--hint);
+  letter-spacing: 0.08em;
+}
+.phone-content {
+  flex: 1;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.phone-label {
+  text-align: center;
+  font-family: var(--font-h);
+  font-size: 0.72rem;
+  color: var(--cyan);
+  margin-top: 1rem;
+  letter-spacing: 0.08em;
+}
+@media (max-width: 900px) {
+  .app-demo-grid { grid-template-columns: 1fr; }
+  .phone-frame { max-width: 280px; }
+}
+
+/* MAPA GPS + CARTAS NÃUTICAS */
+#mapa-live {
+  background: var(--bg);
+  border-top: 1px solid var(--border);
+}
+.mapa-live-wrap {
+  position: relative;
+  border: none;
+  border-radius: 6px;
+  overflow: hidden;
+  box-shadow: none;
+}
+#mapbox-map {
+  height: 520px;
+  width: 100%;
+  background: #010D1F;
+  border-radius: 0;
+}
+.mapbox-ctrl-custom {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+.map-layer-btn {
+  background: rgba(0, 245, 255, 0.04);
+  border: 1px solid rgba(0, 245, 255, 0.25);
+  color: #8AADBE;
+  padding: 7px 14px;
+  border-radius: 20px;
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 0.72em;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  white-space: nowrap;
+}
+.map-layer-btn:hover {
+  background: rgba(0, 245, 255, 0.12);
+  border-color: rgba(0, 245, 255, 0.6);
+  color: #00F5FF;
+  box-shadow: 0 0 10px rgba(0, 245, 255, 0.2),
+              inset 0 0 8px rgba(0, 245, 255, 0.05);
+  transform: translateY(-1px);
+}
+.map-layer-btn.active {
+  background: rgba(0, 245, 255, 0.15);
+  border-color: #00F5FF;
+  color: #00F5FF;
+  box-shadow: 0 0 14px rgba(0, 245, 255, 0.35),
+              inset 0 0 10px rgba(0, 245, 255, 0.08);
+  font-weight: 600;
+}
+.mapa-live-tag {
+  position: absolute;
+  top: 12px; left: 12px;
+  z-index: 1000;
+  background: rgba(0,8,20,0.88);
+  border: 1px solid var(--border2);
+  padding: 0.4rem 0.9rem;
+  border-radius: 3px;
+  font-family: var(--font-m);
+  font-size: 0.52rem;
+  letter-spacing: 0.1em;
+  color: var(--cyan);
+  text-transform: uppercase;
+}
+.mapa-legend {
+  position: absolute;
+  bottom: 40px; right: 12px;
+  z-index: 1000;
+  background: rgba(0,8,20,0.9);
+  border: 1px solid var(--border);
+  padding: 0.7rem 1rem;
+  border-radius: 3px;
+  min-width: 160px;
+}
+.mapa-legend-title {
+  font-family: var(--font-m);
+  font-size: 0.5rem;
+  letter-spacing: 0.1em;
+  color: var(--hint);
+  text-transform: uppercase;
+  margin-bottom: 0.5rem;
+}
+.legend-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.3rem;
+  font-family: var(--font-m);
+  font-size: 0.48rem;
+  color: var(--hint);
+}
+.legend-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+@media (max-width:900px) {
+  #mapbox-map { height: 360px; }
+}
+
+/* ACTIVIDADE DO PEIXE */
+#atividade-peixe {
+  background: linear-gradient(180deg,
+    var(--bg2) 0%, var(--bg) 100%);
+  border-top: 1px solid var(--border);
+}
+.ativ-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3rem;
+  align-items: start;
+  margin-top: 3rem;
+}
+.ativ-gauge-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+}
+.ativ-gauge {
+  position: relative;
+  width: 220px; height: 220px;
+}
+.ativ-gauge svg {
+  width: 100%; height: 100%;
+  transform: rotate(-90deg);
+}
+.ativ-gauge-inner {
+  position: absolute;
+  inset: 18px;
+  border-radius: 50%;
+  background: radial-gradient(ellipse,
+    var(--bg3) 60%, var(--bg) 100%);
+  border: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+.ativ-score-num {
+  font-family: var(--font-h);
+  font-size: 2.8rem;
+  font-weight: 900;
+  line-height: 1;
+  transition: color 0.4s;
+}
+.ativ-score-lbl {
+  font-family: var(--font-m);
+  font-size: 0.5rem;
+  letter-spacing: 0.15em;
+  color: var(--hint);
+  text-transform: uppercase;
+}
+.ativ-status {
+  font-family: var(--font-h);
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-align: center;
+  transition: color 0.4s;
+}
+.ativ-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 1.5rem;
+}
+.ativ-bar-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+.ativ-bar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.ativ-bar-label {
+  font-family: var(--font-m);
+  font-size: 0.56rem;
+  letter-spacing: 0.1em;
+  color: var(--hint);
+  text-transform: uppercase;
+}
+.ativ-bar-value {
+  font-family: var(--font-h);
+  font-size: 0.72rem;
+  font-weight: 700;
+  transition: color 0.4s;
+}
+.ativ-bar-track {
+  height: 6px;
+  background: rgba(0,245,255,0.06);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.ativ-bar-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.6s ease, background 0.4s;
+}
+.ativ-fish-row {
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+  margin-top: 0.5rem;
+}
+.ativ-fish {
+  font-size: 1.4rem;
+  transition: filter 0.4s, opacity 0.4s;
+}
+.ativ-update {
+  font-family: var(--font-m);
+  font-size: 0.5rem;
+  letter-spacing: 0.08em;
+  color: var(--hint);
+  text-align: center;
+  margin-top: 0.5rem;
+}
+@media (max-width:900px) {
+  .ativ-grid { grid-template-columns:1fr; }
+}
+
+/* GUIA DE ESPÃ‰CIES */
+#especies {
+  background: var(--bg2);
+  border-top: 1px solid var(--border);
+}
+.especies-filters {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+  margin: 2rem 0 1rem;
+  flex-wrap: wrap;
+}
+.esp-filter-btn {
+  font-family: var(--font-m);
+  font-size: 0.58rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 0.45rem 1.2rem;
+  border: 1px solid var(--border2);
+  background: var(--bg3);
+  color: var(--hint);
+  cursor: pointer;
+  border-radius: 2px;
+  transition: all 0.2s;
+}
+.esp-filter-btn.active,
+.esp-filter-btn:hover {
+  background: rgba(0,245,255,0.08);
+  border-color: var(--cyan);
+  color: var(--cyan);
+}
+.especies-grid {
+  display: grid;
+  grid-template-columns: repeat(3,1fr);
+  gap: 1.25rem;
+  margin-top: 1rem;
+}
+.esp-card {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 1.25rem;
+  transition: border-color 0.25s, transform 0.25s;
+}
+.esp-card:hover {
+  border-color: var(--cyan);
+  transform: translateY(-3px);
+}
+.esp-emoji {
+  font-size: 2.2rem;
+  display: block;
+  margin-bottom: 0.65rem;
+}
+.esp-name {
+  font-family: var(--font-h);
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--white);
+  margin-bottom: 0.2rem;
+}
+.esp-sci {
+  font-family: var(--font-m);
+  font-size: 0.52rem;
+  color: var(--hint);
+  letter-spacing: 0.05em;
+  margin-bottom: 0.75rem;
+  font-style: italic;
+}
+.esp-data {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+.esp-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.25rem 0;
+  border-bottom: 1px solid rgba(0,245,255,0.06);
+  font-family: var(--font-m);
+  font-size: 0.52rem;
+}
+.esp-row:last-child { border-bottom: none; }
+.esp-key { color: var(--hint); letter-spacing: 0.06em; }
+.esp-val { font-weight: 700; }
+.esp-val.ok { color: var(--green); }
+.esp-val.warn { color: var(--amber); }
+.esp-val.danger { color: var(--red); }
+.esp-badge-veda {
+  display: inline-block;
+  font-family: var(--font-m);
+  font-size: 0.44rem;
+  padding: 0.15rem 0.5rem;
+  background: rgba(232,77,77,0.1);
+  color: var(--red);
+  border: 1px solid rgba(232,77,77,0.25);
+  border-radius: 2px;
+  text-transform: uppercase;
+  margin-top: 0.5rem;
+}
+.esp-badge-ok {
+  display: inline-block;
+  font-family: var(--font-m);
+  font-size: 0.44rem;
+  padding: 0.15rem 0.5rem;
+  background: rgba(57,255,20,0.08);
+  color: var(--green);
+  border: 1px solid rgba(57,255,20,0.2);
+  border-radius: 2px;
+  text-transform: uppercase;
+  margin-top: 0.5rem;
+}
+@media (max-width:900px) {
+  .especies-grid { grid-template-columns: 1fr; }
+}
+
+/* CALCULADORA DE ISCO */
+#isco-calc {
+  background: var(--bg);
+  border-top: 1px solid var(--border);
+}
+.isco-form {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 2rem;
+  max-width: 600px;
+  margin: 2rem auto 0;
+}
+.isco-field {
+  margin-bottom: 1.25rem;
+}
+.isco-label {
+  font-family: var(--font-m);
+  font-size: 0.56rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--hint);
+  display: block;
+  margin-bottom: 0.5rem;
+}
+.isco-select {
+  width: 100%;
+  background: var(--bg2);
+  border: 1px solid var(--border2);
+  color: var(--white);
+  font-family: var(--font-b);
+  font-size: 0.9rem;
+  padding: 0.7rem 1rem;
+  border-radius: 3px;
+  outline: none;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+.isco-select:focus {
+  border-color: var(--cyan);
+}
+.isco-result {
+  margin-top: 1.5rem;
+  display: none;
+}
+.isco-result.show { display: block; }
+.isco-result-title {
+  font-family: var(--font-m);
+  font-size: 0.56rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--cyan);
+  margin-bottom: 1rem;
+}
+.isco-items {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+.isco-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 0.85rem 1rem;
+}
+.isco-rank {
+  font-family: var(--font-h);
+  font-size: 1.1rem;
+  color: var(--cyan);
+  width: 24px;
+  flex-shrink: 0;
+}
+.isco-info { flex: 1; }
+.isco-name {
+  font-family: var(--font-b);
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--white);
+}
+.isco-tip {
+  font-family: var(--font-m);
+  font-size: 0.5rem;
+  color: var(--hint);
+  margin-top: 0.2rem;
+  letter-spacing: 0.06em;
+}
+.isco-pct-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.3rem;
+}
+.isco-pct-num {
+  font-family: var(--font-h);
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--green);
+}
+.isco-pct-bar {
+  width: 60px; height: 4px;
+  background: var(--border);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.isco-pct-fill {
+  height: 100%;
+  background: linear-gradient(90deg,
+    var(--cyan), var(--green));
+  border-radius: 2px;
+}
+
+/* Modal Early Access */
+.modal-early-access {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  background: rgba(0, 8, 20, 0.92);
+  backdrop-filter: blur(8px);
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+.modal-early-access.open {
+  display: flex;
+}
+.modal-early-access-panel {
+  background: var(--bg3);
+  border: 1px solid var(--border2);
+  border-radius: 8px;
+  padding: 2rem;
+  max-width: 440px;
+  width: 100%;
+  position: relative;
+}
+#modal-early-access-close {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  background: none;
+  border: 1px solid var(--border2);
+  color: var(--cyan);
+  font-size: 1.25rem;
+  line-height: 1;
+  width: 2rem;
+  height: 2rem;
+  cursor: pointer;
+  border-radius: 3px;
+}
+
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+   RESPONSIVE
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+@media (max-width: 900px) {
+  .feat-grid, .feat-grid.reverse { grid-template-columns: 1fr; gap: 3rem; direction: ltr; }
+  .tele-wrap { display: none; }
+  .plans-wrap { grid-template-columns: 1fr; }
+  .testi-grid { grid-template-columns: 1fr; }
+  .footer-top { grid-template-columns: 1fr 1fr; }
+  .nav-links { display: none; }
+  #stats { flex-wrap: wrap; }
+  .stat-item { flex: 0 0 50%; }
+  .stat-item::after { display: none !important; }
+}
+@media (max-width: 600px) {
+  .hero-metrics { gap: 0; flex-wrap: wrap; }
+  .metric { flex: 0 0 50%; padding: 0.75rem 1rem; }
+  .footer-top { grid-template-columns: 1fr; }
+  .waitlist-form { flex-direction: column; }
+  .waitlist-input { border-right: 1px solid var(--border2); border-radius: 3px; }
+  .waitlist-btn { border-radius: 3px; }
+  .dl-btns { flex-direction: column; align-items: center; }
+}
+</style>
+</head>
+<body>
+
+<!-- â•â•â• NAV â•â•â• -->
+<nav id="nav">
+  <a href="#hero" class="nav-logo">AQUANAUTIX</a>
+  <ul class="nav-links">
+    <li><a href="#oraculo">OrÃ¡culo</a></li>
+    <li><a href="#mapa-live">GPS</a></li>
+    <li><a href="#atividade-peixe">Actividade</a></li>
+    <li><a href="#especies">EspÃ©cies</a></li>
+    <li><a href="#isco-calc">Isco</a></li>
+    <li><a href="#mapa">Sonar</a></li>
+    <li><a href="#vision">IA VisÃ£o</a></li>
+    <li><a href="#compare">vs Fishbrain</a></li>
+    <li><a href="#plans">PRO</a></li>
+    <li><a href="#features-all">Features</a></li>
+    <li><a href="#demo-oraculo">Demo</a></li>
+    <li><a href="#app-demo">App</a></li>
+  </ul>
+  <a href="#" class="nav-cta" id="nav-early-access">Early Access</a>
+</nav>
+
+<!-- â•â•â• HERO â•â•â• -->
+<section id="hero">
+  <!-- Real ocean background -->
+  <div class="ocean-bg">
+    <video class="bg-video" autoplay muted loop playsinline preload="auto">
+      <source src="video_bg.mp4" type="video/mp4">
+    </video>
+  </div>
+  <div class="ocean-overlay-1"></div>
+  <div class="ocean-overlay-2"></div>
+
+  <!-- Caustics light -->
+  <div class="caustics">
+    <div class="caustic"></div>
+    <div class="caustic"></div>
+    <div class="caustic"></div>
+  </div>
+
+  <!-- Swimming fish layer -->
+  <div class="fish-layer">
+    <!-- Fish 1 â€” large -->
+    <div class="fish fish-1">
+      <svg width="80" height="36" viewBox="0 0 80 36">
+        <path d="M60,18 C60,18 75,8 80,4 L80,14 C75,12 70,14 68,18 C70,22 75,24 80,22 L80,32 C75,28 60,18 60,18 Z" fill="rgba(0,245,255,0.6)"/>
+        <ellipse cx="32" cy="18" rx="30" ry="14" fill="rgba(0,180,220,0.5)"/>
+        <ellipse cx="25" cy="14" rx="3" ry="3" fill="rgba(0,245,255,0.9)"/>
+        <circle cx="24" cy="13" r="1.5" fill="rgba(0,8,20,0.8)"/>
+        <path d="M50,18 C45,12 40,10 35,12" stroke="rgba(0,245,255,0.3)" stroke-width="0.5" fill="none"/>
+        <path d="M50,18 C45,24 40,26 35,24" stroke="rgba(0,245,255,0.3)" stroke-width="0.5" fill="none"/>
+      </svg>
+    </div>
+    <!-- Fish 2 â€” medium -->
+    <div class="fish fish-2">
+      <svg width="55" height="26" viewBox="0 0 55 26">
+        <path d="M42,13 C42,13 52,6 55,3 L55,10 C51,8 48,10 47,13 C48,16 51,18 55,16 L55,23 C52,20 42,13 42,13 Z" fill="rgba(57,255,20,0.5)"/>
+        <ellipse cx="22" cy="13" rx="22" ry="10" fill="rgba(40,200,20,0.4)"/>
+        <circle cx="17" cy="10" r="2.5" fill="rgba(57,255,20,0.8)"/>
+        <circle cx="16.5" cy="9.5" r="1" fill="rgba(0,8,20,0.8)"/>
+      </svg>
+    </div>
+    <!-- Fish 3 â€” small school -->
+    <div class="fish fish-3">
+      <svg width="120" height="24" viewBox="0 0 120 24">
+        <ellipse cx="18" cy="12" rx="14" ry="7" fill="rgba(0,245,255,0.45)"/>
+        <path d="M30,12 L36,7 L36,17 Z" fill="rgba(0,245,255,0.45)"/>
+        <circle cx="12" cy="9" r="2" fill="rgba(0,245,255,0.8)"/>
+        <ellipse cx="60" cy="10" rx="12" ry="6" fill="rgba(0,200,240,0.4)"/>
+        <path d="M70,10 L76,6 L76,14 Z" fill="rgba(0,200,240,0.4)"/>
+        <ellipse cx="98" cy="14" rx="13" ry="6.5" fill="rgba(0,245,255,0.38)"/>
+        <path d="M109,14 L115,10 L115,18 Z" fill="rgba(0,245,255,0.38)"/>
+      </svg>
+    </div>
+    <!-- Fish 4 â€” deep large -->
+    <div class="fish fish-4">
+      <svg width="70" height="30" viewBox="0 0 70 30">
+        <path d="M52,15 C52,15 65,7 70,3 L70,12 C66,10 63,12 61,15 C63,18 66,20 70,18 L70,27 C65,23 52,15 52,15 Z" fill="rgba(47,230,200,0.5)"/>
+        <ellipse cx="28" cy="15" rx="26" ry="12" fill="rgba(30,180,160,0.45)"/>
+        <circle cx="22" cy="11" r="3" fill="rgba(47,230,200,0.85)"/>
+        <circle cx="21" cy="10" r="1.5" fill="rgba(0,8,20,0.8)"/>
+      </svg>
+    </div>
+    <!-- Fish 5 â€” tiny -->
+    <div class="fish fish-5">
+      <svg width="38" height="18" viewBox="0 0 38 18">
+        <path d="M28,9 C28,9 35,4 38,2 L38,7 C36,6 34,7 33,9 C34,11 36,12 38,11 L38,16 C35,14 28,9 28,9 Z" fill="rgba(243,198,77,0.6)"/>
+        <ellipse cx="16" cy="9" rx="14" ry="7" fill="rgba(220,170,40,0.5)"/>
+        <circle cx="11" cy="7" r="2" fill="rgba(243,198,77,0.9)"/>
+        <circle cx="10.5" cy="6.5" r="1" fill="rgba(0,8,20,0.8)"/>
+      </svg>
+    </div>
+    <!-- Fish 6 â€” large deep -->
+    <div class="fish fish-6">
+      <svg width="100" height="44" viewBox="0 0 100 44">
+        <path d="M75,22 C75,22 90,10 100,5 L100,18 C94,15 88,18 85,22 C88,26 94,29 100,26 L100,39 C90,34 75,22 75,22 Z" fill="rgba(0,245,255,0.35)"/>
+        <ellipse cx="40" cy="22" rx="37" ry="18" fill="rgba(0,160,200,0.3)"/>
+        <ellipse cx="30" cy="16" rx="5" ry="5" fill="rgba(0,245,255,0.7)"/>
+        <circle cx="28" cy="14" r="2.5" fill="rgba(0,8,20,0.8)"/>
+        <path d="M65,22 C58,14 48,11 42,14" stroke="rgba(0,245,255,0.2)" stroke-width="0.8" fill="none"/>
+        <path d="M65,22 C58,30 48,33 42,30" stroke="rgba(0,245,255,0.2)" stroke-width="0.8" fill="none"/>
+      </svg>
+    </div>
+  </div>
+
+  <!-- Rising bubbles -->
+  <div class="bubbles">
+    <div class="bubble b1"></div><div class="bubble b2"></div>
+    <div class="bubble b3"></div><div class="bubble b4"></div>
+    <div class="bubble b5"></div><div class="bubble b6"></div>
+    <div class="bubble b7"></div><div class="bubble b8"></div>
+    <div class="bubble b9"></div><div class="bubble b10"></div>
+  </div>
+
+  <!-- Content -->
+  <div class="hero-content">
+    <div class="hero-tag">
+      <span class="hero-tag-dot"></span>
+      AQUANAUTIX â€” INSTRUMENTO DE PESCA DE ELITE Â· PT Â· EN Â· ES
+    </div>
+    <h1>
+      Pesca com<br/><em>inteligÃªncia</em>
+      <span>OrÃ¡culo Â· Sonar BatimÃ©trico Â· Ghost Mode Â· IbÃ©ria</span>
+    </h1>
+    <p class="hero-sub">A app que os pescadores europeus sempre mereceram. Offline-first. Privacidade total. Gratuita.</p>
+
+    <div class="store-ctas">
+      <a href="https://apps.apple.com" class="store-btn-hero primary" target="_blank" rel="noopener">
+        <span class="store-btn-icon">ðŸŽ</span>
+        <div class="store-btn-text">
+          <div class="store-btn-sub">Download na</div>
+          <div class="store-btn-name">App Store</div>
+        </div>
+      </a>
+      <a href="https://play.google.com" class="store-btn-hero secondary" target="_blank" rel="noopener">
+        <span class="store-btn-icon">â–¶</span>
+        <div class="store-btn-text">
+          <div class="store-btn-sub">DisponÃ­vel no</div>
+          <div class="store-btn-name">Google Play</div>
+        </div>
+      </a>
+      <a href="#" class="store-btn-hero secondary" id="hero-early-access">
+        <span class="store-btn-icon">âœ¦</span>
+        <div class="store-btn-text">
+          <div class="store-btn-sub">Acesso</div>
+          <div class="store-btn-name">Early Access</div>
+        </div>
+      </a>
+    </div>
+
+    <div class="hero-alt-cta">GrÃ¡tis para sempre Â· <a href="#plans">PRO a partir de â‚¬7/mÃªs</a> Â· Sem cartÃ£o obrigatÃ³rio</div>
+
+    <div class="hero-metrics">
+      <div class="metric"><span class="metric-val" id="c1">0</span><span class="metric-lbl">Capturas</span></div>
+      <div class="metric"><span class="metric-val" id="c2">0</span><span class="metric-lbl">Spots</span></div>
+      <div class="metric"><span class="metric-val" id="c3">0</span><span class="metric-lbl">EspÃ©cies IA</span></div>
+      <div class="metric"><span class="metric-val">98%</span><span class="metric-lbl">PrecisÃ£o</span></div>
+    </div>
+  </div>
+
+  <div class="scroll-ind">
+    <span>Mergulha</span>
+    <div class="scroll-arrow"></div>
+  </div>
+</section>
+
+<section id="mapa-live">
+  <div class="section-inner">
+    <div class="reveal" style="text-align:center">
+      <h2>Os melhores pontos <em>de Pesca</em></h2>
+    </div>
+    <div class="mapbox-ctrl-custom reveal" style="display:none">
+      <button type="button" class="map-layer-btn active"
+        data-style="dark"
+        onclick="setMapStyle('dark')">
+        ðŸŒ‘ Dark
+      </button>
+      <button type="button" class="map-layer-btn"
+        data-style="satellite"
+        onclick="setMapStyle('satellite')">
+        ðŸ›°ï¸ SatÃ©lite
+      </button>
+      <button type="button" class="map-layer-btn"
+        data-style="professional"
+        onclick="setMapStyle('professional')">
+        ðŸ—ºï¸ Carta de NavegaÃ§Ã£o
+      </button>
+      <button type="button" class="map-layer-btn"
+        data-style="sportfishing"
+        onclick="setMapStyle('sportfishing')">
+        ðŸŽ£ Pesca Desportiva
+      </button>
+      <button type="button" class="map-layer-btn"
+        data-style="bathymetry"
+        onclick="setMapStyle('bathymetry')">
+        ðŸŒŠ BATIMETRIA
+      </button>
+      <button type="button" class="map-layer-btn"
+        data-action="portugal"
+        onclick="flyToPortugal()">
+        ðŸ‡µðŸ‡¹ Portugal
+      </button>
+      <button type="button" class="map-layer-btn"
+        data-action="spain"
+        onclick="flyToSpain()">
+        ðŸ‡ªðŸ‡¸ Espanha
+      </button>
+      <button type="button" class="map-layer-btn"
+        id="btn-minha-posicao"
+        data-action="location"
+        onclick="flyToMyLocation()">
+        ðŸ“ A Minha PosiÃ§Ã£o
+      </button>
+      <button type="button" class="map-layer-btn"
+        data-action="atlantic"
+        onclick="flyToAtlantic()">
+        ðŸŒŠ AtlÃ¢ntico
+      </button>
+      <button type="button" class="map-layer-btn"
+        data-style="baitshops"
+        data-action="baitshops"
+        onclick="toggleBaitShops()">
+        ðŸª£ LOJAS DE ISCO
+      </button>
+    </div>
+    <div class="mapa-live-wrap reveal">
+      <div class="mapa-live-tag"
+        id="mapa-tag-label">
+        AQUANAUTIX Â· SPOTS Â· GHOST MODE
+      </div>
+      <div id="mapbox-map" style="display:none"></div>
+      <img
+        src="images/4_spots.png"
+        alt="AQUANAUTIX â€” Mapa de Spots Â· Ghost Mode Â· Tiers FREE/PRO/Elite"
+        style="width:100%;height:100%;object-fit:cover;display:block;border-radius:inherit;"
+      />
+    </div>
+    <div style="text-align:center;margin-top:2rem">
+      <a href="#waitlist" class="btn-main">
+        Quero o mapa completo
+      </a>
+    </div>
+  </div>
+</section>
+
+<section id="mapa">
+  <div class="section-inner">
+    <div class="feat-grid reverse">
+      <div class="reveal">
+        <div class="section-label">// Feature 02 â€” Cartografia de elite</div>
+        <h2>Mapa <em>sonar</em><br/>com batimetria GEBCO</h2>
+        <p class="lead">VÃª o fundo como um sonar profissional. Curvas batimÃ©tricas GEBCO com fallback ArcGIS e camadas NOAA. Waypoints e rotas offline.</p>
+        <div class="pill-row">
+          <span class="pill on">GEBCO Global</span><span class="pill on">NOAA Coastal</span>
+          <span class="pill on">Mapbox</span><span class="pill on">SatÃ©lite</span>
+          <span class="pill">Waypoints offline</span><span class="pill">Rotas</span>
+        </div>
+        <p style="font-size:0.88rem;color:var(--hint);line-height:1.7;margin-bottom:2rem;font-weight:300;">Spots privados com Ghost Mode â€” as coordenadas reais nunca saem do teu dispositivo quando partilhas.</p>
+        <a href="#mapa-live" class="btn-main">Ver o Mapa</a>
+      </div>
+      <div class="reveal reveal-delay-1">
+        <div class="mapa-screen">
+          <svg viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg">
+            <rect width="400" height="300" fill="#010D1F"/>
+            <!-- Grid -->
+            <line x1="100" y1="0" x2="100" y2="300" stroke="#00F5FF" stroke-width="0.3" opacity="0.07"/>
+            <line x1="200" y1="0" x2="200" y2="300" stroke="#00F5FF" stroke-width="0.3" opacity="0.07"/>
+            <line x1="300" y1="0" x2="300" y2="300" stroke="#00F5FF" stroke-width="0.3" opacity="0.07"/>
+            <line x1="0" y1="100" x2="400" y2="100" stroke="#00F5FF" stroke-width="0.3" opacity="0.07"/>
+            <line x1="0" y1="200" x2="400" y2="200" stroke="#00F5FF" stroke-width="0.3" opacity="0.07"/>
+            <!-- Bathymetric contours -->
+            <path d="M0,265 Q100,248 180,258 Q260,268 340,250 Q380,242 400,248" fill="none" stroke="#001435" stroke-width="10"/>
+            <path d="M0,240 Q90,222 170,232 Q250,242 330,220 Q370,210 400,218" fill="none" stroke="#001C4A" stroke-width="8"/>
+            <path d="M0,215 Q70,195 155,208 Q240,220 320,196 Q365,182 400,190" fill="none" stroke="#002566" stroke-width="7"/>
+            <path d="M0,188 Q60,165 145,180 Q230,195 310,168 Q358,150 400,160" fill="none" stroke="#003285" stroke-width="5.5"/>
+            <path d="M0,160 Q55,135 135,150 Q215,165 298,138 Q350,118 400,130" fill="none" stroke="#0048A8" stroke-width="4.5"/>
+            <path d="M0,130 Q50,105 128,120 Q206,135 286,108 Q342,88 400,100" fill="none" stroke="#0060C8" stroke-width="3.5"/>
+            <path d="M0,100 Q55,75 135,90 Q215,105 288,78 Q345,58 400,72" fill="none" stroke="#0078DC" stroke-width="3"/>
+            <path d="M0,70 Q60,45 142,60 Q224,75 295,50 Q348,30 400,44" fill="none" stroke="#0090EC" stroke-width="2.5"/>
+            <path d="M0,42 Q65,18 148,33 Q231,48 300,24 Q350,5 400,18" fill="none" stroke="#00AAEF" stroke-width="2"/>
+            <path d="M0,15 Q70,-5 155,8 Q240,22 308,0" fill="none" stroke="#00C2F5" stroke-width="1.5"/>
+            <!-- Depth numbers -->
+            <text x="22" y="95" font-family="Share Tech Mono" font-size="7" fill="#003285" opacity="0.8">-20m</text>
+            <text x="22" y="130" font-family="Share Tech Mono" font-size="7" fill="#0048A8" opacity="0.8">-15m</text>
+            <text x="22" y="165" font-family="Share Tech Mono" font-size="7" fill="#0060C8" opacity="0.8">-10m</text>
+            <text x="22" y="200" font-family="Share Tech Mono" font-size="7" fill="#0078DC" opacity="0.8">-5m</text>
+            <!-- Spot markers -->
+            <circle cx="190" cy="148" r="5" fill="#00F5FF" opacity="0.95"/>
+            <circle cx="190" cy="148" r="9" fill="none" stroke="#00F5FF" stroke-width="1" opacity="0.5"/>
+            <circle cx="190" cy="148" r="14" fill="none" stroke="#00F5FF" stroke-width="0.5" opacity="0.25"/>
+            <text x="198" y="143" font-family="Share Tech Mono" font-size="7" fill="#00F5FF" opacity="0.9">MEU SPOT</text>
+            <circle cx="295" cy="105" r="4" fill="#39FF14" opacity="0.85"/>
+            <circle cx="295" cy="105" r="8" fill="none" stroke="#39FF14" stroke-width="0.8" opacity="0.4"/>
+            <circle cx="115" cy="182" r="3" fill="#F3C64D" opacity="0.75"/>
+            <circle cx="115" cy="182" r="7" fill="none" stroke="#F3C64D" stroke-width="0.7" opacity="0.35"/>
+            <!-- Land mass -->
+            <path d="M280,255 Q310,240 350,250 Q380,258 400,252 L400,300 L280,300 Z" fill="#0A140A" opacity="0.6"/>
+          </svg>
+          <div class="mapa-tag">GEBCO Â· LIVE Â· PT</div>
+          <div class="depth-leg">
+            <div class="depth-leg-title">Batimetria</div>
+            <div class="depth-grad"></div>
+            <div class="depth-range"><span>-50m</span><span>0m</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="oraculo">
+  <div class="section-inner">
+    <div class="feat-grid">
+      <div class="score-wrap reveal">
+        <div class="score-ring-container">
+          <svg class="score-svg" viewBox="0 0 200 200">
+            <circle class="score-track" cx="100" cy="100" r="88"/>
+            <circle class="score-fill" cx="100" cy="100" r="88"/>
+          </svg>
+          <div class="score-inner">
+            <div class="score-num">78</div>
+            <div class="score-lbl">Score OrÃ¡culo</div>
+          </div>
+        </div>
+        <div class="tele-wrap">
+          <div class="tele"><div class="tele-key">PressÃ£o atm.</div><div class="tele-val">1013 hPa</div><div class="tele-bar"><div class="tele-bar-fill" style="width:72%;background:var(--cyan)"></div></div></div>
+          <div class="tele"><div class="tele-key">Fase Lunar</div><div class="tele-val">Crescente Ã¢â€”'</div><div class="tele-bar"><div class="tele-bar-fill" style="width:85%;background:var(--amber)"></div></div></div>
+          <div class="tele"><div class="tele-key">Janela Solunar</div><div class="tele-val">06:40â€“08:20</div><div class="tele-bar"><div class="tele-bar-fill" style="width:92%;background:var(--green)"></div></div></div>
+          <div class="tele"><div class="tele-key">MarÃ©</div><div class="tele-val">Enchente â†‘</div><div class="tele-bar"><div class="tele-bar-fill" style="width:60%;background:var(--teal)"></div></div></div>
+        </div>
+      </div>
+      <div class="reveal reveal-delay-1">
+        <div class="section-label">// Feature 01 â€” PrediÃ§Ã£o inteligente</div>
+        <h2>O <em>OrÃ¡culo</em><br/>sabe quando pescar</h2>
+        <p class="lead">Motor de inteligÃªncia que cruza pressÃ£o atmosfÃ©rica, fases lunares, marÃ©s e histÃ³rico do teu spot. Score tÃ¡ctico de 0 a 100 â€” personalizado para ti.</p>
+        <div class="pill-row">
+          <span class="pill on">Solunar</span><span class="pill on">MarÃ©s</span><span class="pill on">Lua</span>
+          <span class="pill on">PressÃ£o</span><span class="pill">Temperatura</span><span class="pill">HistÃ³rico local</span>
+        </div>
+        <p style="font-size:0.88rem;color:var(--hint);line-height:1.7;margin-bottom:2rem;font-weight:300;">O histÃ³rico das tuas capturas alimenta o modelo. Quanto mais usas, mais preciso fica para o teu spot especÃ­fico.</p>
+        <a href="#oraculo" class="btn-main"
+          id="btn-experimentar-oraculo"
+          onclick="calcularOraculo(); return false;">
+          Experimentar o OrÃ¡culo
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="atividade-peixe">
+  <div class="section-inner">
+    <div class="reveal" style="text-align:center">
+      <div class="section-label"
+        style="display:inline-block">
+        // OrÃ¡culo em tempo real
+      </div>
+      <h2>Vale a pena ir Ã  <em>pesca?</em></h2>
+      <p class="lead" style="margin:0 auto">
+        Score calculado agora com base em
+        fase lunar, solunar, pressÃ£o e marÃ©.
+        Actualiza a cada minuto.
+      </p>
+    </div>
+    <div class="ativ-grid">
+      <div class="ativ-gauge-wrap reveal">
+        <div class="ativ-gauge">
+          <svg viewBox="0 0 200 200"
+            aria-hidden="true">
+            <circle fill="none"
+              stroke="rgba(0,245,255,0.08)"
+              stroke-width="10"
+              cx="100" cy="100" r="85"/>
+            <circle id="ativ-fill"
+              fill="none"
+              stroke-width="10"
+              stroke-linecap="round"
+              stroke-dasharray="534"
+              stroke-dashoffset="534"
+              cx="100" cy="100" r="85"
+              style="transition:stroke-dashoffset
+                0.6s ease,stroke 0.4s,filter 0.4s"/>
+          </svg>
+          <div class="ativ-gauge-inner">
+            <div id="ativ-num"
+              class="ativ-score-num">--</div>
+            <div class="ativ-score-lbl">
+              Actividade
+            </div>
+          </div>
+        </div>
+        <div id="ativ-status"
+          class="ativ-status">A calcular...</div>
+        <div class="ativ-fish-row">
+          <span class="ativ-fish" id="af1">ðŸŸ</span>
+          <span class="ativ-fish" id="af2">ðŸŸ</span>
+          <span class="ativ-fish" id="af3">ðŸŸ</span>
+          <span class="ativ-fish" id="af4">ðŸŸ</span>
+          <span class="ativ-fish" id="af5">ðŸŸ</span>
+        </div>
+        <div class="ativ-update"
+          id="ativ-update">A calcular...</div>
+      </div>
+      <div class="ativ-bars reveal reveal-delay-1">
+        <div class="ativ-bar-row">
+          <div class="ativ-bar-header">
+            <span class="ativ-bar-label">
+              ðŸŒ™ Fase Lunar
+            </span>
+            <span class="ativ-bar-value"
+              id="ab-luna">--</span>
+          </div>
+          <div class="ativ-bar-track">
+            <div class="ativ-bar-fill"
+              id="abf-luna"
+              style="width:0%;
+              background:var(--amber)">
+            </div>
+          </div>
+        </div>
+        <div class="ativ-bar-row">
+          <div class="ativ-bar-header">
+            <span class="ativ-bar-label">
+              â± Janela Solunar
+            </span>
+            <span class="ativ-bar-value"
+              id="ab-sol">--</span>
+          </div>
+          <div class="ativ-bar-track">
+            <div class="ativ-bar-fill"
+              id="abf-sol"
+              style="width:0%;
+              background:var(--cyan)">
+            </div>
+          </div>
+        </div>
+        <div class="ativ-bar-row">
+          <div class="ativ-bar-header">
+            <span class="ativ-bar-label">
+              ðŸŒŠ MarÃ©
+            </span>
+            <span class="ativ-bar-value"
+              id="ab-mare">--</span>
+          </div>
+          <div class="ativ-bar-track">
+            <div class="ativ-bar-fill"
+              id="abf-mare"
+              style="width:0%;
+              background:var(--teal)">
+            </div>
+          </div>
+        </div>
+        <div class="ativ-bar-row">
+          <div class="ativ-bar-header">
+            <span class="ativ-bar-label">
+              ðŸŒ¡ PressÃ£o Atm.
+            </span>
+            <span class="ativ-bar-value"
+              id="ab-pres">--</span>
+          </div>
+          <div class="ativ-bar-track">
+            <div class="ativ-bar-fill"
+              id="abf-pres"
+              style="width:0%;
+              background:var(--green)">
+            </div>
+          </div>
+        </div>
+        <div class="ativ-bar-row">
+          <div class="ativ-bar-header">
+            <span class="ativ-bar-label">
+              â˜€ï¸ Hora do Dia
+            </span>
+            <span class="ativ-bar-value"
+              id="ab-hora">--</span>
+          </div>
+          <div class="ativ-bar-track">
+            <div class="ativ-bar-fill"
+              id="abf-hora"
+              style="width:0%;
+              background:var(--cyan)">
+            </div>
+          </div>
+        </div>
+        <div style="margin-top:1rem;
+          padding-top:1rem;
+          border-top:1px solid var(--border)">
+          <div id="ativ-conselho"
+            style="font-family:var(--font-b);
+            font-size:0.9rem;
+            color:var(--white);
+            line-height:1.6">
+            A analisar condiÃ§Ãµes...
+          </div>
+        </div>
+      </div>
+    </div>
+    <div style="text-align:center;
+      margin-top:2.5rem">
+      <a href="#waitlist" class="btn-main">
+        Ver previsÃ£o completa
+      </a>
+    </div>
+  </div>
+</section>
+
+<section id="demo-oraculo">
+  <div class="section-inner">
+    <div class="demo-orac-head reveal">
+      <div class="section-label" style="display: inline-block">// Interactivo</div>
+      <h2>Experimenta o <em>OrÃ¡culo</em></h2>
+      <p class="lead" style="margin: 0 auto; text-align: center">Arrasta o slider â€” o score e o conselho tÃ¡ctico reagem em tempo real.</p>
+    </div>
+    <div class="demo-orac-wrap">
+      <div class="demo-orac-ring-col reveal">
+        <div class="demo-orac-ring-container">
+          <svg class="demo-orac-svg" viewBox="0 0 200 200" aria-hidden="true">
+            <circle class="demo-orac-track" cx="100" cy="100" r="88"/>
+            <circle id="demo-orac-fill" class="demo-orac-fill" cx="100" cy="100" r="88"/>
+          </svg>
+          <div class="demo-orac-inner">
+            <span id="demo-orac-num" class="demo-orac-num">78</span>
+            <span class="demo-orac-lbl">Score OrÃ¡culo</span>
+          </div>
+        </div>
+        <div class="demo-orac-slider-wrap">
+          <label for="demo-orac-range">Simular condiÃ§Ãµes (0â€“100)</label>
+          <input type="range" id="demo-orac-range" class="demo-orac-slider" min="0" max="100" value="78"/>
+        </div>
+      </div>
+      <div class="demo-orac-panel reveal reveal-delay-1">
+        <div class="demo-orac-chips">
+          <span class="pill on">Lua</span>
+          <span class="pill on">MarÃ©</span>
+          <span class="pill on">Solunar</span>
+          <span class="pill on">PressÃ£o</span>
+        </div>
+        <p id="demo-orac-tactical" class="demo-orac-tactical"></p>
+        <a href="#waitlist" class="btn-main" style="margin-top: 1rem">Quero early access</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="vision">
+  <div class="section-inner">
+    <div class="feat-grid">
+      <div class="reveal">
+        <div class="vision-card">
+          <div class="vision-photo">
+            <div class="fish-display">ðŸŸ</div>
+            <div class="scan-beam"></div>
+            <div class="bk bk-tl"></div><div class="bk bk-tr"></div>
+            <div class="bk bk-bl"></div><div class="bk bk-br"></div>
+            <span class="ai-label ai-tl">AQUANAUTIXÂ·AI</span>
+            <span class="ai-label ai-tr">GPT-4o VISION</span>
+            <span class="ai-label ai-bl">SCANNINGâ€¦</span>
+            <span class="ai-label ai-br">98.2% CONF</span>
+          </div>
+          <div class="vision-data">
+            <div class="vrow"><span class="vkey">EspÃ©cie</span><span class="vval g">Robalo Â· D. labrax</span></div>
+            <div class="vrow"><span class="vkey">Peso estimado</span><span class="vval">2.4 kg</span></div>
+            <div class="vrow"><span class="vkey">Comprimento</span><span class="vval">52 cm</span></div>
+            <div class="vrow"><span class="vkey">ConfianÃ§a</span>
+              <div class="conf-wrap">
+                <div class="conf-track"><div class="conf-fill" style="width:98%"></div></div>
+                <span class="vval g" style="font-size:0.7rem">98.2%</span>
+              </div>
+            </div>
+            <div class="vrow"><span class="vkey">Legal PT</span><span class="vval g">âœ“ OK (mÃ­n. 36cm)</span></div>
+            <div class="vrow"><span class="vkey">MÃ©todo</span><span class="vval a">Surfcasting</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="reveal reveal-delay-1">
+        <div class="section-label">// Feature 03 â€” InteligÃªncia artificial</div>
+        <h2>Identifica qualquer<br/>peixe com <em>IA GPT-4o</em></h2>
+        <p class="lead">Fotografa â€” o AQUANAUTIX identifica a espÃ©cie, estima peso e comprimento, e verifica compliance legal PT/ES. Em segundos, offline.</p>
+        <div class="pill-row">
+          <span class="pill on">EspÃ©cie</span><span class="pill on">Peso</span><span class="pill on">Comprimento</span>
+          <span class="pill on">Legal PT/ES</span><span class="pill">Modo Offline</span>
+        </div>
+        <p style="font-size:0.88rem;color:var(--hint);line-height:1.7;margin-bottom:2rem;font-weight:300;">Pipeline via Supabase Edge Function â€” a tua chave OpenAI nunca fica exposta. Resultados guardados no logbook offline Hive.</p>
+        <a href="#waitlist" class="btn-main">Experimentar GrÃ¡tis</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="ghost">
+  <div class="section-inner">
+    <div class="feat-grid reverse">
+      <div class="reveal">
+        <div class="section-label">// Feature 04 â€” Privacidade radical</div>
+        <h2>Ghost Mode.<br/>Os teus spots<br/>sÃ£o <em>teus.</em></h2>
+        <p class="lead">Privacidade diferencial por defeito. Fuzzing geogrÃ¡fico de ~3km em partilhas pÃºblicas. As coordenadas reais nunca saem do teu dispositivo.</p>
+        <div class="priv-list">
+          <div class="priv-item"><span class="priv-code">[PRIV]</span><div><div class="priv-title">Privado por defeito</div><div class="priv-desc">Cada captura e spot Ã© privado atÃ© dares permissÃ£o explÃ­cita. Nunca ao contrÃ¡rio.</div></div></div>
+          <div class="priv-item"><span class="priv-code">[FUZZ]</span><div><div class="priv-title">Fuzzing ~3km</div><div class="priv-desc">Partilha pÃºblica? Coordenadas ofuscadas automaticamente. O teu spot secreto fica secreto.</div></div></div>
+          <div class="priv-item"><span class="priv-code">[DP]</span><div><div class="priv-title">Privacidade diferencial</div><div class="priv-desc">Heatmaps e tendÃªncias usam ruÃ­do calibrado e k-anonimato. Zero dados raw pÃºblicos.</div></div></div>
+        </div>
+      </div>
+      <div class="reveal reveal-delay-1">
+        <div class="ghost-vis">
+          <svg viewBox="0 0 400 340" xmlns="http://www.w3.org/2000/svg">
+            <rect width="400" height="340" fill="#010D1F"/>
+            <line x1="80" y1="0" x2="80" y2="340" stroke="#00F5FF" stroke-width="0.3" opacity="0.06"/>
+            <line x1="160" y1="0" x2="160" y2="340" stroke="#00F5FF" stroke-width="0.3" opacity="0.06"/>
+            <line x1="240" y1="0" x2="240" y2="340" stroke="#00F5FF" stroke-width="0.3" opacity="0.06"/>
+            <line x1="320" y1="0" x2="320" y2="340" stroke="#00F5FF" stroke-width="0.3" opacity="0.06"/>
+            <line x1="0" y1="85" x2="400" y2="85" stroke="#00F5FF" stroke-width="0.3" opacity="0.06"/>
+            <line x1="0" y1="170" x2="400" y2="170" stroke="#00F5FF" stroke-width="0.3" opacity="0.06"/>
+            <line x1="0" y1="255" x2="400" y2="255" stroke="#00F5FF" stroke-width="0.3" opacity="0.06"/>
+            <!-- Fuzz rings -->
+            <circle cx="200" cy="165" r="55" fill="rgba(0,245,255,0.025)" stroke="rgba(0,245,255,0.15)" stroke-width="1" stroke-dasharray="5 4"/>
+            <circle cx="200" cy="165" r="100" fill="none" stroke="rgba(0,245,255,0.08)" stroke-width="1" stroke-dasharray="5 4"/>
+            <circle cx="200" cy="165" r="145" fill="none" stroke="rgba(0,245,255,0.04)" stroke-width="1" stroke-dasharray="5 4"/>
+            <!-- Real spot -->
+            <circle cx="200" cy="165" r="6" fill="#00F5FF"/>
+            <circle cx="200" cy="165" r="11" fill="none" stroke="#00F5FF" stroke-width="1.5" opacity="0.5"/>
+            <!-- Fuzzed public dots -->
+            <circle cx="174" cy="180" r="3.5" fill="#00F5FF" opacity="0.22"/>
+            <circle cx="225" cy="148" r="3.5" fill="#00F5FF" opacity="0.18"/>
+            <circle cx="189" cy="138" r="3" fill="#00F5FF" opacity="0.15"/>
+            <circle cx="232" cy="178" r="3" fill="#00F5FF" opacity="0.2"/>
+            <circle cx="162" cy="155" r="2.5" fill="#00F5FF" opacity="0.14"/>
+            <circle cx="240" cy="160" r="2.5" fill="#00F5FF" opacity="0.16"/>
+            <!-- Labels -->
+            <text x="211" y="161" font-family="Share Tech Mono" font-size="7" fill="#00F5FF" opacity="0.9">REAL</text>
+            <text x="115" y="235" font-family="Share Tech Mono" font-size="7" fill="rgba(0,245,255,0.4)">PUBLIC (FUZZED)</text>
+          </svg>
+          <div class="ghost-label-bottom">Spot real: <span>sÃ³ tu</span> Â· PÃºblico: ~3km ofuscado</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="especies">
+  <div class="section-inner">
+    <div class="reveal" style="text-align:center">
+      <div class="section-label"
+        style="display:inline-block">
+        // RegulamentaÃ§Ã£o ibÃ©rica
+      </div>
+      <h2>Guia de <em>EspÃ©cies</em><br/>
+          PT + ES</h2>
+      <p class="lead" style="margin:0 auto">
+        Tamanhos mÃ­nimos legais, Ã©pocas de veda
+        e isco recomendado para cada espÃ©cie.
+        Sempre actualizado.
+      </p>
+    </div>
+    <div class="especies-filters reveal">
+      <button type="button"
+        class="esp-filter-btn active"
+        onclick="filterEspecies('all')">
+        ðŸŒŠ Todas
+      </button>
+      <button type="button"
+        class="esp-filter-btn"
+        onclick="filterEspecies('pt')">
+        ðŸ‡µðŸ‡¹ Portugal
+      </button>
+      <button type="button"
+        class="esp-filter-btn"
+        onclick="filterEspecies('es')">
+        ðŸ‡ªðŸ‡¸ Espanha
+      </button>
+      <button type="button"
+        class="esp-filter-btn"
+        onclick="filterEspecies('veda')">
+        ðŸš« Em Veda
+      </button>
+    </div>
+    <div id="especies-counter"
+      style="text-align:center;
+      font-family:var(--font-m);
+      font-size:0.56rem;
+      letter-spacing:0.1em;
+      color:var(--hint);
+      text-transform:uppercase;
+      margin-top:0.5rem">
+    </div>
+    <div class="especies-grid reveal"
+      id="especies-grid">
+    </div>
+  </div>
+</section>
+
+<section id="isco-calc">
+  <div class="section-inner">
+    <div class="reveal" style="text-align:center">
+      <div class="section-label"
+        style="display:inline-block">
+        // IA de recomendaÃ§Ã£o
+      </div>
+      <h2>O que usar<br/>
+          no teu <em>spot</em>?</h2>
+      <p class="lead" style="margin:0 auto">
+        Selecciona a regiÃ£o, espÃ©cie alvo e
+        Ã©poca â€” o AQUANAUTIX recomenda
+        as melhores iscas.
+      </p>
+    </div>
+    <div id="isco-hint" style="
+      display:none;
+      font-family:var(--font-m);
+      font-size:0.56rem;
+      letter-spacing:0.1em;
+      color:var(--amber);
+      text-align:center;
+      margin-top:0.5rem;
+    ">
+      â†‘ Selecciona os 3 campos para ver recomendaÃ§Ã£o
+    </div>
+    <div class="isco-form reveal">
+      <div class="isco-field">
+        <label class="isco-label"
+          for="isco-regiao">
+          ðŸ“ RegiÃ£o
+        </label>
+        <select class="isco-select"
+          id="isco-regiao"
+          onchange="calcIsco()">
+          <option value="">Selecciona...</option>
+          <option value="norte-pt">Norte PT</option>
+          <option value="centro-pt">Centro PT</option>
+          <option value="sul-pt">Sul PT (Algarve)</option>
+          <option value="galiza">Galiza ES</option>
+          <option value="levante">Levante ES</option>
+          <option value="andaluzia">Andaluzia ES</option>
+        </select>
+      </div>
+      <div class="isco-field">
+        <label class="isco-label"
+          for="isco-especie">
+          ðŸŸ EspÃ©cie alvo
+        </label>
+        <select class="isco-select"
+          id="isco-especie"
+          onchange="calcIsco()">
+          <option value="">Selecciona...</option>
+          <option value="robalo">ðŸŸ Robalo</option>
+          <option value="dourada">ðŸ  Dourada</option>
+          <option value="sargo">ðŸ¡ Sargo</option>
+          <option value="corvina">ðŸ¦ˆ Corvina</option>
+          <option value="pargo">ðŸŽ£ Pargo</option>
+          <option value="polvo">ðŸ™ Polvo</option>
+          <option value="cherne">ðŸŸ Cherne</option>
+          <option value="linguado">ðŸŸ Linguado</option>
+        </select>
+      </div>
+      <div class="isco-field">
+        <label class="isco-label"
+          for="isco-epoca">
+          ðŸ“… Ã‰poca do ano
+        </label>
+        <select class="isco-select"
+          id="isco-epoca"
+          onchange="calcIsco()">
+          <option value="">Selecciona...</option>
+          <option value="primavera">ðŸŒ¸ Primavera</option>
+          <option value="verao">â˜€ï¸ VerÃ£o</option>
+          <option value="outono">ðŸ‚ Outono</option>
+          <option value="inverno">â„ï¸ Inverno</option>
+        </select>
+      </div>
+      <div class="isco-result" id="isco-result">
+        <div class="isco-result-title">
+          // TOP 3 ISCAS RECOMENDADAS
+        </div>
+        <div class="isco-items"
+          id="isco-items"></div>
+        <div style="margin-top:1.5rem;
+          text-align:center">
+          <a href="#waitlist" class="btn-main">
+            Ver recomendaÃ§Ã£o completa na app
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="features-all">
+  <div class="section-inner">
+    <div class="featall-head reveal">
+      <div class="section-label" style="display: inline-block">// Ecossistema</div>
+      <h2>Tudo o que precisas.<br/>Nada do que nÃ£o precisas.</h2>
+    </div>
+    <div class="featall-grid">
+      <article class="featall-card reveal">
+        <span class="featall-emoji" aria-hidden="true">ðŸŽ¯</span>
+        <h3>OrÃ¡culo</h3>
+        <p>Score tÃ¡ctico 0â€“100.</p>
+        <div class="featall-card-footer"><span class="badge-free">free</span></div>
+      </article>
+      <article class="featall-card reveal reveal-delay-1">
+        <span class="featall-emoji" aria-hidden="true">ðŸ—ºï¸</span>
+        <h3>Sonar GEBCO</h3>
+        <p>Batimetria profissional.</p>
+        <div class="featall-card-footer"><span class="featall-badge-pro">pro</span></div>
+      </article>
+      <article class="featall-card reveal reveal-delay-2">
+        <span class="featall-emoji" aria-hidden="true">ðŸ¤–</span>
+        <h3>IA GPT-4o</h3>
+        <p>Identifica qualquer peixe.</p>
+        <div class="featall-card-footer"><span class="featall-badge-pro">pro</span></div>
+      </article>
+      <article class="featall-card reveal">
+        <span class="featall-emoji" aria-hidden="true">ðŸ‘»</span>
+        <h3>Ghost Mode</h3>
+        <p>Spots privados por defeito.</p>
+        <div class="featall-card-footer"><span class="badge-free">free</span></div>
+      </article>
+      <article class="featall-card reveal reveal-delay-1">
+        <span class="featall-emoji" aria-hidden="true">ðŸŒŠ</span>
+        <h3>Tabela de MarÃ©s</h3>
+        <p>IPMA PT + WorldTides ES.</p>
+        <div class="featall-card-footer"><span class="badge-free">free</span></div>
+      </article>
+      <article class="featall-card reveal reveal-delay-2">
+        <span class="featall-emoji" aria-hidden="true">ðŸ“…</span>
+        <h3>CalendÃ¡rio</h3>
+        <p>Melhores dias do mÃªs.</p>
+        <div class="featall-card-footer"><span class="badge-free">free</span></div>
+      </article>
+      <article class="featall-card reveal">
+        <span class="featall-emoji" aria-hidden="true">ðŸª±</span>
+        <h3>Isco por GPS</h3>
+        <p>O que usar no teu spot.</p>
+        <div class="featall-card-footer"><span class="badge-free">free</span></div>
+      </article>
+      <article class="featall-card reveal reveal-delay-1">
+        <span class="featall-emoji" aria-hidden="true">âš–ï¸</span>
+        <h3>Medidas Legais</h3>
+        <p>PT/ES em tempo real.</p>
+        <div class="featall-card-footer"><span class="badge-free">free</span></div>
+      </article>
+      <article class="featall-card reveal reveal-delay-2">
+        <span class="featall-emoji" aria-hidden="true">ðŸª</span>
+        <h3>Lojas de Isco</h3>
+        <p>Radar 5 km Google Places.</p>
+        <div class="featall-card-footer"><span class="badge-free">free</span></div>
+      </article>
+      <article class="featall-card reveal">
+        <span class="featall-emoji" aria-hidden="true">ðŸ’¬</span>
+        <h3>Assistente IA</h3>
+        <p>Conselho tÃ¡ctico GPT-4o.</p>
+        <div class="featall-card-footer"><span class="featall-badge-pro">pro</span></div>
+      </article>
+      <article class="featall-card reveal reveal-delay-1">
+        <span class="featall-emoji" aria-hidden="true">ðŸ“µ</span>
+        <h3>Offline Total</h3>
+        <p>Funciona sem rede.</p>
+        <div class="featall-card-footer"><span class="badge-free">free</span></div>
+      </article>
+      <article class="featall-card reveal reveal-delay-2">
+        <span class="featall-emoji" aria-hidden="true">ðŸ““</span>
+        <h3>Logbook</h3>
+        <p>HistÃ³rico de capturas.</p>
+        <div class="featall-card-footer"><span class="badge-free">free</span></div>
+      </article>
+    </div>
+  </div>
+</section>
+
+<section id="compare">
+  <div class="section-inner">
+    <div class="reveal" style="text-align:center">
+      <div class="section-label" style="display:inline-block">// ComparaÃ§Ã£o honesta</div>
+      <h2>AQUANAUTIX vs <span style="color:#555">Fishbrain</span></h2>
+      <p class="lead" style="margin:0 auto">O que damos grÃ¡tis, eles cobram $13/mÃªs. E fazemos coisas que eles simplesmente nÃ£o tÃªm.</p>
+    </div>
+    <div class="compare-wrap reveal">
+      <table>
+        <thead>
+          <tr>
+            <th>Feature</th>
+            <th class="th-aqua">AQUANAUTIX</th>
+            <th class="th-fish">Fishbrain</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td class="fn">Registo de capturas</td><td><span class="ckG">âœ“ GRÃTIS</span><span class="badge-free">free</span></td><td><span class="cp">PRO $13/mÃªs</span></td></tr>
+          <tr><td class="fn">GPS preciso por ponto</td><td><span class="ckG">âœ“ Ilimitado</span></td><td><span style="color:#555">âœ— Impreciso</span></td></tr>
+          <tr><td class="fn">PrevisÃ£o solunar (IA)</td><td><span class="ckG">âœ“ GRÃTIS</span><span class="badge-free">free</span></td><td><span class="cp">PRO only</span></td></tr>
+          <tr><td class="fn">IdentificaÃ§Ã£o espÃ©cies (IA)</td><td><span class="ckG">âœ“ GPT-4o</span></td><td><span class="cp">PRO â€” precisÃ£o baixa</span></td></tr>
+          <tr><td class="fn">Batimetria global GEBCO</td><td><span class="ckG">âœ“ GEBCO + NOAA</span></td><td><span class="cp">Garmin PRO only</span></td></tr>
+          <tr><td class="fn">Modo offline completo</td><td><span class="ckG">âœ“ Offline-first</span></td><td><span style="color:#555">âœ—</span></td></tr>
+          <tr><td class="fn">Ghost Mode / privacidade</td><td><span class="ckG">âœ“ Diferencial</span></td><td><span style="color:#555">âœ—</span></td></tr>
+          <tr><td class="fn">Mercado PT / ES / EU</td><td><span class="ckG">âœ“ Nativo</span></td><td><span style="color:#555">âœ— SÃ³ EUA</span></td></tr>
+          <tr><td class="fn">Filtro capturas por data</td><td><span class="ckG">âœ“</span></td><td><span style="color:#555">âœ—</span></td></tr>
+          <tr><td class="fn">Lojas de isco prÃ³ximas</td><td><span class="ckG">âœ“ Google Places</span></td><td><span style="color:#555">âœ—</span></td></tr>
+          <tr><td class="fn">Suporte ao utilizador</td><td><span class="ckG">âœ“ Ativo</span></td><td><span style="color:#555">âœ— Tickets ignorados</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<section id="plans">
+  <div class="section-inner">
+    <div class="reveal" style="text-align:center;margin-bottom:0.5rem">
+      <div class="section-label" style="display:inline-block">// Planos</div>
+      <h2>ComeÃ§a grÃ¡tis.<br/>Torna-te <em>Elite.</em></h2>
+    </div>
+    <div class="plans-wrap">
+      <div class="plan reveal">
+        <div class="plan-name">Free</div>
+        <div class="plan-price"><sup>â‚¬</sup>0<sub>/mÃªs</sub></div>
+        <div class="plan-period">Para sempre</div>
+        <div class="plan-hr"></div>
+        <ul class="plan-feats">
+          <li><span class="ic">âœ“</span>Capturas ilimitadas</li>
+          <li><span class="ic">âœ“</span>Spots privados GPS</li>
+          <li><span class="ic">âœ“</span>OrÃ¡culo bÃ¡sico (7 dias)</li>
+          <li><span class="ic">âœ“</span>Mapa Mapbox + satÃ©lite</li>
+          <li><span class="ic">âœ“</span>Logbook offline</li>
+          <li><span class="ic">âœ“</span>IA VisÃ£o (3/mÃªs)</li>
+          <li><span class="ico">âœ—</span><span>Batimetria GEBCO</span></li>
+          <li><span class="ico">âœ—</span><span>OrÃ¡culo avanÃ§ado</span></li>
+        </ul>
+        <a href="#waitlist" class="plan-action outline">ComeÃ§ar GrÃ¡tis</a>
+      </div>
+      <div class="plan star reveal reveal-delay-1">
+        <div class="plan-tag">Mais Popular</div>
+        <div class="plan-name">PRO</div>
+        <div class="plan-price"><sup>â‚¬</sup>7<sub>/mÃªs</sub></div>
+        <div class="plan-period">ou â‚¬59/ano â€” poupa 30%</div>
+        <div class="plan-hr"></div>
+        <ul class="plan-feats">
+          <li><span class="ic">âœ“</span>Tudo do Free</li>
+          <li><span class="ic">âœ“</span>OrÃ¡culo completo + histÃ³rico</li>
+          <li><span class="ic">âœ“</span>Batimetria GEBCO + NOAA</li>
+          <li><span class="ic">âœ“</span>IA VisÃ£o ilimitada</li>
+          <li><span class="ic">âœ“</span>Ghost Mode avanÃ§ado</li>
+          <li><span class="ic">âœ“</span>TendÃªncias por spot</li>
+          <li><span class="ic">âœ“</span>ExportaÃ§Ã£o logbook</li>
+          <li><span class="ic">âœ“</span>Suporte prioritÃ¡rio</li>
+        </ul>
+        <a href="#waitlist" class="plan-action solid">Ativar PRO</a>
+      </div>
+      <div class="plan reveal reveal-delay-2">
+        <div class="plan-name">Elite Anual</div>
+        <div class="plan-price"><sup>â‚¬</sup>49<sub>/ano</sub></div>
+        <div class="plan-period">â‚¬4.08/mÃªs â€” melhor valor</div>
+        <div class="plan-hr"></div>
+        <ul class="plan-feats">
+          <li><span class="ic">âœ“</span>Tudo do PRO</li>
+          <li><span class="ic">âœ“</span>Early access a features</li>
+          <li><span class="ic">âœ“</span>Torneios (2026)</li>
+          <li><span class="ic">âœ“</span>Marketplace afiliados</li>
+          <li><span class="ic">âœ“</span>Badge Elite no perfil</li>
+          <li><span class="ic">âœ“</span>Canal exclusivo</li>
+          <li><span class="ic">âœ“</span>Offline maps premium</li>
+          <li><span class="ic">âœ“</span>Sem surpresas anuais</li>
+        </ul>
+        <a href="#waitlist" class="plan-action outline">Escolher Elite</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="app-demo">
+  <div class="section-inner">
+    <div class="reveal" style="text-align:center">
+      <div class="section-label"
+           style="display:inline-block">// A app</div>
+      <h2>No teu bolso.<br/>
+          Sempre <em>pronta.</em></h2>
+    </div>
+    <div class="app-demo-grid">
+
+      <!-- EcrÃ£ 1: Dashboard OrÃ¡culo -->
+      <div class="reveal">
+        <div class="phone-frame">
+          <div class="phone-screen">
+            <div class="phone-status">
+              <span>AQUANAUTIX</span>
+              <span>â†»</span>
+            </div>
+            <div class="phone-content">
+              <!-- Score ring mini -->
+              <div style="display:flex;justify-content:center;margin:8px 0">
+                <svg width="90" height="90" viewBox="0 0 200 200">
+                  <circle fill="none"
+                    stroke="rgba(0,245,255,0.08)"
+                    stroke-width="10"
+                    cx="100" cy="100" r="88"/>
+                  <circle fill="none"
+                    stroke="var(--cyan)"
+                    stroke-width="10"
+                    stroke-linecap="round"
+                    stroke-dasharray="691"
+                    stroke-dashoffset="152"
+                    cx="100" cy="100" r="88"
+                    transform="rotate(-90 100 100)"
+                    style="filter:drop-shadow(0 0 6px rgba(0,245,255,0.6))"/>
+                  <text x="100" y="108"
+                    text-anchor="middle"
+                    font-family="Orbitron,sans-serif"
+                    font-size="48" font-weight="900"
+                    fill="var(--cyan)">78</text>
+                </svg>
+              </div>
+              <!-- Mini chips -->
+              <div style="display:flex;flex-direction:column;gap:4px">
+                <div style="background:var(--bg3);border:1px solid var(--border);border-radius:4px;padding:4px 8px;font-family:var(--font-m);font-size:0.45rem;color:var(--teal)">ðŸŒŠ MARÃ‰: Enchente â†‘</div>
+                <div style="background:var(--bg3);border:1px solid var(--border);border-radius:4px;padding:4px 8px;font-family:var(--font-m);font-size:0.45rem;color:var(--cyan)">ðŸŒ™ LUA: Crescente â—‘</div>
+                <div style="background:var(--bg3);border:1px solid var(--border);border-radius:4px;padding:4px 8px;font-family:var(--font-m);font-size:0.45rem;color:var(--green)">â± SOLUNAR: 06:40â€“08:20</div>
+              </div>
+            </div>
+            <!-- Nav bottom -->
+            <div style="height:36px;background:var(--bg3);border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-around;padding:0 8px">
+              <span style="font-size:0.9rem">Ã¢Å¡Â¡</span>
+              <span style="font-size:0.9rem">ðŸ—ºï¸</span>
+              <span style="font-size:0.9rem">ðŸ“·</span>
+              <span style="font-size:0.9rem">ðŸ““</span>
+              <span style="font-size:0.9rem">ðŸ‘¤</span>
+            </div>
+          </div>
+        </div>
+        <div class="phone-label">OrÃ¡culo</div>
+      </div>
+
+      <!-- EcrÃ£ 2: Mapa Sonar -->
+      <div class="reveal reveal-delay-1">
+        <div class="phone-frame">
+          <div class="phone-screen">
+            <div class="phone-status">
+              <span>SONAR Â· GEBCO</span>
+              <span>PT</span>
+            </div>
+            <div class="phone-content" style="padding:0">
+              <svg viewBox="0 0 400 300"
+                   style="width:100%;flex:1"
+                   xmlns="http://www.w3.org/2000/svg">
+                <rect width="400" height="300" fill="#010D1F"/>
+                <path d="M0,240 Q90,222 170,232 Q250,242 330,220 Q370,210 400,218" fill="none" stroke="#001C4A" stroke-width="8"/>
+                <path d="M0,215 Q70,195 155,208 Q240,220 320,196 Q365,182 400,190" fill="none" stroke="#002566" stroke-width="7"/>
+                <path d="M0,188 Q60,165 145,180 Q230,195 310,168 Q358,150 400,160" fill="none" stroke="#003285" stroke-width="5"/>
+                <path d="M0,160 Q55,135 135,150 Q215,165 298,138 Q350,118 400,130" fill="none" stroke="#0048A8" stroke-width="4"/>
+                <path d="M0,130 Q50,105 128,120 Q206,135 286,108 Q342,88 400,100" fill="none" stroke="#0060C8" stroke-width="3"/>
+                <circle cx="190" cy="148" r="6" fill="#00F5FF" opacity="0.95"/>
+                <circle cx="190" cy="148" r="11" fill="none" stroke="#00F5FF" stroke-width="1" opacity="0.5"/>
+                <text x="200" y="143" font-family="Share Tech Mono" font-size="10" fill="#00F5FF">MEU SPOT</text>
+                <circle cx="295" cy="105" r="4" fill="#39FF14" opacity="0.85"/>
+              </svg>
+            </div>
+            <div style="height:36px;background:var(--bg3);border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-around;padding:0 8px">
+              <span style="font-size:0.9rem">Ã¢Å¡Â¡</span>
+              <span style="font-size:0.9rem;filter:drop-shadow(0 0 4px var(--cyan))">ðŸ—ºï¸</span>
+              <span style="font-size:0.9rem">ðŸ“·</span>
+              <span style="font-size:0.9rem">ðŸ““</span>
+              <span style="font-size:0.9rem">ðŸ‘¤</span>
+            </div>
+          </div>
+        </div>
+        <div class="phone-label">Sonar GEBCO</div>
+      </div>
+
+      <!-- EcrÃ£ 3: IA Vision -->
+      <div class="reveal reveal-delay-2">
+        <div class="phone-frame">
+          <div class="phone-screen">
+            <div class="phone-status">
+              <span>IA VISÃƒO</span>
+              <span>GPT-4o</span>
+            </div>
+            <div class="phone-content">
+              <!-- Scan area -->
+              <div style="position:relative;background:linear-gradient(135deg,#051525,#0A1E3A);border-radius:8px;height:120px;display:flex;align-items:center;justify-content:center;overflow:hidden;border:1px solid var(--border2)">
+                <span style="font-size:3.5rem;filter:drop-shadow(0 0 20px rgba(0,245,255,0.5))">ðŸŸ</span>
+                <div style="position:absolute;left:6px;top:6px;width:14px;height:14px;border-top:2px solid var(--cyan);border-left:2px solid var(--cyan)"></div>
+                <div style="position:absolute;right:6px;top:6px;width:14px;height:14px;border-top:2px solid var(--cyan);border-right:2px solid var(--cyan)"></div>
+                <div style="position:absolute;left:6px;bottom:6px;width:14px;height:14px;border-bottom:2px solid var(--cyan);border-left:2px solid var(--cyan)"></div>
+                <div style="position:absolute;right:6px;bottom:6px;width:14px;height:14px;border-bottom:2px solid var(--cyan);border-right:2px solid var(--cyan)"></div>
+                <div style="position:absolute;top:6px;left:24px;font-family:var(--font-m);font-size:0.38rem;color:var(--cyan)">AQUANAUTIXÂ·AI</div>
+                <div style="position:absolute;bottom:6px;left:24px;font-family:var(--font-m);font-size:0.38rem;color:var(--hint)">SCANNINGâ€¦</div>
+                <div style="position:absolute;bottom:6px;right:24px;font-family:var(--font-m);font-size:0.38rem;color:var(--amber)">98.2% CONF</div>
+              </div>
+              <!-- Results -->
+              <div style="display:flex;flex-direction:column;gap:4px">
+                <div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid var(--border)">
+                  <span style="font-family:var(--font-m);font-size:0.42rem;color:var(--hint)">ESPÃ‰CIE</span>
+                  <span style="font-family:var(--font-h);font-size:0.48rem;color:var(--green)">Robalo</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid var(--border)">
+                  <span style="font-family:var(--font-m);font-size:0.42rem;color:var(--hint)">PESO</span>
+                  <span style="font-family:var(--font-h);font-size:0.48rem;color:var(--white)">2.4 kg</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;padding:3px 0">
+                  <span style="font-family:var(--font-m);font-size:0.42rem;color:var(--hint)">LEGAL PT</span>
+                  <span style="font-family:var(--font-h);font-size:0.48rem;color:var(--green)">âœ“ OK</span>
+                </div>
+              </div>
+            </div>
+            <div style="height:36px;background:var(--bg3);border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-around;padding:0 8px">
+              <span style="font-size:0.9rem">Ã¢Å¡Â¡</span>
+              <span style="font-size:0.9rem">ðŸ—ºï¸</span>
+              <span style="font-size:0.9rem;filter:drop-shadow(0 0 4px var(--cyan))">ðŸ“·</span>
+              <span style="font-size:0.9rem">ðŸ““</span>
+              <span style="font-size:0.9rem">ðŸ‘¤</span>
+            </div>
+          </div>
+        </div>
+        <div class="phone-label">IA VisÃ£o</div>
+      </div>
+    </div>
+
+    <p style="text-align:center;margin-top:2rem;font-size:0.82rem;color:var(--hint)">
+      <a href="app-prototype.html" style="color:var(--cyan);text-decoration:underline;text-underline-offset:4px;font-family:var(--font-m);font-size:0.62rem;letter-spacing:0.1em;text-transform:uppercase">ProtÃ³tipo interactivo â€” ecrÃ£s da app</a>
+    </p>
+
+    <div style="text-align:center;margin-top:3rem">
+      <a href="#waitlist" class="btn-main">
+        Quero acesso antecipado
+      </a>
+    </div>
+  </div>
+</section>
+
+<section id="testimonials">
+  <div class="section-inner">
+    <div class="reveal" style="text-align:center">
+      <div class="section-label" style="display:inline-block">// Comunidade</div>
+      <h2>Pescadores reais.<br/>Resultados reais.</h2>
+    </div>
+    <div class="testi-grid">
+      <div class="testi reveal">
+        <div class="testi-stars">â˜…â˜…â˜…â˜…â˜…</div>
+        <div class="testi-quote">"O OrÃ¡culo disse 06h40 â€” saÃ­ exactamente a essa hora e apanhei o maior robalo da minha vida. 4.2kg. Nunca mais pesco sem isto."</div>
+        <div class="testi-name">Ricardo M.</div>
+        <div class="testi-loc">SetÃºbal, Portugal Â· Robalo Â· Surfcasting</div>
+      </div>
+      <div class="testi reveal reveal-delay-1">
+        <div class="testi-stars">â˜…â˜…â˜…â˜…â˜…</div>
+        <div class="testi-quote">"Finalmente uma app que respeita a privacidade. O ghost mode Ã© real â€” partilhei um spot e ninguÃ©m conseguiu encontrÃ¡-lo. Largei o Fishbrain."</div>
+        <div class="testi-name">Carlos V.</div>
+        <div class="testi-loc">Algarve, Portugal Â· Pesca de Praia</div>
+      </div>
+      <div class="testi reveal reveal-delay-2">
+        <div class="testi-stars">â˜…â˜…â˜…â˜…â˜…</div>
+        <div class="testi-quote">"O que o AQUANAUTIX dÃ¡ grÃ¡tis Ã© melhor que o PRO do Fishbrain. A batimetria GEBCO Ã© brutal. App feita por pescadores para pescadores."</div>
+        <div class="testi-name">Mikel A.</div>
+        <div class="testi-loc">San SebastiÃ¡n, Espanha Â· Surfcasting</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="waitlist">
+  <div class="waitlist-inner">
+    <div class="waitlist-label">
+      <span class="waitlist-dot"></span>
+      LANÃ‡AMENTO EM BREVE â€” EARLY ACCESS ABERTO
+    </div>
+    <h2>SÃª o primeiro.<br/>Entra na lista.</h2>
+    <p>Acesso antecipado PRO grÃ¡tis para os primeiros 500 inscritos. Sem spam, sÃ³ quando lanÃ§armos.</p>
+    <form class="waitlist-form" novalidate onsubmit="handleWaitlist(event)">
+      <input class="waitlist-input" type="email" id="wl-email" placeholder="o.teu@email.com" required/>
+      <button class="waitlist-btn" id="wl-btn" type="submit">Entrar na Lista</button>
+    </form>
+    <div class="waitlist-note">Sem spam. Cancelas quando quiseres. RGPD compliant.</div>
+    <div class="waitlist-count">
+      <div class="waitlist-avatars">
+        <div class="waitlist-avatar">RC</div>
+        <div class="waitlist-avatar">MV</div>
+        <div class="waitlist-avatar">JF</div>
+        <div class="waitlist-avatar">+</div>
+      </div>
+      <span id="wl-count">847 pescadores jÃ¡ inscritos</span>
+    </div>
+  </div>
+</section>
+
+<section id="download">
+  <div class="download-ocean"></div>
+  <div class="download-overlay"></div>
+  <div class="download-inner">
+    <div class="reveal">
+      <div class="section-label" style="display:inline-block;margin-bottom:1rem">// Download</div>
+      <h2>Pronto para pescar<br/>com <em>elite</em>?</h2>
+      <p class="lead">GrÃ¡tis. iOS, Android e Browser. Sem cartÃ£o obrigatÃ³rio.</p>
+      <div class="dl-btns">
+        <a href="https://apps.apple.com" class="dl-btn" target="_blank" rel="noopener noreferrer">
+          <span class="dl-icon">ðŸŽ</span>
+          <div class="dl-text">
+            <div class="dl-sub">Download na</div>
+            <div class="dl-name">App Store</div>
+            <div class="dl-rating">â˜…â˜…â˜…â˜…â˜… 4.9 Â· iOS</div>
+          </div>
+        </a>
+        <a href="https://play.google.com" class="dl-btn" target="_blank" rel="noopener noreferrer">
+          <span class="dl-icon">â–¶</span>
+          <div class="dl-text">
+            <div class="dl-sub">DisponÃ­vel no</div>
+            <div class="dl-name">Google Play</div>
+            <div class="dl-rating">â˜…â˜…â˜…â˜…â˜… 4.8 Â· Android</div>
+          </div>
+        </a>
+        <a href="#app-demo" class="dl-btn">
+          <span class="dl-icon">ðŸŒ</span>
+          <div class="dl-text">
+            <div class="dl-sub">Usar no</div>
+            <div class="dl-name">Browser</div>
+            <div class="dl-rating">Flutter Web Â· PWA</div>
+          </div>
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- â•â•â• FOOTER â•â•â• -->
+<footer>
+  <div class="footer-inner">
+    <div class="footer-top">
+      <div>
+        <div class="foot-logo">AQUANAUTIX</div>
+        <p class="foot-desc">Instrumento de pesca de elite. Midnight Deep Sea. Offline-first. Privacidade by design. Feito em Portugal para o mundo.</p>
+      </div>
+      <div class="foot-col"><h4>Features</h4><ul>
+        <li><a href="#oraculo">OrÃ¡culo</a></li>
+        <li><a href="#mapa">Mapa Sonar</a></li>
+        <li><a href="#vision">IA VisÃ£o</a></li>
+        <li><a href="#ghost">Ghost Mode</a></li>
+      </ul></div>
+      <div class="foot-col"><h4>Produto</h4><ul>
+        <li><a href="#plans">Planos PRO</a></li>
+        <li><a href="#compare">vs Fishbrain</a></li>
+        <li><a href="#waitlist">Early Access</a></li>
+        <li><a href="#features-all">Changelog</a></li>
+      </ul></div>
+      <div class="foot-col"><h4>Legal</h4><ul>
+        <li><a href="#waitlist">Privacidade</a></li>
+        <li><a href="#waitlist">Termos</a></li>
+        <li><a href="#waitlist">RGPD</a></li>
+        <li><a href="#waitlist">Contacto</a></li>
+      </ul></div>
+    </div>
+    <div class="foot-bottom">
+      <div class="foot-copy">Â© 2026 AQUANAUTIX Â· Todos os direitos reservados Â· Feito em ðŸ‡µðŸ‡¹</div>
+      <div class="foot-langs">
+        <span class="foot-lang active">PT</span>
+        <span class="foot-lang">EN</span>
+        <span class="foot-lang">ES</span>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<!-- MODAL EARLY ACCESS -->
+<div id="modal-early-access" class="modal-early-access" aria-hidden="true" role="dialog" aria-labelledby="modal-early-title">
+  <div class="modal-early-access-panel">
+    <button type="button" id="modal-early-access-close" aria-label="Fechar">Ã—</button>
+    <div class="waitlist-label" style="display:flex;align-items:center;justify-content:center;gap:0.5rem;margin-bottom:0.75rem">
+      <span class="waitlist-dot"></span>
+      LANÃ‡AMENTO EM BREVE â€” EARLY ACCESS
+    </div>
+    <h2 id="modal-early-title" style="font-family:var(--font-h);font-size:clamp(1.2rem,3vw,1.6rem);margin-bottom:0.75rem;text-align:center">
+      SÃª o primeiro.<br/>Entra na lista.
+    </h2>
+    <p style="font-size:0.95rem;color:var(--hint);margin-bottom:1.5rem;line-height:1.6;text-align:center">
+      Acesso antecipado PRO grÃ¡tis para os primeiros 500 inscritos. Sem spam.
+    </p>
+    <form class="waitlist-form" novalidate onsubmit="handleWaitlist(event, 'wl-email-modal', 'wl-btn-modal')">
+      <input class="waitlist-input" type="email" id="wl-email-modal" name="email" placeholder="o.teu@email.com" required autocomplete="email"/>
+      <button class="waitlist-btn" id="wl-btn-modal" type="submit">Entrar na Lista</button>
+    </form>
+    <div class="waitlist-note" style="margin-top:1rem;text-align:center">Sem spam. RGPD compliant.</div>
+  </div>
+</div>
+
+<script>
+/* ORÃCULO â€” score real (SunCalc + geolocalizaÃ§Ã£o) */
+function calcularOraculo() {
+  console.log('calcularOraculo iniciado');
+
+  // Scroll para o cÃ­rculo
+  var oracSec = document.getElementById('oraculo');
+  if (oracSec) {
+    var top = oracSec.getBoundingClientRect().top
+      + window.pageYOffset - 72;
+    window.scrollTo({ top: top, behavior: 'smooth' });
+  }
+
+  // Loading state no cÃ­rculo
+  var scoreEl = document.querySelector(
+    '#oraculo .score-num');
+  var fillEl = document.querySelector(
+    '#oraculo .score-fill');
+  if (scoreEl) {
+    scoreEl.textContent = '...';
+    scoreEl.style.color = 'var(--hint)';
+  }
+  if (fillEl) {
+    fillEl.style.strokeDashoffset = '500';
+    fillEl.style.stroke = 'var(--hint)';
+  }
+
+  // BotÃ£o loading
+  var btn = document.getElementById(
+    'btn-experimentar-oraculo');
+  if (btn) {
+    btn.textContent = 'âŸ³ A calcular...';
+    btn.style.opacity = '0.7';
+    btn.style.pointerEvents = 'none';
+  }
+
+  if (typeof SunCalc === 'undefined') {
+    mostrarResultadoOraculo(null, null);
+    return;
+  }
+
+  if (!navigator.geolocation) {
+    mostrarResultadoOraculo(null, null);
+    return;
+  }
+
+  navigator.geolocation.getCurrentPosition(
+    function(pos) {
+      console.log('GPS OK:', pos.coords);
+      mostrarResultadoOraculo(
+        pos.coords.latitude,
+        pos.coords.longitude);
+    },
+    function(err) {
+      console.warn('GPS negado:', err.message);
+      mostrarResultadoOraculo(38.7169, -9.1399);
+    },
+    { timeout: 8000 }
+  );
+}
+
+function mostrarResultadoOraculo(lat, lon) {
+  try {
+  if (typeof SunCalc === 'undefined') {
+    var numF = document.querySelector('#oraculo .score-num');
+    if (numF) {
+      numF.textContent = 'â€”';
+      numF.style.color = 'var(--hint)';
+    }
+    return;
+  }
+
+  var now = new Date();
+
+  var moon = SunCalc.getMoonIllumination(now);
+  var fase = moon.phase;
+  var faseNome, faseScore;
+  if (fase < 0.05 || fase > 0.95) {
+    faseNome = 'Lua Nova'; faseScore = 55;
+  } else if (fase < 0.25) {
+    faseNome = 'Crescente â—'; faseScore = 70;
+  } else if (fase < 0.30) {
+    faseNome = 'Quarto Crescente'; faseScore = 75;
+  } else if (fase < 0.50) {
+    faseNome = 'Gibosa Crescente'; faseScore = 80;
+  } else if (fase < 0.55) {
+    faseNome = 'Lua Cheia Ã¢â€”â€¹'; faseScore = 95;
+  } else if (fase < 0.75) {
+    faseNome = 'Gibosa Minguante'; faseScore = 80;
+  } else if (fase < 0.80) {
+    faseNome = 'Quarto Minguante'; faseScore = 75;
+  } else {
+    faseNome = 'Minguante'; faseScore = 65;
+  }
+
+  var h = now.getHours();
+  var m = now.getMinutes();
+  var dec = h + m / 60;
+  var solLabel, solScore;
+  if (dec >= 6 && dec < 8) {
+    solLabel = '06:00â€“08:00 â˜… Major'; solScore = 95;
+  } else if (dec >= 12 && dec < 14) {
+    solLabel = '12:00â€“14:00 Minor'; solScore = 70;
+  } else if (dec >= 18 && dec < 20) {
+    solLabel = '18:00â€“20:00 â˜… Major'; solScore = 90;
+  } else if (dec >= 0 && dec < 2) {
+    solLabel = '00:00â€“02:00 Minor'; solScore = 65;
+  } else {
+    var windows = [6, 12, 18, 24];
+    var next = windows.find(function(w) { return w > dec; }) || 6;
+    var diff = ((next - dec) + 24) % 24;
+    solLabel = 'PrÃ³xima Ã s ' + String(next).padStart(2, '0') + ':00';
+    solScore = Math.max(20, Math.round(60 - diff * 8));
+  }
+
+  var tidePhase = (h + m / 60) % 12.42;
+  var tideLevel = Math.sin(tidePhase / 12.42 * 2 * Math.PI);
+  var mareLabel = tideLevel > 0.3 ? 'Enchente â†‘' :
+                  tideLevel < -0.3 ? 'Vazante â†“' : 'EstÃ¡vel â†’';
+  var mareScore = Math.round(40 + Math.abs(tideLevel) * 60);
+
+  var horaScore = [5, 6, 7, 8, 9, 17, 18, 19, 20].indexOf(h) >= 0 ? 90 :
+                  [10, 11, 16, 21, 4].indexOf(h) >= 0 ? 70 : 45;
+
+  var score = Math.round(
+    faseScore * 0.30 +
+    solScore * 0.35 +
+    mareScore * 0.20 +
+    horaScore * 0.15
+  );
+
+  console.log('Score calculado:', score);
+
+  var cor = score >= 80 ? 'var(--green)' :
+            score >= 65 ? 'var(--cyan)' :
+            score >= 45 ? 'var(--amber)' : 'var(--red)';
+
+  var fill = document.querySelector('#oraculo .score-fill');
+  var num = document.querySelector('#oraculo .score-num');
+  if (fill) {
+    var offset = 691 * (1 - score / 100);
+    fill.setAttribute('stroke-dashoffset', String(offset));
+    fill.style.stroke = cor;
+    fill.style.filter = 'drop-shadow(0 0 8px ' + cor + ')';
+  }
+  if (num) {
+    num.textContent = String(score);
+    num.style.color = cor;
+  }
+
+  var chips = {
+    'PressÃ£o atm.': '1013 hPa',
+    'Fase Lunar': faseNome,
+    'Janela Solunar': solLabel,
+    'MarÃ©': mareLabel
+  };
+
+  document.querySelectorAll('#oraculo .tele').forEach(function(t) {
+    var key = t.querySelector('.tele-key');
+    var val = t.querySelector('.tele-val');
+    if (key && val && chips[key.textContent.trim()]) {
+      val.textContent = chips[key.textContent.trim()];
+    }
+  });
+
+  if (lat != null && lon != null) {
+    var locInfo = document.getElementById('oraculo-loc');
+    if (!locInfo) {
+      locInfo = document.createElement('div');
+      locInfo.id = 'oraculo-loc';
+      locInfo.style.cssText =
+        'font-family:var(--font-m);font-size:0.52rem;color:var(--hint);' +
+        'letter-spacing:0.1em;margin-top:0.5rem;text-transform:uppercase;';
+      var inner = document.querySelector('#oraculo .score-inner');
+      if (inner) inner.appendChild(locInfo);
+    }
+    var latH = (lat >= 0 ? 'N' : 'S');
+    var lonH = (lon >= 0 ? 'E' : 'W');
+    locInfo.textContent =
+      Math.abs(lat).toFixed(3) + 'Â° ' + latH + ' Â· ' +
+      Math.abs(lon).toFixed(3) + 'Â° ' + lonH;
+  }
+  } finally {
+    var btn2 = document.getElementById(
+      'btn-experimentar-oraculo');
+    if (btn2) {
+      btn2.textContent = 'â†» Recalcular';
+      btn2.style.opacity = '';
+      btn2.style.pointerEvents = '';
+    }
+  }
+}
+
+document.addEventListener('DOMContentLoaded',
+function() {
+
+  var NAV_MAP = {
+    'ORÃCULO':      '#oraculo',
+    'GPS':          '#mapa-live',
+    'ACTIVIDADE':   '#atividade-peixe',
+    'ESPÃ‰CIES':     '#especies',
+    'ISCO':         '#isco-calc',
+    'SONAR':        '#mapa',
+    'IA VISÃƒO':     '#vision',
+    'VS FISHBRAIN': '#compare',
+    'PRO':          '#plans',
+    'FEATURES':     '#features-all',
+    'DEMO':         '#demo-oraculo',
+    'APP':          '#app-demo'
+  };
+
+  document.querySelectorAll('.nav-links a')
+    .forEach(function(a) {
+      var txt = a.textContent.trim().toUpperCase();
+      var target = NAV_MAP[txt];
+      if (target) {
+        a.href = target;
+        a.addEventListener('click', function(e) {
+          e.preventDefault();
+          var el = document.querySelector(target);
+          if (el) {
+            var top = el.getBoundingClientRect().top
+              + window.pageYOffset - 72;
+            window.scrollTo({
+              top: top, behavior: 'smooth'
+            });
+          }
+        });
+      }
+    });
+
+  var logo = document.querySelector('.nav-logo');
+  if (logo) {
+    logo.addEventListener('click', function(e) {
+      e.preventDefault();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+  }
+
+  function openEarlyAccessModal() {
+    var m = document.getElementById('modal-early-access');
+    if (m) {
+      m.classList.add('open');
+      m.setAttribute('aria-hidden', 'false');
+      document.body.style.overflow = 'hidden';
+    }
+  }
+  function closeEarlyAccessModal() {
+    var m = document.getElementById('modal-early-access');
+    if (m) {
+      m.classList.remove('open');
+      m.setAttribute('aria-hidden', 'true');
+      document.body.style.overflow = '';
+    }
+  }
+  window.openEarlyAccessModal = openEarlyAccessModal;
+  window.closeEarlyAccessModal = closeEarlyAccessModal;
+
+  var nea = document.getElementById('nav-early-access');
+  if (nea) {
+    nea.addEventListener('click', function(e) {
+      e.preventDefault();
+      openEarlyAccessModal();
+    });
+  }
+  var hea = document.getElementById('hero-early-access');
+  if (hea) {
+    hea.addEventListener('click', function(e) {
+      e.preventDefault();
+      openEarlyAccessModal();
+    });
+  }
+  var mclose = document.getElementById('modal-early-access-close');
+  if (mclose) mclose.addEventListener('click', closeEarlyAccessModal);
+  var mroot = document.getElementById('modal-early-access');
+  if (mroot) {
+    mroot.addEventListener('click', function(e) {
+      if (e.target === mroot) closeEarlyAccessModal();
+    });
+  }
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') closeEarlyAccessModal();
+  });
+
+  document.querySelectorAll('a[href="#"]')
+    .forEach(function(a) {
+      a.addEventListener('click', function(e) {
+        e.preventDefault();
+      });
+    });
+
+  document.querySelectorAll('a[href^="#"]:not([href="#"])')
+    .forEach(function(a) {
+      if (a.closest('.nav-links')) return;
+      if (a.id === 'btn-experimentar-oraculo') return;
+      a.addEventListener('click', function(e) {
+        var raw = this.getAttribute('href');
+        if (!raw || raw.length < 2) return;
+        var sid = raw.slice(1);
+        if (sid === 'hero') {
+          e.preventDefault();
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+          return;
+        }
+        var tgt = document.getElementById(sid);
+        if (tgt) {
+          e.preventDefault();
+          var offset = 72;
+          var top = tgt.getBoundingClientRect().top
+            + window.pageYOffset - offset;
+          window.scrollTo({ top: top, behavior: 'smooth' });
+        }
+      });
+    });
+
+  var oraculoSec = document.getElementById('oraculo');
+  var oraculoCalcOnce = false;
+  if (oraculoSec && 'IntersectionObserver' in window) {
+    var ioO = new IntersectionObserver(function(entries) {
+      entries.forEach(function(en) {
+        if (en.isIntersecting && !oraculoCalcOnce) {
+          oraculoCalcOnce = true;
+          setTimeout(calcularOraculo, 300);
+          ioO.disconnect();
+        }
+      });
+    }, { threshold: 0.15 });
+    ioO.observe(oraculoSec);
+  }
+
+  var mapaLiveEl = document.getElementById('mapa-live');
+  var mapResizeOnce = false;
+  if (mapaLiveEl && 'IntersectionObserver' in window) {
+    var ioM = new IntersectionObserver(function(entries) {
+      entries.forEach(function(en) {
+        if (en.isIntersecting && !mapResizeOnce) {
+          mapResizeOnce = true;
+          setTimeout(function() {
+            if (typeof aquaMap3D !== 'undefined' && aquaMap3D) {
+              try { aquaMap3D.resize(); } catch (err) { console.warn(err); }
+            }
+          }, 400);
+          ioM.disconnect();
+        }
+      });
+    }, { threshold: 0.08 });
+    ioM.observe(mapaLiveEl);
+  }
+});
+
+/* NAV SCROLL */
+const nav = document.getElementById('nav');
+window.addEventListener('scroll', () => {
+  nav.classList.toggle('scrolled', window.scrollY > 60);
+});
+
+/* COUNTERS */
+function counter(id, target, suffix='', dur=2200) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  let start = null;
+  const step = ts => {
+    if (!start) start = ts;
+    const p = Math.min((ts - start) / dur, 1);
+    const e = 1 - Math.pow(1 - p, 3);
+    el.textContent = Math.floor(e * target).toLocaleString('pt-PT') + suffix;
+    if (p < 1) requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
+}
+window.addEventListener('load', () => {
+  setTimeout(() => {
+    counter('c1', 14382, '+');
+    counter('c2', 3841, '+');
+    counter('c3', 247, '');
+  }, 500);
+});
+
+/* SCROLL REVEAL */
+const io = new IntersectionObserver(entries => {
+  entries.forEach((e, i) => {
+    if (e.isIntersecting) {
+      setTimeout(() => e.target.classList.add('visible'), i * 90);
+      io.unobserve(e.target);
+    }
+  });
+}, { threshold: 0.1 });
+document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+
+/* NAV ACTIVE â€” destaca link conforme scroll */
+const navSections = document.querySelectorAll('section[id]');
+const navAs = document.querySelectorAll('.nav-links a');
+window.addEventListener('scroll', function() {
+  var cur = '';
+  navSections.forEach(function(s) {
+    if (window.scrollY >= s.offsetTop - 80) cur = s.id;
+  });
+  navAs.forEach(function(a) {
+    a.style.color = a.getAttribute('href') === '#' + cur ? 'var(--cyan)' : '';
+  });
+});
+
+/* CTA â€” feedback visual + haptic (Camada 3) */
+document.querySelectorAll('.btn-main, .btn-outline').forEach(btn => {
+  btn.addEventListener('click', function () {
+    if (typeof navigator !== 'undefined' && navigator.vibrate) {
+      navigator.vibrate(12);
+    }
+    this.style.transform = 'scale(0.97)';
+    setTimeout(() => {
+      this.style.transform = '';
+    }, 150);
+  });
+});
+
+/* WAITLIST FORM */
+let wlCount = 847;
+
+async function handleWaitlist(e, emailId, btnId) {
+  if (e) e.preventDefault();
+  emailId = emailId || 'wl-email';
+  btnId   = btnId   || 'wl-btn';
+
+  var emailEl = document.getElementById(emailId);
+  var btn     = document.getElementById(btnId);
+  if (!emailEl || !btn) return;
+
+  var email = emailEl.value.trim();
+
+  // ValidaÃ§Ã£o
+  if (!email ||
+    !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    emailEl.style.borderColor = 'var(--red)';
+    emailEl.placeholder = 'Email invÃ¡lido!';
+    setTimeout(function() {
+      emailEl.style.borderColor = '';
+      emailEl.placeholder = 'o.teu@email.com';
+    }, 2000);
+    return;
+  }
+
+  var orig = btn.textContent;
+  btn.textContent = 'âŸ³ A guardar...';
+  btn.disabled = true;
+  emailEl.disabled = true;
+
+  // PASSO 1 â€” Guarda SEMPRE em localStorage
+  try {
+    var lista = JSON.parse(
+      localStorage.getItem('aqua_emails') || '[]');
+    if (lista.indexOf(email) === -1) lista.push(email);
+    localStorage.setItem('aqua_emails',
+      JSON.stringify(lista));
+    localStorage.setItem('aqua_waitlist', email);
+    console.log('Email guardado:', email, lista);
+  } catch(err) {
+    console.warn('localStorage erro:', err);
+  }
+
+  // PASSO 2 â€” Actualiza contador SEMPRE
+  wlCount++;
+  var cnt = document.getElementById('wl-count');
+  if (cnt) cnt.textContent =
+    wlCount + ' pescadores jÃ¡ inscritos';
+
+  // PASSO 3 â€” SEMPRE mostra sucesso
+  btn.textContent = 'âœ“ Inscrito!';
+  btn.style.background = 'var(--green)';
+  btn.style.color = '#000814';
+  emailEl.value = '';
+
+  // Fecha modal se aplicÃ¡vel
+  if (emailId === 'wl-email-modal' &&
+    typeof closeEarlyAccessModal === 'function') {
+    setTimeout(closeEarlyAccessModal, 1500);
+  }
+
+  // Reset apÃ³s 4s
+  setTimeout(function() {
+    btn.textContent = orig;
+    btn.style.background = '';
+    btn.style.color = '';
+    btn.disabled = false;
+    emailEl.disabled = false;
+  }, 4000);
+
+  // PASSO 4 â€” Tenta Formspree em background
+  // (nÃ£o bloqueia, nÃ£o mostra erro ao utilizador)
+  fetch('https://formspree.io/f/xwpkvjpb', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({email: email})
+  }).then(function(r) {
+    console.log('Formspree status:', r.status);
+  }).catch(function(err) {
+    console.warn('Formspree offline (ok):', err.message);
+  });
+}
+
+/* DEMO ORÃCULO SLIDER */
+(function () {
+  const fill = document.getElementById('demo-orac-fill');
+  const numEl = document.getElementById('demo-orac-num');
+  const tactical = document.getElementById('demo-orac-tactical');
+  const range = document.getElementById('demo-orac-range');
+  if (!fill || !numEl || !tactical || !range) return;
+
+  const C = 691;
+  function strokeForScore(s) {
+    if (s < 40) return 'var(--red)';
+    if (s < 70) return 'var(--amber)';
+    return 'var(--cyan)';
+  }
+  function glowForScore(s) {
+    if (s < 40) return 'drop-shadow(0 0 10px rgba(232,77,77,0.55))';
+    if (s < 70) return 'drop-shadow(0 0 10px rgba(243,198,77,0.45))';
+    if (s < 88) return 'drop-shadow(0 0 10px rgba(0,245,255,0.55))';
+    return 'drop-shadow(0 0 12px rgba(57,255,20,0.45))';
+  }
+  function numColor(s) {
+    if (s < 40) return 'var(--red)';
+    if (s < 70) return 'var(--amber)';
+    if (s < 88) return 'var(--cyan)';
+    return 'var(--green)';
+  }
+  function tacticalHtml(s) {
+    if (s < 40) {
+      return 'CondiÃ§Ãµes <em>adversas</em>. Prioriza seguranÃ§a e repouso do spot â€” o OrÃ¡culo sugere aguardar melhor janela.';
+    }
+    if (s < 70) {
+      return 'Janela <em>moderada</em>. Testa horÃ¡rios solunar e marÃ©s; evita forÃ§ar equipamento em Ã¡gua morta.';
+    }
+    if (s < 88) {
+      return '<em>Boa</em> probabilidade tÃ¡ctica. Cruza pressÃ£o estÃ¡vel com marÃ© favorÃ¡vel e lanÃ§a nos picos do calendÃ¡rio.';
+    }
+    return 'NÃ­vel <em>elite</em>: condiÃ§Ãµes alinhadas. O OrÃ¡culo marca esta saÃ­da como prioridade mÃ¡xima.';
+  }
+  function apply() {
+    const s = Math.min(100, Math.max(0, parseInt(range.value, 10) || 0));
+    numEl.textContent = String(s);
+    numEl.style.color = numColor(s);
+    const off = C * (1 - s / 100);
+    fill.style.strokeDashoffset = String(off);
+    const col = strokeForScore(s);
+    fill.style.stroke = col;
+    fill.style.filter = glowForScore(s);
+    tactical.innerHTML = tacticalHtml(s);
+  }
+  range.addEventListener('input', apply);
+  apply();
+})();
+
+/* MAPBOX GL JS â€” MAPA 3D */
+const MAPBOX_TOKEN =
+  'pk.eyJ1IjoiYXF1YWRleCIsImEiOiJjbW4wcnZ6cjIwaGE5MnByMHMxZWpqeWR5In0.ywn5gbLqrc7CRMsxfECeVg';
+
+let aquaMap3D = null;
+
+const MAP_STYLES = {
+  dark:         'mapbox://styles/mapbox/dark-v11',
+  satellite:    'mapbox://styles/mapbox/satellite-streets-v12',
+  nautical:     'mapbox://styles/mapbox/navigation-night-v1',
+  sportfishing: 'mapbox://styles/mapbox/satellite-v9',
+  bathymetry:   'mapbox://styles/mapbox/satellite-v9'
+};
+
+const MAP_LABELS = {
+  dark:         'AQUANAUTIX Â· DARK Â· SPOTS Â· GHOST MODE',
+  satellite:    'AQUANAUTIX Â· SATÃ‰LITE Â· VISTA AÃ‰REA Â· PT/ES',
+  professional: 'AQUANAUTIX Â· CARTA DE NAVEGAÃ‡ÃƒO Â· OPENSEAMAP',
+  sportfishing: 'AQUANAUTIX Â· PESCA DESPORTIVA Â· SATÃ‰LITE Â· PT/ES',
+  bathymetry:   'AQUANAUTIX Â· BATIMETRIA GEBCO Â· FUNDO DO MAR',
+};
+
+const SPOTS = [
+  { coords: [-9.230, 38.690], color: '#00F5FF',
+    title: 'Spot Cascais', sub: 'Robalo Â· Surfcasting',
+    ghost: true },
+  { coords: [-7.930, 37.020], color: '#39FF14',
+    title: 'Robalo 4.2kg', sub: '06h40 Â· Faro',
+    ghost: false },
+  { coords: [-8.680, 41.180], color: '#00F5FF',
+    title: 'Spot Matosinhos', sub: 'Dourada Â· Ghost Mode',
+    ghost: true },
+  { coords: [-8.890, 38.520], color: '#F3C64D',
+    title: 'Isco SetÃºbal', sub: 'Loja Â· Google Places',
+    ghost: false, kind: 'bait_shop',
+    address: 'Av. Luisa Todi, Setubal' },
+  { coords: [-8.670, 37.100], color: '#00F5FF',
+    title: 'Spot Sagres', sub: 'Pargo Â· Ghost Mode',
+    ghost: true },
+  { coords: [-8.410, 43.360], color: '#00F5FF',
+    title: 'Spot A CoruÃ±a', sub: 'Robalo Â· Ghost Mode',
+    ghost: true },
+  { coords: [-6.290, 36.530], color: '#39FF14',
+    title: 'Cherne 3.1kg', sub: '09h15 Â· CÃ¡diz',
+    ghost: false },
+  { coords: [0.000, 39.850], color: '#00F5FF',
+    title: 'Spot Valencia', sub: 'Dourada Â· Ghost Mode',
+    ghost: true },
+  { coords: [-9.1022, 38.7397], color:'#F3C64D',
+    title:'StarnÃ¡utica', sub:'Loja Â· Lisboa', ghost:false,
+    kind:'bait_shop',
+    address:'Av. Infante Dom Henrique, Lisboa' },
+  { coords: [-9.1035, 38.7786], color:'#F3C64D',
+    title:'BemPescar', sub:'Loja Â· Moscavide', ghost:false,
+    kind:'bait_shop',
+    address:'R. 25 de Abril 31A, Moscavide' },
+  { coords: [-9.1709, 38.6712], color:'#F3C64D',
+    title:'GO Fishing Portugal', sub:'Loja Â· Almada',
+    ghost:false, kind:'bait_shop',
+    address:'R. Marcos de AssunÃ§Ã£o 7E, Almada' },
+  { coords: [-8.5752, 41.1443], color:'#F3C64D',
+    title:'FISHISCO Pesca', sub:'Loja Â· Porto',
+    ghost:false, kind:'bait_shop',
+    address:'R. Faia 13, Porto' },
+  { coords: [-8.6667, 41.1478], color:'#F3C64D',
+    title:'O JÃºlio - Artigos de Pesca', sub:'Loja Â· Porto',
+    ghost:false, kind:'bait_shop',
+    address:'R. SÃ£o JoÃ£o da Foz 35, Porto' },
+  { coords: [-8.5767, 41.1436], color:'#F3C64D',
+    title:'Cormoura', sub:'Loja Â· Porto',
+    ghost:false, kind:'bait_shop',
+    address:'Marina do Freixo, Porto' },
+  { coords: [-8.0957, 37.0755], color:'#F3C64D',
+    title:'AlgarvePesca', sub:'Loja Â· Quarteira',
+    ghost:false, kind:'bait_shop',
+    address:'Av. de Ceuta, Quarteira' },
+  { coords: [-7.9512, 37.0519], color:'#F3C64D',
+    title:'O Parchal', sub:'Loja Â· Faro',
+    ghost:false, kind:'bait_shop',
+    address:'Urb. Ismael Batista, Faro' },
+  { coords: [-7.8386, 37.0241], color:'#F3C64D',
+    title:'Sulcampo', sub:'Loja Â· OlhÃ£o',
+    ghost:false, kind:'bait_shop',
+    address:'Av. 5 de Outubro 4, OlhÃ£o' },
+  { coords: [-8.8976, 38.5207], color:'#F3C64D',
+    title:'PrÃ¡Pesca', sub:'Loja Â· SetÃºbal',
+    ghost:false, kind:'bait_shop',
+    address:'R. Praia da SaÃºde 15B, SetÃºbal' },
+  { coords: [-8.8833, 38.5219], color:'#F3C64D',
+    title:'Casa Pita', sub:'Loja Â· SetÃºbal',
+    ghost:false, kind:'bait_shop',
+    address:'R. FontaÃ­nhas 2, SetÃºbal' },
+  { coords: [-3.7276, 40.4265], color:'#F3C64D',
+    title:'DRM Fishing Store', sub:'Tienda Â· Madrid',
+    ghost:false, kind:'bait_shop',
+    address:'Av. de Valladolid 15, Madrid' },
+  { coords: [-3.5461, 40.4328], color:'#F3C64D',
+    title:'The Fly Center', sub:'Tienda Â· Madrid',
+    ghost:false, kind:'bait_shop',
+    address:'Av. de Fuentemar 20, Coslada' },
+  { coords: [-3.6975, 40.4307], color:'#F3C64D',
+    title:'Antunez Sage Redington', sub:'Tienda Â· Madrid',
+    ghost:false, kind:'bait_shop',
+    address:'C. Manuel Cortina 18, Madrid' },
+  { coords: [2.1728, 41.3829], color:'#F3C64D',
+    title:'Fly Shop Salmon 2000', sub:'Tienda Â· Barcelona',
+    ghost:false, kind:'bait_shop',
+    address:'Carrer de Petritxol 12, Barcelona' },
+  { coords: [2.1847, 41.3831], color:'#F3C64D',
+    title:'La Pesca Casa La Viuda', sub:'Tienda Â· Barcelona',
+    ghost:false, kind:'bait_shop',
+    address:'C. General CastaÃ±os 6, Barcelona' },
+  { coords: [2.1937, 41.3985], color:'#F3C64D',
+    title:'Casa CalicÃ³ Barcelona', sub:'Tienda Â· Barcelona',
+    ghost:false, kind:'bait_shop',
+    address:'Carrer d\'Ã€vila 94, Barcelona' },
+  { coords: [-8.7708, 42.1942], color:'#F3C64D',
+    title:'Tienda RÃ­as Baixas', sub:'Tienda Â· Vigo',
+    ghost:false, kind:'bait_shop',
+    address:'Ctra. de Camposancos 165, Vigo' },
+  { coords: [-8.7008, 42.2498], color:'#F3C64D',
+    title:'Riversfly Vigo', sub:'Tienda Â· Vigo',
+    ghost:false, kind:'bait_shop',
+    address:'R. Enrique Lorenzo 39, Vigo' },
+  // â”€â”€ AÃ‡ORES â”€â”€
+  { coords: [-25.6735, 37.7412], color:'#39FF14',
+    title:'Ponta Delgada â€” AÃ§ores',
+    sub:'Atum, Espadarte, Marlim Â· Big Game',
+    ghost:false },
+  { coords: [-28.7006, 38.5333], color:'#39FF14',
+    title:'Horta â€” Faial',
+    sub:'Atum Rabilho, Marlim Azul Â· Big Game',
+    ghost:false },
+  { coords: [-27.2167, 38.6500], color:'#39FF14',
+    title:'Angra do HeroÃ­smo â€” Terceira',
+    sub:'Garoupa, Cherne Â· Fundo',
+    ghost:false },
+  // â”€â”€ MADEIRA â”€â”€
+  { coords: [-16.9000, 32.6333], color:'#39FF14',
+    title:'Funchal â€” Madeira',
+    sub:'Espada Preta, Atum Â· Profundidade',
+    ghost:false },
+  { coords: [-17.2667, 32.8167], color:'#39FF14',
+    title:'Porto Moniz â€” Madeira',
+    sub:'Garoupa, BodiÃ£o Â· Rocha',
+    ghost:false },
+  // â”€â”€ MELHORES SPOTS PT â”€â”€
+  { coords: [-9.4215, 38.6979], color:'#0033FF',
+    title:'Cascais', sub:'Robalo, Sargo, Dourada Â· Costa',
+    ghost:false, kind:'hotspot' },
+  { coords: [-9.3809, 39.3556], color:'#0033FF',
+    title:'Peniche', sub:'Sargo, Robalo, Chicharro Â· Costa',
+    ghost:false, kind:'hotspot' },
+  { coords: [-8.9435, 37.0088], color:'#0033FF',
+    title:'Sagres', sub:'Atum, Bonito Â· Alto Mar',
+    ghost:false, kind:'hotspot' },
+  { coords: [-8.5374, 37.1375], color:'#0033FF',
+    title:'PortimÃ£o', sub:'Atum, Espadarte Â· Alto Mar',
+    ghost:false, kind:'hotspot' },
+  { coords: [-8.6507, 40.6419], color:'#0033FF',
+    title:'Ria de Aveiro', sub:'Robalo, Linguado Â· EstuÃ¡rio',
+    ghost:false, kind:'hotspot' },
+  { coords: [-8.7963, 41.1579], color:'#0033FF',
+    title:'PÃ³voa de Varzim', sub:'Robalo, Chicharro Â· Costa',
+    ghost:false, kind:'hotspot' },
+  { coords: [-9.4177, 38.7058], color:'#0033FF',
+    title:'Costa do Estoril', sub:'Sargo, Dourada Â· Costa',
+    ghost:false, kind:'hotspot' },
+  // â”€â”€ MELHORES SPOTS ES â”€â”€
+  { coords: [3.1584, 41.9650], color:'#0033FF',
+    title:'Costa Brava', sub:'Sargo, Dourada, Pargo Â· Costa',
+    ghost:false, kind:'hotspot' },
+  { coords: [-6.3423, 36.9941], color:'#0033FF',
+    title:'Guadalquivir', sub:'AchigÃ£, Black-bass Â· Rio',
+    ghost:false, kind:'hotspot' },
+  { coords: [0.7450, 40.6389], color:'#0033FF',
+    title:'Delta do Ebro', sub:'Robalo, Dourada Â· Delta',
+    ghost:false, kind:'hotspot' },
+  { coords: [-1.9681, 43.3183], color:'#0033FF',
+    title:'San SebastiÃ¡n', sub:'Atum, Bonito Â· Costa',
+    ghost:false, kind:'hotspot' },
+  { coords: [-8.7207, 42.2406], color:'#0033FF',
+    title:'RÃ­a de Vigo', sub:'Robalo, Linguado Â· EstuÃ¡rio',
+    ghost:false, kind:'hotspot' },
+  { coords: [-4.4214, 36.7213], color:'#0033FF',
+    title:'MÃ¡laga', sub:'Atum, Pargo Â· Alto Mar',
+    ghost:false, kind:'hotspot' },
+  { coords: [-7.7078, 37.6634], color:'#0033FF',
+    title:'Rio Guadiana', sub:'AchigÃ£, Carpa Â· Rio',
+    ghost:false, kind:'hotspot' },
+];
+
+var _markerClicked = false;
+var _spotMarkers = [];
+
+function addSpots(map) {
+  map.resize();
+  _spotMarkers.forEach(function(m) { m.remove(); });
+  _spotMarkers = [];
+  SPOTS.forEach((s) => {
+    if (s.kind === 'bait_shop') return;
+    const el = document.createElement('div');
+
+    var pinColor = s.color || '#00F5FF';
+    var pinSize = s.kind === 'hotspot' ? 24 : 18;
+    var pinIcon = s.kind === 'hotspot' ? 'ðŸŽ£' :
+                  s.ghost ? 'ðŸ‘»' : 'ðŸ“';
+
+    el.style.cssText = `
+      width:${pinSize}px;
+      height:${pinSize * 1.4}px;
+      cursor:pointer;
+      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
+    `;
+    el.innerHTML = `
+      <svg viewBox="0 0 32 44" xmlns="http://www.w3.org/2000/svg"
+        width="${pinSize}" height="${pinSize * 1.4}">
+        <path d="M16 0 C7.16 0 0 7.16 0 16 
+          C0 28 16 44 16 44 
+          C16 44 32 28 32 16 
+          C32 7.16 24.84 0 16 0Z"
+          fill="${pinColor}" opacity="0.95"/>
+        <circle cx="16" cy="16" r="8" 
+          fill="rgba(255,255,255,0.25)"/>
+        <text x="16" y="21" 
+          text-anchor="middle" 
+          font-size="11">${pinIcon}</text>
+      </svg>
+    `;
+
+    var popupHTML;
+    if (s.kind === 'hotspot') {
+      popupHTML = `
+    <div style="background:#071428;border:1px solid rgba(255,0,0,0.45);
+      border-radius:8px;padding:10px 14px;color:#fff;
+      font-family:'IBM Plex Sans',sans-serif;min-width:180px">
+      <div style="color:#0033FF;font-size:0.6em;
+        letter-spacing:0.1em;margin-bottom:4px">
+        ðŸŽ£ SPOT DE PESCA
+      </div>
+      <div style="font-weight:700;font-size:0.95em;
+        margin-bottom:4px">${s.title}</div>
+      <div style="color:#8AADBE;font-size:0.78em">
+        ${s.sub}
+      </div>
+    </div>
+  `;
+    } else if (s.ghost) {
+      popupHTML = `
+    <div style="background:#071428;border:1px solid
+      rgba(0,245,255,0.3);border-radius:8px;
+      padding:10px 14px;color:#fff;
+      font-family:'IBM Plex Sans',sans-serif">
+      <div style="color:#00F5FF;font-size:0.58em;
+        letter-spacing:0.12em;margin-bottom:5px">
+        AQUANAUTIX ${s.ghost ? 'Â· ðŸ‘» GHOST' : ''}
+      </div>
+      <div style="font-weight:700;margin-bottom:3px">
+        ${s.title}
+      </div>
+      <div style="color:#8AADBE;font-size:0.78em">
+        ${s.sub}
+      </div>
+      <div style="color:#39FF14;font-size:0.7em;margin-top:4px">
+        Ghost Mode activo â€” coords obfuscadas
+      </div>
+    </div>
+  `;
+    } else {
+      popupHTML = `
+    <div style="background:#071428;border:1px solid
+      rgba(0,245,255,0.3);border-radius:8px;
+      padding:10px 14px;color:#fff;
+      font-family:'IBM Plex Sans',sans-serif">
+      <div style="color:#00F5FF;font-size:0.58em;
+        letter-spacing:0.12em;margin-bottom:5px">
+        AQUANAUTIX Â· SPOT
+      </div>
+      <div style="font-weight:700;margin-bottom:3px">
+        ${s.title}
+      </div>
+      <div style="color:#8AADBE;font-size:0.78em">
+        ${s.sub}
+      </div>
+    </div>
+  `;
+    }
+
+    var popup = new mapboxgl.Popup({
+      offset: 12,
+      className: 'aqua-popup-3d',
+      closeButton: false
+    }).setHTML(popupHTML);
+
+    var marker = new mapboxgl.Marker({
+      element: el, anchor: 'center'
+    })
+      .setLngLat(s.coords)
+      .setPopup(popup)
+      .addTo(map);
+    marker.getElement().addEventListener('click', function(ev) {
+      _markerClicked = true;
+    });
+    _spotMarkers.push(marker);
+  });
+
+  var baitShops = SPOTS.filter(function(s) {
+    return s.kind === 'bait_shop';
+  });
+  baitShops.forEach(function(s) {
+    var el = document.createElement('div');
+    var pinSize = 20;
+    el.style.cssText = `
+      width:${pinSize}px;
+      height:${pinSize * 1.4}px;
+      cursor:pointer;
+      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
+    `;
+    el.innerHTML = `
+      <svg viewBox="0 0 32 44" 
+        xmlns="http://www.w3.org/2000/svg"
+        width="${pinSize}" height="${pinSize * 1.4}">
+        <path d="M16 0 C7.16 0 0 7.16 0 16 
+          C0 28 16 44 16 44 
+          C16 44 32 28 32 16 
+          C32 7.16 24.84 0 16 0Z"
+          fill="#F3C64D" opacity="0.95"/>
+        <circle cx="16" cy="16" r="8" 
+          fill="rgba(255,255,255,0.25)"/>
+        <text x="16" y="21" 
+          text-anchor="middle" 
+          font-size="11">ðŸª£</text>
+      </svg>
+    `;
+
+    var popup = new mapboxgl.Popup({
+      offset: 12,
+      className: 'aqua-popup-3d',
+      closeButton: false
+    }).setHTML(`
+      <div style="background:#071428;
+        border:1px solid rgba(243,198,77,0.45);
+        border-radius:8px;padding:10px 14px;
+        color:#fff;font-family:'IBM Plex Sans',sans-serif">
+        <div style="color:#F3C64D;font-size:0.6em;
+          letter-spacing:0.1em;margin-bottom:4px">
+          ðŸª£ LOJA DE ISCO
+        </div>
+        <div style="font-weight:700;margin-bottom:2px">
+          ${s.title}
+        </div>
+        <div style="color:#8AADBE;font-size:0.78em">
+          ${s.sub}
+        </div>
+        <div style="color:#CFE6F2;font-size:0.72em;
+          margin-top:4px">${s.address || ''}</div>
+        <a href="https://maps.google.com/?q=${s.coords[1]},${s.coords[0]}"
+          target="_blank"
+          style="display:inline-block;margin-top:8px;
+          padding:5px 12px;
+          background:rgba(243,198,77,0.15);
+          border:1px solid #F3C64D;
+          border-radius:4px;
+          color:#F3C64D;
+          font-size:0.72em;
+          text-decoration:none;
+          font-family:'IBM Plex Sans',sans-serif">
+          ðŸ“ Abrir no Google Maps
+        </a>
+      </div>
+    `);
+
+    var marker = new mapboxgl.Marker({
+      element: el, anchor: 'bottom'
+    })
+      .setLngLat(s.coords)
+      .setPopup(popup)
+      .addTo(map);
+
+    marker.getElement().addEventListener('click', function(ev) {
+      _markerClicked = true;
+    });
+    _spotMarkers.push(marker);
+  });
+}
+
+function addNauticalLayer(map) {
+  if (map.getSource('openseamap')) return;
+  map.addSource('openseamap', {
+    type: 'raster',
+    tiles: ['https://tiles.openseamap.org/seamark/{z}/{x}/{y}.png'],
+    tileSize: 256,
+    attribution: 'Â© OpenSeaMap',
+  });
+  map.addLayer({
+    id: 'openseamap-layer',
+    type: 'raster',
+    source: 'openseamap',
+    paint: { 'raster-opacity': 0.85 },
+  });
+}
+
+function add3DTerrain(map) {
+  // Remove terreno anterior se existir
+  try { map.setTerrain(null); } catch(e) {}
+
+  // Adiciona fonte DEM
+  if (!map.getSource('mapbox-dem')) {
+    map.addSource('mapbox-dem', {
+      type: 'raster-dem',
+      url: 'mapbox://mapbox.mapbox-terrain-dem-v1',
+      tileSize: 512,
+      maxzoom: 14
+    });
+  }
+
+  // Aguarda o estilo carregar antes de aplicar
+  map.once('idle', function() {
+
+    // Aplica terreno com exagero alto
+    map.setTerrain({
+      source: 'mapbox-dem',
+      exaggeration: 4.0
+    });
+
+    // Adiciona hillshade para ver o relevo
+    if (!map.getLayer('terrain-hillshade')) {
+      map.addLayer({
+        id: 'terrain-hillshade',
+        type: 'hillshade',
+        source: 'mapbox-dem',
+        layout: { visibility: 'visible' },
+        paint: {
+          'hillshade-shadow-color': '#000814',
+          'hillshade-highlight-color': '#00F5FF',
+          'hillshade-accent-color': '#071428',
+          'hillshade-illumination-direction': 315,
+          'hillshade-exaggeration': 0.9
+        }
+      });
+    }
+
+    // Voa para Portugal em 3D real
+    map.easeTo({
+      pitch: 0,
+      bearing: 0,
+      zoom: 5.5,
+      center: [-8.5, 39.5],
+      duration: 2000
+    });
+
+    // Actualiza tag
+    var tag = document.getElementById('mapa-tag-label');
+    if (tag) tag.textContent =
+      'AQUANAUTIX Â· 3D TERRENO Â· BATIMETRIA REAL';
+
+    console.log('3D Terreno activo â€” exagero 4.0');
+  });
+}
+
+function setActionActive(action) {
+  document.querySelectorAll('.map-layer-btn[data-action]')
+    .forEach(function(b) {
+      b.classList.toggle('active',
+        b.getAttribute('data-action') === action);
+    });
+  document.querySelectorAll('.map-layer-btn[data-style]:not([data-action])')
+    .forEach(function(b) {
+      b.classList.remove('active');
+    });
+}
+
+window.setMapStyle = function(style) {
+  if (!aquaMap3D) return;
+  var currentStyle = MAP_STYLES[style] || MAP_STYLES.dark;
+  var activeStyle  = MAP_STYLES[window._activeMapStyle] || '';
+
+  // Se o estilo base Ã© igual ao activo, style.load
+  // nunca dispara â€” aplica layers directamente
+  if (currentStyle === activeStyle && style === 'bathymetry') {
+    // Limpa layers anteriores
+    ['bathymetry-layer','bathymetry-hillshade',
+     'arcgis-ocean-base-layer','arcgis-ocean-ref-layer',
+     'terrain-hillshade',
+     'hillshade-layer','water-depth',
+     'openseamap-layer'].forEach(function(id) {
+      try {
+        if (aquaMap3D.getLayer(id)) aquaMap3D.removeLayer(id);
+      } catch(e) {}
+    });
+    ['mapbox-dem','openseamap','arcgis-ocean-base',
+     'arcgis-ocean-ref'].forEach(function(id) {
+      try {
+        if (aquaMap3D.getSource(id)) aquaMap3D.removeSource(id);
+      } catch(e) {}
+    });
+    try { aquaMap3D.setTerrain(null); } catch(e) {}
+
+    // Actualiza botÃµes .active
+    document.querySelectorAll('.map-layer-btn')
+      .forEach(function(b) { b.classList.remove('active'); });
+    var activeBtn = document.querySelector(
+      '[data-style="bathymetry"]'
+    );
+    if (activeBtn) activeBtn.classList.add('active');
+
+    applyBathymetryLayers();
+    return;
+  }
+
+  window._activeMapStyle = style;
+  aquaMap3D.setStyle(currentStyle);
+  aquaMap3D.once('style.load', function() {
+    // Limpa SEMPRE overlays anteriores
+    ['openseamap-layer','gebco-grid-layer','bathymetry-layer',
+     'bathymetry-hillshade','arcgis-ocean-base-layer',
+     'arcgis-ocean-ref-layer',
+     'hillshade-layer','water-depth','nautical-layer',
+     'gebco-layer'].forEach(function(l) {
+      if (aquaMap3D.getLayer(l)) aquaMap3D.removeLayer(l);
+    });
+    ['openseamap','gebco-grid','bathymetry-src',
+     'nautical-src','mapbox-dem','mapbox-terrain-v2',
+     'arcgis-ocean-base','arcgis-ocean-ref']
+      .forEach(function(s) {
+      if (aquaMap3D.getSource(s)) aquaMap3D.removeSource(s);
+    });
+    try { aquaMap3D.setTerrain(null); } catch(e) {}
+
+    aquaMap3D.once('idle', function() {
+      addSpots(aquaMap3D);
+    });
+
+    if (style === 'professional') {
+      aquaMap3D.addSource('openseamap', {
+        type: 'raster',
+        tiles: [
+          'https://tiles.openseamap.org/seamark/{z}/{x}/{y}.png'
+        ],
+        tileSize: 256,
+        attribution: 'Â© OpenSeaMap'
+      });
+      aquaMap3D.addLayer({
+        id: 'openseamap-layer',
+        type: 'raster',
+        source: 'openseamap',
+        paint: { 'raster-opacity': 1.0 }
+      });
+      aquaMap3D.easeTo({
+        center: [-9.1, 38.7],
+        zoom: 9,
+        pitch: 0,
+        bearing: 0,
+        duration: 1500
+      });
+    }
+
+    if (style === 'bathymetry') {
+      applyBathymetryLayers();
+    }
+
+    if (style === 'sportfishing') {
+
+      // Terreno 3D sobre satÃ©lite â€” imersivo
+      if (!aquaMap3D.getSource('mapbox-dem')) {
+        aquaMap3D.addSource('mapbox-dem', {
+          type: 'raster-dem',
+          url: 'mapbox://mapbox.mapbox-terrain-dem-v1',
+          tileSize: 512,
+          maxzoom: 14
+        });
+      }
+      aquaMap3D.setTerrain({
+        source: 'mapbox-dem',
+        exaggeration: 1.5
+      });
+
+      var tag = document.getElementById('mapa-tag-label');
+      if (tag) tag.textContent =
+        'AQUANAUTIX Â· PESCA DESPORTIVA Â· SATÃ‰LITE 3D Â· PT/ES';
+
+      // Costa PT em satÃ©lite 3D â€” vista de drone
+      aquaMap3D.easeTo({
+        center: [-9.0, 38.5],
+        zoom: 8.0,
+        pitch: 60,
+        bearing: -25,
+        duration: 2500
+      });
+    }
+
+    if (style === 'satellite') {
+      aquaMap3D.easeTo({
+        center: [-8.5, 39.5],
+        zoom: 6,
+        pitch: 0,
+        bearing: 0,
+        duration: 1200
+      });
+    }
+
+    if (style === 'dark') {
+      aquaMap3D.easeTo({
+        center: [-8.5, 39.5],
+        zoom: 5.5,
+        pitch: 0,
+        bearing: 0,
+        duration: 1200
+      });
+    }
+
+    if (style === 'nautical') {
+      var tag = document.getElementById('mapa-tag-label');
+      if (tag) tag.textContent =
+        'AQUANAUTIX Â· CARTA DE NAVEGAÃ‡ÃƒO Â· PT/ES';
+      aquaMap3D.easeTo({
+        center: [-9.5, 38.8],
+        zoom: 7.0,
+        pitch: 0,
+        bearing: 0,
+        duration: 1800
+      });
+    }
+  });
+  const lbl = document.getElementById('mapa-tag-label');
+  if (lbl) lbl.textContent = MAP_LABELS[style] || '';
+  document.querySelectorAll('.map-layer-btn[data-style]')
+    .forEach(function(b) {
+      b.classList.toggle('active',
+        b.getAttribute('data-style') === style);
+    });
+  document.querySelectorAll('.map-layer-btn[data-action]')
+    .forEach(function(b) {
+      b.classList.remove('active');
+    });
+};
+
+window.flyToPortugal = function() {
+  if (!aquaMap3D) return;
+  setActionActive('portugal');
+  aquaMap3D.flyTo({
+    center: [-8.5, 39.5], zoom: 6.5,
+    pitch: 0, bearing: 0, duration: 2000
+  });
+};
+window.flyToSpain = function() {
+  if (!aquaMap3D) return;
+  setActionActive('spain');
+  aquaMap3D.flyTo({
+    center: [-3.7, 40.4], zoom: 6.0,
+    pitch: 0, bearing: 0, duration: 2000
+  });
+};
+
+// â”€â”€ Bathymetry layers (called after style ready) â”€â”€
+function applyBathymetryLayers() {
+
+  // ArcGIS Ocean Base â€” batimetria real com
+  // gradiente de profundidade (azul escuro = fundo)
+  if (!aquaMap3D.getSource('arcgis-ocean-base')) {
+    aquaMap3D.addSource('arcgis-ocean-base', {
+      type: 'raster',
+      tiles: [
+        'https://server.arcgisonline.com/ArcGIS/rest/' +
+        'services/Ocean/World_Ocean_Base/MapServer/' +
+        'tile/{z}/{y}/{x}'
+      ],
+      tileSize: 256,
+      minzoom: 1,
+      maxzoom: 10,
+      attribution: 'Â© Esri, GEBCO, NOAA'
+    });
+  }
+  if (!aquaMap3D.getLayer('arcgis-ocean-base-layer')) {
+    aquaMap3D.addLayer({
+      id: 'arcgis-ocean-base-layer',
+      type: 'raster',
+      source: 'arcgis-ocean-base',
+      paint: {
+        'raster-opacity': 0.45,
+        'raster-contrast': 0.15,
+        'raster-saturation': -0.3,
+        'raster-brightness-min': 0.0,
+        'raster-brightness-max': 0.7
+      }
+    });
+  }
+
+  // ArcGIS Ocean Reference â€” labels e curvas
+  // batimÃ©tricas por cima (isobatas GEBCO reais)
+  if (!aquaMap3D.getSource('arcgis-ocean-ref')) {
+    aquaMap3D.addSource('arcgis-ocean-ref', {
+      type: 'raster',
+      tiles: [
+        'https://server.arcgisonline.com/ArcGIS/rest/' +
+        'services/Ocean/World_Ocean_Reference/MapServer/' +
+        'tile/{z}/{y}/{x}'
+      ],
+      tileSize: 256,
+      minzoom: 1,
+      maxzoom: 10,
+      attribution: 'Â© Esri'
+    });
+  }
+  if (!aquaMap3D.getLayer('arcgis-ocean-ref-layer')) {
+    aquaMap3D.addLayer({
+      id: 'arcgis-ocean-ref-layer',
+      type: 'raster',
+      source: 'arcgis-ocean-ref',
+      paint: {
+        'raster-opacity': 0.7,
+        'raster-brightness-min': 0.0,
+        'raster-brightness-max': 0.6
+      }
+    });
+  }
+
+  // Hillshade DEM Mapbox â€” relevo costeiro
+  // com cores AQUANAUTIX por cima
+  if (!aquaMap3D.getSource('mapbox-dem')) {
+    aquaMap3D.addSource('mapbox-dem', {
+      type: 'raster-dem',
+      url: 'mapbox://mapbox.mapbox-terrain-dem-v1',
+      tileSize: 512,
+      maxzoom: 14
+    });
+  }
+  if (!aquaMap3D.getLayer('bathymetry-hillshade')) {
+    aquaMap3D.addLayer({
+      id: 'bathymetry-hillshade',
+      type: 'hillshade',
+      source: 'mapbox-dem',
+      paint: {
+        'hillshade-shadow-color': '#001433',
+        'hillshade-highlight-color': '#00F5FF',
+        'hillshade-accent-color': '#005599',
+        'hillshade-illumination-direction': 315,
+        'hillshade-exaggeration': 0.6
+      }
+    });
+  }
+
+  // Terreno 3D costeiro
+  aquaMap3D.setTerrain({
+    source: 'mapbox-dem',
+    exaggeration: 1.8
+  });
+
+  var tag = document.getElementById('mapa-tag-label');
+  if (tag) tag.textContent =
+    'AQUANAUTIX Â· BATIMETRIA GEBCO Â· SONAR Â· PROFUNDIDADE REAL';
+
+  aquaMap3D.easeTo({
+    center: [-10.5, 37.5],
+    zoom: 5.5,
+    pitch: 45,
+    bearing: -10,
+    duration: 2200
+  });
+}
+
+window.flyToAtlantic = function() {
+  if (!aquaMap3D) return;
+  setActionActive('atlantic');
+
+  // Limpa layers que causam ecrÃ£ cyan
+  var layersToRemove = [
+    'terrain-hillshade',
+    'nautical-hillshade',
+    'hillshade-layer',
+    'water-depth',
+    'openseamap-layer',
+    'bathymetry-layer',
+    'bathymetry-hillshade',
+    'arcgis-ocean-base-layer',
+    'arcgis-ocean-ref-layer'
+  ];
+  layersToRemove.forEach(function(id) {
+    try {
+      if (aquaMap3D.getLayer(id))
+        aquaMap3D.removeLayer(id);
+    } catch(e) {}
+  });
+
+  // Remove terreno 3D se activo
+  try { aquaMap3D.setTerrain(null); } catch(e) {}
+
+  // Actualiza tag
+  var tag = document.getElementById('mapa-tag-label');
+  if (tag) tag.textContent =
+    'AQUANAUTIX Â· ATLÃ‚NTICO Â· IBÃ‰RIA Â· PT/ES';
+
+  // Voa para o AtlÃ¢ntico ibÃ©rico
+  aquaMap3D.flyTo({
+    center: [-12, 38],
+    zoom: 4.8,
+    pitch: 0,
+    bearing: 0,
+    duration: 2500
+  });
+};
+
+window.flyToMyLocation = function() {
+  var btn = document.getElementById(
+    'btn-minha-posicao');
+  if (btn) {
+    btn.textContent = 'âŸ³ A localizar...';
+    btn.disabled = true;
+  }
+
+  if (aquaMap3D) {
+    setMapStyle('dark');
+    setActionActive('location');
+  }
+
+  if (!navigator.geolocation) {
+    if (btn) {
+      btn.textContent = 'ðŸ“ A Minha PosiÃ§Ã£o';
+      btn.disabled = false;
+    }
+    alert('GPS nÃ£o disponÃ­vel neste browser.');
+    return;
+  }
+
+  navigator.geolocation.getCurrentPosition(
+    function(pos) {
+      var lat = pos.coords.latitude;
+      var lon = pos.coords.longitude;
+      console.log('GPS mapa:', lat, lon);
+
+      setTimeout(function() {
+        if (!aquaMap3D) return;
+        aquaMap3D.flyTo({
+          center: [lon, lat],
+          zoom: 12,
+          pitch: 0,
+          bearing: 0,
+          duration: 2000,
+        });
+
+        // Adiciona marcador da posiÃ§Ã£o actual
+        var el = document.createElement('div');
+        el.style.cssText = [
+          'width:16px',
+          'height:16px',
+          'background:#00F5FF',
+          'border-radius:50%',
+          'border:3px solid white',
+          'box-shadow:0 0 15px #00F5FF,',
+          '0 0 30px #00F5FF66',
+        ].join(';');
+
+        new mapboxgl.Marker({
+          element: el,
+          anchor: 'center'
+        })
+        .setLngLat([lon, lat])
+        .setPopup(new mapboxgl.Popup({
+          offset: 20,
+          className: 'aqua-popup-3d',
+          closeButton: false
+        }).setHTML([
+          '<div style="background:#071428;',
+          'border:1px solid rgba(0,245,255,0.3);',
+          'border-radius:8px;padding:10px 14px;',
+          'font-family:\'IBM Plex Sans\',sans-serif;',
+          'color:#fff">',
+          '<div style="color:#00F5FF;font-size:0.6em;',
+          'letter-spacing:0.12em;margin-bottom:5px">',
+          'A TUA POSIÃ‡ÃƒO ACTUAL</div>',
+          '<div style="font-weight:700">',
+          lat.toFixed(4) + 'Â° N Â· ',
+          Math.abs(lon).toFixed(4) + 'Â° W</div>',
+          '<div style="color:#39FF14;font-size:0.7em;',
+          'margin-top:4px">ðŸ‘» Ghost Mode activo</div>',
+          '</div>'
+        ].join('')))
+        .addTo(aquaMap3D)
+        .togglePopup();
+      }, 800);
+
+      if (btn) {
+        btn.textContent = 'âœ“ Localizado!';
+        setTimeout(function() {
+          btn.textContent = 'ðŸ“ A Minha PosiÃ§Ã£o';
+          btn.disabled = false;
+        }, 3000);
+      }
+    },
+    function(err) {
+      console.warn('GPS negado:', err.message);
+      if (btn) {
+        btn.textContent = 'ðŸ“ A Minha PosiÃ§Ã£o';
+        btn.disabled = false;
+      }
+      // Fallback: vai para Lisboa
+      setTimeout(function() {
+        if (!aquaMap3D) return;
+        aquaMap3D.flyTo({
+          center: [-9.1399, 38.7169],
+          zoom: 10,
+          pitch: 0,
+          bearing: 0,
+          duration: 1500
+        });
+      }, 800);
+    },
+    { timeout: 8000 }
+  );
+};
+
+window.toggleBaitShops = function() {
+  var btn = document.querySelector('[data-action="baitshops"]');
+  var baitMarkers = _spotMarkers.filter(function(m) {
+    var el = m.getElement();
+    return el && el.querySelector('svg path[fill="#F3C64D"]');
+  });
+
+  if (!baitMarkers.length) return;
+
+  var isVisible = baitMarkers[0].getElement().style.display !== 'none';
+
+  baitMarkers.forEach(function(m) {
+    m.getElement().style.display = isVisible ? 'none' : 'block';
+  });
+
+  if (btn) btn.classList.toggle('active', !isVisible);
+};
+
+function buildMapLegend() {
+  var existing = document.querySelector('.mapa-legend');
+  if (existing) existing.remove();
+
+  var legend = document.createElement('div');
+  legend.className = 'mapa-legend';
+  legend.innerHTML = `
+    <div class="mapa-legend-title">SPOTS</div>
+    <div class="legend-row">
+      <span style="display:block;width:8px;height:8px;
+        border-radius:50%;background:#00F5FF;
+        box-shadow:0 0 6px #00F5FF;flex-shrink:0"></span>
+      Meu Spot (Ghost Mode)
+    </div>
+    <div class="legend-row">
+      <span style="display:block;width:8px;height:8px;
+        border-radius:50%;background:#39FF14;
+        box-shadow:0 0 6px #39FF14;flex-shrink:0"></span>
+      Captura recente
+    </div>
+    <div class="legend-row">
+      <span style="display:block;width:8px;height:8px;
+        border-radius:50%;background:#F3C64D;
+        box-shadow:0 0 6px #F3C64D;flex-shrink:0"></span>
+      Loja de isco
+    </div>
+    <div class="legend-row">
+      <span style="display:block;width:8px;height:8px;
+        border-radius:50%;background:#E84D4D;
+        box-shadow:0 0 6px #E84D4D;flex-shrink:0"></span>
+      Zona de veda
+    </div>
+    <div class="legend-row">
+      <span style="display:block;width:8px;height:8px;
+        border-radius:50%;background:#0033FF;
+        box-shadow:0 0 10px #0033FF;flex-shrink:0"></span>
+      Spot de pesca
+    </div>
+  `;
+
+  var wrap = document.querySelector('.mapa-live-wrap');
+  if (wrap) wrap.appendChild(legend);
+}
+
+function initMapbox() {
+  const el = document.getElementById('mapbox-map');
+  if (!el || !window.mapboxgl) return;
+
+  mapboxgl.accessToken = MAPBOX_TOKEN;
+
+  aquaMap3D = new mapboxgl.Map({
+    container: 'mapbox-map',
+    style: MAP_STYLES.dark,
+    center: [-8.5, 39.5],
+    zoom: 5.5,
+    pitch: 0,
+    bearing: 0,
+    antialias: true,
+  });
+
+  aquaMap3D.addControl(
+    new mapboxgl.NavigationControl(), 'top-right');
+  aquaMap3D.addControl(
+    new mapboxgl.GeolocateControl({
+      positionOptions: { enableHighAccuracy: true },
+      trackUserLocation: true,
+      showUserHeading: true
+    }),
+    'top-right'
+  );
+  aquaMap3D.addControl(
+    new mapboxgl.ScaleControl(), 'bottom-left');
+  aquaMap3D.addControl(
+    new mapboxgl.FullscreenControl(), 'top-right');
+
+  aquaMap3D.on('load', () => {
+    window._activeMapStyle = 'dark';
+    buildMapLegend();
+    try {
+      aquaMap3D.setPaintProperty(
+        'water', 'fill-color', '#1a6b9e'
+      );
+    } catch(e) {
+      console.log('water layer nÃ£o disponÃ­vel neste estilo');
+    }
+
+    // AnimaÃ§Ã£o cor do mar
+    var _waterHue = 0;
+    function animateWater() {
+      _waterHue = (_waterHue + 0.3) % 360;
+      var r = Math.round(10 + 20 * Math.sin(_waterHue * Math.PI / 180));
+      var g = Math.round(80 + 40 * Math.sin(_waterHue * Math.PI / 180 + 1));
+      var b = Math.round(140 + 60 * Math.sin(_waterHue * Math.PI / 180 + 2));
+      var color = 'rgb(' + r + ',' + g + ',' + b + ')';
+      try {
+        aquaMap3D.setPaintProperty('water', 'fill-color', color);
+      } catch(e) {}
+      requestAnimationFrame(animateWater);
+    }
+    animateWater();
+
+    aquaMap3D.once('idle', function() {
+      addSpots(aquaMap3D);
+    });
+
+    aquaMap3D.flyTo({
+      center: [-8.5, 39.5],
+      zoom: 5.5,
+      pitch: 0,
+      bearing: 0,
+      duration: 3000,
+      essential: true,
+    });
+  });
+
+  const s = document.createElement('style');
+  s.textContent = `
+.aqua-popup-3d .mapboxgl-popup-content {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  border-radius: 0 !important;
+}
+.aqua-popup-3d .mapboxgl-popup-tip {
+  display: none !important;
+}
+.mapboxgl-ctrl-group {
+  background: rgba(7,20,40,0.92) !important;
+  border: 1px solid rgba(0,245,255,0.35) !important;
+  border-radius: 6px !important;
+  box-shadow: 0 0 20px rgba(0,245,255,0.1) !important;
+  overflow: hidden !important;
+}
+.mapboxgl-ctrl-group button {
+  background: rgba(7,20,40,0.92) !important;
+  color: #00F5FF !important;
+  width: 36px !important;
+  height: 36px !important;
+  border-bottom: 1px solid rgba(0,245,255,0.15) !important;
+}
+.mapboxgl-ctrl-group button:last-child {
+  border-bottom: none !important;
+}
+.mapboxgl-ctrl-group button:hover {
+  background: rgba(0,245,255,0.12) !important;
+  color: #ffffff !important;
+}
+.mapboxgl-ctrl-group button span {
+  filter: invert(1) sepia(1) saturate(5)
+    hue-rotate(155deg) !important;
+}
+.mapboxgl-ctrl-compass .mapboxgl-ctrl-icon {
+  filter: invert(1) sepia(1) saturate(5)
+    hue-rotate(155deg) !important;
+}
+.mapboxgl-ctrl-geolocate .mapboxgl-ctrl-icon {
+  filter: invert(1) sepia(1) saturate(5)
+    hue-rotate(155deg) !important;
+}
+.mapboxgl-ctrl-fullscreen .mapboxgl-ctrl-icon {
+  filter: invert(1) sepia(1) saturate(5)
+    hue-rotate(155deg) !important;
+}
+.mapboxgl-ctrl-zoom-in .mapboxgl-ctrl-icon {
+  filter: invert(1) sepia(1) saturate(5)
+    hue-rotate(155deg) !important;
+}
+.mapboxgl-ctrl-zoom-out .mapboxgl-ctrl-icon {
+  filter: invert(1) sepia(1) saturate(5)
+    hue-rotate(155deg) !important;
+}
+.mapboxgl-ctrl-attrib {
+  background: rgba(0,8,20,0.8) !important;
+  color: #8AADBE !important;
+  font-size: 0.42rem !important;
+  border-radius: 4px !important;
+}
+.mapboxgl-ctrl-attrib a {
+  color: #00F5FF !important;
+}
+.mapboxgl-ctrl-scale {
+  background: rgba(0,8,20,0.7) !important;
+  border-color: rgba(0,245,255,0.4) !important;
+  color: #8AADBE !important;
+  font-size: 0.5rem !important;
+  border-radius: 3px !important;
+}
+@keyframes aquaPulseShop {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(243,198,77,0.55),
+      0 0 16px #F3C64D;
+  }
+  70% {
+    transform: scale(1.1);
+    box-shadow: 0 0 0 14px rgba(243,198,77,0),
+      0 0 26px #F3C64D99;
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(243,198,77,0),
+      0 0 16px #F3C64D;
+  }
+}
+  `;
+  document.head.appendChild(s);
+}
+
+var _mapInitDone = false;
+var _mapObserver = new IntersectionObserver(function(entries) {
+  entries.forEach(function(entry) {
+    if (entry.isIntersecting && !_mapInitDone) {
+      _mapInitDone = true;
+      initMapbox();
+    } else if (entry.isIntersecting && aquaMap3D) {
+      aquaMap3D.resize();
+    }
+  });
+}, { threshold: 0.1 });
+
+var _mapSection = document.getElementById('mapa-live');
+if (_mapSection) _mapObserver.observe(_mapSection);
+/* mapa-live em modo imagem estÃ¡tica â€” observer desligado */
+_mapObserver.disconnect();
+_mapInitDone = true;
+
+/* ACTIVIDADE DO PEIXE â€” ORÃCULO LIVE */
+(function oraculo() {
+  function moonPhase(d) {
+    const known = new Date('2000-01-06T18:14:00Z');
+    const days = (d - known) / 86400000;
+    const cycle = ((days % 29.53058867) + 29.53058867)
+      % 29.53058867;
+    const pct = Math.round(
+      (1 - Math.cos(cycle / 29.53 * 2 * Math.PI)) / 2 * 100);
+    let name, score;
+    if (cycle < 1.85) { name = 'Lua Nova'; score = 55; }
+    else if (cycle < 7.38) { name = 'Crescente'; score = 70; }
+    else if (cycle < 9.23) { name = 'Q. Crescente'; score = 75; }
+    else if (cycle < 14.77) { name = 'Gibosa'; score = 80; }
+    else if (cycle < 16.61) { name = 'Lua Cheia'; score = 95; }
+    else if (cycle < 22.15) { name = 'Gibosa Mng'; score = 80; }
+    else if (cycle < 23.99) { name = 'Q. Minguante'; score = 75; }
+    else { name = 'Minguante'; score = 65; }
+    return { name, score, pct };
+  }
+
+  function solunar(h, m) {
+    const dec = h + m / 60;
+    const windows = [
+      [6, 8, 'Major'], [12, 14, 'Minor'],
+      [18, 20, 'Major'], [0, 2, 'Minor'],
+    ];
+    for (const [st, e, t] of windows) {
+      if (dec >= st && dec < e) {
+        const mid = (st + e) / 2;
+        const d = Math.abs(dec - mid);
+        const sc = Math.round(100 - d * 40);
+        return { label: `${t} ${String(st).padStart(2, '0')}:00â€“${String(e).padStart(2, '0')}:00`, score: sc };
+      }
+    }
+    const next = windows.find(([st]) => st > dec) || windows[0];
+    const diff = ((next[0] - dec) + 24) % 24;
+    const sc = Math.max(20, Math.round(60 - diff * 8));
+    return { label: `PrÃ³xima ${next[2]} Ã s ${String(next[0]).padStart(2, '0')}:00`, score: sc };
+  }
+
+  function tideScore(h, m) {
+    const t = (h + m / 60) % 12.42;
+    const rising = Math.sin(t / 12.42 * 2 * Math.PI) > 0;
+    const near = Math.abs(Math.cos(t / 12.42 * 2 * Math.PI));
+    const sc = Math.round(40 + near * 60);
+    return {
+      label: rising ? 'Enchente â†‘' : 'Vazante â†“',
+      score: sc,
+      near: near > 0.7,
+    };
+  }
+
+  function hourScore(h) {
+    const good = [5, 6, 7, 8, 9, 17, 18, 19, 20];
+    const ok = [10, 11, 16, 21, 4];
+    if (good.includes(h)) return { label: 'Ã“ptima', score: 90 };
+    if (ok.includes(h)) return { label: 'Boa', score: 70 };
+    return { label: 'Moderada', score: 45 };
+  }
+
+  function calcScore(moon, sol, tide, hora) {
+    return Math.round(
+      moon.score * 0.30 +
+      sol.score * 0.35 +
+      tide.score * 0.20 +
+      hora.score * 0.15
+    );
+  }
+
+  function statusText(s) {
+    if (s >= 80) return { t: 'ðŸŽ¯ Vai AGORA!', c: '#39FF14' };
+    if (s >= 65) return { t: 'âœ… Vale a pena', c: '#00F5FF' };
+    if (s >= 45) return { t: 'âš ï¸ Moderado', c: '#F3C64D' };
+    return { t: 'âŒ Aguarda', c: '#E84D4D' };
+  }
+
+  function update() {
+    const now = new Date();
+    const h = now.getHours();
+    const m = now.getMinutes();
+    const moon = moonPhase(now);
+    const sol = solunar(h, m);
+    const tide = tideScore(h, m);
+    const hora = hourScore(h);
+    const score = calcScore(moon, sol, tide, hora);
+    const st = statusText(score);
+    const C = 534;
+    const off = C * (1 - score / 100);
+
+    const fill = document.getElementById('ativ-fill');
+    const num = document.getElementById('ativ-num');
+    const status = document.getElementById('ativ-status');
+    const upd = document.getElementById('ativ-update');
+    const conselho = document.getElementById('ativ-conselho');
+    if (!fill) return;
+
+    const col = score >= 80 ? '#39FF14' :
+      score >= 65 ? '#00F5FF' :
+        score >= 45 ? '#F3C64D' : '#E84D4D';
+
+    fill.style.strokeDashoffset = String(off);
+    fill.style.stroke = col;
+    fill.style.filter =
+      `drop-shadow(0 0 8px ${col}99)`;
+    if (num) {
+      num.textContent = String(score);
+      num.style.color = col;
+    }
+    if (status) {
+      status.textContent = st.t;
+      status.style.color = st.c;
+    }
+
+    const bars = [
+      ['luna', moon.name, moon.score, '#F3C64D'],
+      ['sol', sol.label, sol.score, '#00F5FF'],
+      ['mare', tide.label, tide.score, '#2FE6C8'],
+      ['pres', 'EstÃ¡vel', 75, '#39FF14'],
+      ['hora', hora.label, hora.score, '#00F5FF'],
+    ];
+    bars.forEach(([id, lbl, sc, c]) => {
+      const v = document.getElementById(`ab-${id}`);
+      const f = document.getElementById(`abf-${id}`);
+      if (v) v.textContent = lbl;
+      if (f) {
+        f.style.width = `${sc}%`;
+        f.style.background = c;
+      }
+    });
+
+    const active = Math.round(score / 20);
+    for (let i = 1; i <= 5; i++) {
+      const fish = document.getElementById(`af${i}`);
+      if (fish) {
+        fish.style.filter = i <= active ?
+          `drop-shadow(0 0 6px ${col})` : 'none';
+        fish.style.opacity = i <= active ? '1' : '0.2';
+      }
+    }
+
+    const conselhos = {
+      high: [
+        `<em style="color:${col}">Score ${score}/100</em> â€” CondiÃ§Ãµes de elite. ${moon.name} + ${sol.label}. LanÃ§a agora!`,
+        `<em style="color:${col}">Janela major activa.</em> Cruza com ${tide.label.toLowerCase()} para maximizar captura.`,
+      ],
+      mid: [
+        `Score <em style="color:${col}">${score}/100</em>. CondiÃ§Ãµes moderadas â€” ${sol.label}.`,
+        `${moon.name} com ${tide.label.toLowerCase()}. Experimenta fundos de 5â€“15m.`,
+      ],
+      low: [
+        `Score <em style="color:${col}">${score}/100</em> â€” Aguarda a prÃ³xima janela solunar.`,
+        `CondiÃ§Ãµes fracas agora. ${sol.label}. Prepara o material.`,
+      ],
+    };
+    const pool = score >= 65 ? conselhos.high :
+      score >= 45 ? conselhos.mid :
+        conselhos.low;
+    if (conselho)
+      conselho.innerHTML =
+        pool[Math.floor(now.getSeconds() / 30) % pool.length];
+
+    if (upd) {
+      const hh = String(h).padStart(2, '0');
+      const mm = String(m).padStart(2, '0');
+      upd.textContent = `Actualizado: ${hh}:${mm} Â· ` +
+        `PrÃ³xima actualizaÃ§Ã£o em 60s`;
+    }
+  }
+
+  update();
+  setInterval(update, 60000);
+})();
+
+/* GUIA DE ESPÃ‰CIES */
+const ESPECIES = [
+  { id: 'robalo', emoji: 'ðŸŸ', nome: 'Robalo',
+    sci: 'Dicentrarchus labrax',
+    minPT: 36, minES: 25,
+    veda: 'Maiâ€“Jun PT', vedaEs: 'NÃ£o',
+    habitat: 'Costa rochosa, estuÃ¡rios',
+    isco: 'Minhoca de mar, isco vivo' },
+  { id: 'dourada', emoji: 'ðŸ ', nome: 'Dourada',
+    sci: 'Sparus aurata',
+    minPT: 25, minES: 20,
+    veda: 'NÃ£o', vedaEs: 'NÃ£o',
+    habitat: 'Fundos arenosos, lagoas',
+    isco: 'BerbigÃ£o, camarÃ£o, minhoca' },
+  { id: 'sargo', emoji: 'ðŸ¡', nome: 'Sargo',
+    sci: 'Diplodus sargus',
+    minPT: 23, minES: 18,
+    veda: 'NÃ£o', vedaEs: 'NÃ£o',
+    habitat: 'Rochas, posidÃ³nia',
+    isco: 'BerbigÃ£o, mexilhÃ£o, caranguejo' },
+  { id: 'corvina', emoji: 'ðŸ¦ˆ', nome: 'Corvina',
+    sci: 'Argyrosomus regius',
+    minPT: 30, minES: 30,
+    veda: 'NÃ£o', vedaEs: 'NÃ£o',
+    habitat: 'EstuÃ¡rios, costa arenosa',
+    isco: 'Lula, isco vivo, camarÃ£o' },
+  { id: 'pargo', emoji: 'ðŸŽ£', nome: 'Pargo',
+    sci: 'Pagrus pagrus',
+    minPT: 18, minES: 18,
+    veda: 'NÃ£o', vedaEs: 'NÃ£o',
+    habitat: 'Fundos rochosos 20â€“100m',
+    isco: 'Caranguejo, camarÃ£o, lula' },
+  { id: 'polvo', emoji: 'ðŸ™', nome: 'Polvo',
+    sci: 'Octopus vulgaris',
+    minPT: '750g', minES: '1kg',
+    veda: 'NÃ£o', vedaEs: 'NÃ£o',
+    habitat: 'Rochas, grutas, fundos mistos',
+    isco: 'Galera, caranguejo vivo' },
+  { id: 'cherne', emoji: 'ðŸŸ', nome: 'Cherne',
+    sci: 'Polyprion americanus',
+    minPT: 45, minES: 45,
+    veda: 'Fevâ€“Abr', vedaEs: 'Fevâ€“Abr',
+    habitat: 'Fundos rochosos 50â€“300m',
+    isco: 'Lula, pota, isco vivo' },
+  { id: 'linguado', emoji: 'ðŸŸ', nome: 'Linguado',
+    sci: 'Solea solea',
+    minPT: 24, minES: 20,
+    veda: 'NÃ£o', vedaEs: 'NÃ£o',
+    habitat: 'Fundos arenosos costeiros',
+    isco: 'Minhoca, camarÃ£o, minhoca de mar' },
+  { id: 'garoupa', emoji: 'ðŸ ', nome: 'Garoupa',
+    sci: 'Epinephelus marginatus',
+    minPT: 45, minES: 45,
+    veda: 'Protegida ES', vedaEs: 'PROTEGIDA',
+    habitat: 'Rochas, grutas',
+    isco: 'Isco vivo, lula' },
+  { id: 'besugo', emoji: 'ðŸ¡', nome: 'Besugo',
+    sci: 'Pagellus acarne',
+    minPT: 15, minES: 15,
+    veda: 'NÃ£o', vedaEs: 'NÃ£o',
+    habitat: 'Fundos mistos 30â€“100m',
+    isco: 'CamarÃ£o, minhoca de mar' },
+  { id: 'ruivo', emoji: 'ðŸŸ', nome: 'Ruivo',
+    sci: 'Trigla lucerna',
+    minPT: 20, minES: 20,
+    veda: 'NÃ£o', vedaEs: 'NÃ£o',
+    habitat: 'Fundos arenosos',
+    isco: 'Minhoca, camarÃ£o' },
+  { id: 'lula', emoji: 'ðŸ¦‘', nome: 'Lula',
+    sci: 'Loligo vulgaris',
+    minPT: '10cm', minES: '10cm',
+    veda: 'NÃ£o', vedaEs: 'NÃ£o',
+    habitat: 'Costa aberta, fundos arenosos',
+    isco: 'Galera, jig luminoso' },
+  { id: 'cavala', emoji: 'ðŸŸ', nome: 'Cavala',
+    sci: 'Scomber scombrus',
+    minPT: 18, minES: 18,
+    veda: 'Sem veda definida', vedaEs: 'Sem veda definida',
+    habitat: 'PelÃ¡gico costeiro, alto mar',
+    isco: 'Sardinha, amostras, lula' },
+  { id: 'choco', emoji: 'ðŸ¦‘', nome: 'Choco',
+    sci: 'Sepia officinalis',
+    minPT: 0, minES: 0,
+    veda: 'Sem veda definida', vedaEs: 'Sem veda definida',
+    habitat: 'Fundos arenosos costeiros',
+    isco: 'Amostras, camarÃ£o, peixinho' },
+  { id: 'congro', emoji: 'ðŸ', nome: 'Congro',
+    sci: 'Conger conger',
+    minPT: 0, minES: 0,
+    veda: 'Sem veda definida', vedaEs: 'Sem veda definida',
+    habitat: 'Fundos rochosos, grutas',
+    isco: 'Sardinhas, lulas, polvos' },
+  { id: 'safio', emoji: 'ðŸ ', nome: 'Safio',
+    sci: 'Aphanopus carbo',
+    minPT: 0, minES: 0,
+    veda: 'Sem veda definida', vedaEs: 'Sem veda definida',
+    habitat: 'Profundidades, Madeira e AÃ§ores',
+    isco: 'Lulas, amostras, cavalas' },
+  { id: 'abrotea', emoji: 'ðŸ¡', nome: 'Abrotea',
+    sci: 'Phycis blennoides',
+    minPT: 0, minES: 0,
+    veda: 'Sem veda definida', vedaEs: 'Sem veda definida',
+    habitat: 'Fundos rochosos, profundidade',
+    isco: 'Minhoca, camarÃ£o, amostras' },
+  { id: 'faneca', emoji: 'ðŸŸ', nome: 'Faneca',
+    sci: 'Gadiculus argenteus',
+    minPT: 0, minES: 0,
+    veda: 'Sem veda definida', vedaEs: 'Sem veda definida',
+    habitat: 'Fundos arenosos e lamas costeiras',
+    isco: 'Minhoca, camarÃ£o, amostras' },
+  { id: 'atum', emoji: 'ðŸŸ', nome: 'Atum',
+    sci: 'Thunnus thynnus',
+    minPT: 0, minES: 0,
+    veda: 'Sem veda definida', vedaEs: 'Sem veda definida',
+    habitat: 'PelÃ¡gico oceÃ¢nico',
+    isco: 'Sardinha, cavalinha, isco vivo' },
+];
+
+function buildEspeciaCard(e, region) {
+  const isProtected = e.vedaEs === 'PROTEGIDA';
+  const minVal = region === 'es' ? e.minES : e.minPT;
+  const vedaVal = region === 'es' ? e.vedaEs : e.veda;
+  const vedaOk = vedaVal === 'NÃ£o';
+  const minDisplay = typeof minVal === 'number' ? minVal + 'cm' : minVal;
+  const vedaClass = vedaOk ? 'ok' : (isProtected ? 'danger' : 'warn');
+  return `
+    <article class="esp-card">
+      <span class="esp-emoji">${e.emoji}</span>
+      <div class="esp-name">${e.nome}</div>
+      <div class="esp-sci">${e.sci}</div>
+      <div class="esp-data">
+        <div class="esp-row">
+          <span class="esp-key">MÃN. LEGAL</span>
+          <span class="esp-val ok">${minDisplay}</span>
+        </div>
+        <div class="esp-row">
+          <span class="esp-key">VEDA</span>
+          <span class="esp-val ${vedaClass}">${vedaVal}</span>
+        </div>
+        <div class="esp-row">
+          <span class="esp-key">HABITAT</span>
+          <span class="esp-val"
+            style="font-size:0.48rem;
+            text-align:right;max-width:55%">
+            ${e.habitat}
+          </span>
+        </div>
+        <div class="esp-row">
+          <span class="esp-key">ISCO</span>
+          <span class="esp-val"
+            style="font-size:0.48rem;
+            text-align:right;max-width:55%">
+            ${e.isco}
+          </span>
+        </div>
+      </div>
+      ${isProtected
+        ? '<span class="esp-badge-veda">ðŸš« Protegida</span>'
+        : !vedaOk
+          ? `<span class="esp-badge-veda">ðŸ“… ${vedaVal}</span>`
+          : '<span class="esp-badge-ok">âœ“ Sem veda</span>'}
+    </article>`;
+}
+
+let currentEspFilter = 'all';
+let currentEspRegion = 'pt';
+
+window.filterEspecies = function(filter) {
+  currentEspFilter = filter;
+  if (filter === 'es') currentEspRegion = 'es';
+  else if (filter === 'pt') currentEspRegion = 'pt';
+  renderEspecies();
+  document.querySelectorAll('.esp-filter-btn')
+    .forEach((b, i) => {
+      b.classList.toggle('active',
+        ['all', 'pt', 'es', 'veda'][i] === filter);
+    });
+};
+
+function renderEspecies() {
+  const grid = document.getElementById('especies-grid');
+  if (!grid) return;
+  let list = ESPECIES;
+  if (currentEspFilter === 'veda') {
+    list = ESPECIES.filter(e =>
+      e.veda !== 'NÃ£o' || e.vedaEs !== 'NÃ£o');
+  }
+  grid.innerHTML = list.map(e =>
+    buildEspeciaCard(e, currentEspRegion))
+    .join('');
+}
+renderEspecies();
+
+/* CALCULADORA DE ISCO */
+const ISCO_DB = {
+  robalo: [
+    { n: 'ðŸª± Minhoca de mar', pct: 92,
+      tip: 'Eficaz todo o ano em estuÃ¡rios' },
+    { n: 'ðŸ  Isco vivo (sardinha/biqueirÃ£o)',
+      pct: 88, tip: 'Ideal no verÃ£o e outono' },
+    { n: 'ðŸ¦ CamarÃ£o', pct: 75,
+      tip: 'Excelente em Ã¡gua turva' },
+  ],
+  dourada: [
+    { n: 'ðŸš BerbigÃ£o', pct: 90,
+      tip: 'NÃºmero 1 para dourada' },
+    { n: 'ðŸª± Minhoca de mar', pct: 85,
+      tip: 'Funciona em qualquer Ã©poca' },
+    { n: 'ðŸ¦ CamarÃ£o', pct: 80,
+      tip: 'Perfeito em estuÃ¡rios' },
+  ],
+  sargo: [
+    { n: 'ðŸš BerbigÃ£o', pct: 88,
+      tip: 'O favorito do sargo' },
+    { n: 'ðŸŒ MexilhÃ£o', pct: 82,
+      tip: 'Excelente em rochas' },
+    { n: 'ðŸ¦€ Caranguejo', pct: 75,
+      tip: 'Funciona bem no verÃ£o' },
+  ],
+  corvina: [
+    { n: 'ðŸ¦‘ Lula', pct: 90,
+      tip: 'Melhor isco para corvina grande' },
+    { n: 'ðŸ  Isco vivo', pct: 85,
+      tip: 'Alta eficÃ¡cia ao crepÃºsculo' },
+    { n: 'ðŸ¦ CamarÃ£o', pct: 78,
+      tip: 'Bom em estuÃ¡rios' },
+  ],
+  pargo: [
+    { n: 'ðŸ¦€ Caranguejo', pct: 88,
+      tip: 'IndispensÃ¡vel para pargo' },
+    { n: 'ðŸ¦ CamarÃ£o', pct: 84,
+      tip: 'Eficaz em fundos rochosos' },
+    { n: 'ðŸ¦‘ Lula', pct: 76,
+      tip: 'Para pargo de profundidade' },
+  ],
+  polvo: [
+    { n: 'ðŸ¦ Galera', pct: 90,
+      tip: 'IrresistÃ­vel para polvo' },
+    { n: 'ðŸ¦€ Caranguejo vivo', pct: 85,
+      tip: 'Melhor de Julho a Setembro' },
+    { n: 'ðŸ™ Jig polvo', pct: 78,
+      tip: 'Para pescar de barco' },
+  ],
+  cherne: [
+    { n: 'ðŸ¦‘ Lula/Pota', pct: 88,
+      tip: 'Essencial para cherne' },
+    { n: 'ðŸ  Isco vivo', pct: 84,
+      tip: 'Para profundidades >50m' },
+    { n: 'ðŸ™ Jig profundo', pct: 75,
+      tip: 'Pesca vertical de barco' },
+  ],
+  linguado: [
+    { n: 'ðŸª± Minhoca', pct: 90,
+      tip: 'O clÃ¡ssico para linguado' },
+    { n: 'ðŸ¦ CamarÃ£o', pct: 85,
+      tip: 'Funciona muito bem Ã  noite' },
+    { n: 'ðŸª± Minhoca de mar', pct: 80,
+      tip: 'Eficaz em fundos arenosos' },
+  ],
+};
+
+window.calcIsco = function() {
+  const regiao = document.getElementById('isco-regiao')?.value;
+  const especie = document.getElementById('isco-especie')?.value;
+  const epoca = document.getElementById('isco-epoca')?.value;
+  const result = document.getElementById('isco-result');
+  const items = document.getElementById('isco-items');
+  if (!regiao || !especie || !epoca) {
+    if (result) result.classList.remove('show');
+    const hint = document.getElementById('isco-hint');
+    if (hint) hint.style.display = 'block';
+    return;
+  }
+  const hint = document.getElementById('isco-hint');
+  if (hint) hint.style.display = 'none';
+  const iscas = ISCO_DB[especie] || [];
+  if (!items || !result) return;
+  items.innerHTML = iscas.map((isco, i) => `
+    <div class="isco-item">
+      <div class="isco-rank">${i + 1}</div>
+      <div class="isco-info">
+        <div class="isco-name">${isco.n}</div>
+        <div class="isco-tip">${isco.tip}</div>
+      </div>
+      <div class="isco-pct-wrap">
+        <div class="isco-pct-num">
+          ${isco.pct}%
+        </div>
+        <div class="isco-pct-bar">
+          <div class="isco-pct-fill"
+            style="width:${isco.pct}%">
+          </div>
+        </div>
+      </div>
+    </div>
+  `).join('');
+  result.classList.add('show');
+};
+
+/* FIX 3 â€” Calculadora isco auto-avanÃ§a campos */
+document.querySelectorAll('.isco-select')
+  .forEach((sel, i, all) => {
+    sel.addEventListener('focus', function() {
+      this.style.borderColor = 'var(--cyan)';
+    });
+    sel.addEventListener('blur', function() {
+      this.style.borderColor = '';
+    });
+    sel.addEventListener('change', function() {
+      calcIsco();
+      const next = all[i + 1];
+      if (next && !next.value) {
+        setTimeout(() => next.focus(), 200);
+      }
+    });
+  });
+
+/* FIX 4 â€” Mapa 3D fallback se nÃ£o carregar */
+(function mapaFallback() {
+  const mapEl = document.getElementById('mapbox-map');
+  if (!mapEl) return;
+  setTimeout(() => {
+    if (mapEl.children.length === 0) {
+      mapEl.innerHTML = `
+        <div style="height:100%;display:flex;
+          flex-direction:column;align-items:center;
+          justify-content:center;gap:1rem;
+          background:var(--bg3);
+          font-family:var(--font-m);
+          font-size:0.6rem;letter-spacing:0.12em;
+          color:var(--hint);text-transform:uppercase">
+          <span style="font-size:2rem">ðŸ—ºï¸</span>
+          <span>Mapa disponÃ­vel na app</span>
+          <a href="#waitlist" class="btn-main"
+            style="margin-top:0.5rem">
+            Early Access
+          </a>
+        </div>`;
+    }
+  }, 5000);
+})();
+
+/* FIX 5 â€” Filtros espÃ©cies com counter */
+const originalFilterEspecies = window.filterEspecies;
+window.filterEspecies = function(filter) {
+  originalFilterEspecies(filter);
+  setTimeout(() => {
+    const cards = document.querySelectorAll(
+      '#especies-grid .esp-card');
+    const counter = document.getElementById(
+      'especies-counter');
+    if (counter) {
+      counter.textContent = cards.length +
+        ' espÃ©cies';
+    }
+  }, 100);
+};
+setTimeout(() => {
+  const cards = document.querySelectorAll(
+    '#especies-grid .esp-card');
+  const counter = document.getElementById('especies-counter');
+  if (counter) {
+    counter.textContent = cards.length + ' espÃ©cies';
+  }
+}, 250);
+
+/* FIX 6 â€” Contadores animados verificaÃ§Ã£o */
+(function checkCounters() {
+  const ids = ['c1','c2','c3'];
+  ids.forEach(id => {
+    const el = document.getElementById(id);
+    if (el && el.textContent === '0') {
+      console.warn('Counter ' + id +
+        ' nÃ£o animou â€” verificar IO');
+    }
+  });
+  setTimeout(checkCounters, 3000);
+})();
+
+/* FIX 7 â€” Slider OrÃ¡culo com cor dinÃ¢mica */
+(function sliderColor() {
+  const range = document.getElementById(
+    'demo-orac-range');
+  if (!range) return;
+
+  function updateSliderColor() {
+    const val = parseInt(range.value);
+    const col = val < 40 ? 'var(--red)' :
+                val < 70 ? 'var(--amber)' :
+                val < 88 ? 'var(--cyan)' :
+                'var(--green)';
+    range.style.accentColor = col;
+
+    // Label em tempo real
+    let label = document.getElementById(
+      'demo-orac-live-val');
+    if (!label) {
+      label = document.createElement('div');
+      label.id = 'demo-orac-live-val';
+      label.style.cssText = `
+        font-family:var(--font-h);
+        font-size:0.75rem;
+        font-weight:700;
+        text-align:center;
+        margin-top:0.5rem;
+        transition:color 0.3s;
+        letter-spacing:0.1em;
+      `;
+      range.parentElement.appendChild(label);
+    }
+    label.textContent = val + '/100';
+    label.style.color = col;
+  }
+
+  range.addEventListener('input', updateSliderColor);
+  updateSliderColor();
+})();
+
+/* FIX 8 â€” Mobile nav responsivo */
+(function mobileNav() {
+  const nav = document.getElementById('nav');
+  const links = nav?.querySelector('.nav-links');
+  if (!nav || !links) return;
+
+  // Hamburger button
+  const btn = document.createElement('button');
+  btn.innerHTML = 'â˜°';
+  btn.style.cssText = `
+    display:none;
+    background:none;
+    border:1px solid var(--border2);
+    color:var(--cyan);
+    font-size:1.2rem;
+    padding:0.3rem 0.7rem;
+    cursor:pointer;
+    border-radius:3px;
+  `;
+  btn.setAttribute('aria-label','Menu');
+  nav.appendChild(btn);
+
+  const style = document.createElement('style');
+  style.textContent = `
+    @media(max-width:900px){
+      #nav .nav-links {
+        display:none!important;
+        flex-direction:column;
+        position:absolute;
+        top:62px;left:0;right:0;
+        background:rgba(0,8,20,0.97);
+        border-bottom:1px solid var(--border);
+        padding:1rem;
+        gap:1rem;
+        z-index:999;
+      }
+      #nav .nav-links.open {
+        display:flex!important;
+      }
+      #nav button[aria-label="Menu"] {
+        display:block!important;
+      }
+    }
+  `;
+  document.head.appendChild(style);
+
+  btn.addEventListener('click', () => {
+    links.classList.toggle('open');
+    btn.innerHTML = links.classList
+      .contains('open') ? 'âœ•' : 'â˜°';
+  });
+
+  // Fecha ao clicar num link
+  links.querySelectorAll('a').forEach(a => {
+    a.addEventListener('click', () => {
+      links.classList.remove('open');
+      btn.innerHTML = 'â˜°';
+    });
+  });
+})();
+
+/* LANG SWITCHER */
+document.querySelectorAll('.foot-lang').forEach(b => {
+  b.addEventListener('click', () => {
+    document.querySelectorAll('.foot-lang').forEach(x => x.classList.remove('active'));
+    b.classList.add('active');
+  });
+});
+</script>
+</body>
+</html>
+

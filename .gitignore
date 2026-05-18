@@ -25,6 +25,10 @@ android/.gradle/
 *.jks
 androidkey.properties.txt
 
+# Google OAuth client secrets (NEVER commit)
+android/app/google-services.json/
+client_secret*.json
+
 # iOS
 ios/Pods/
 
