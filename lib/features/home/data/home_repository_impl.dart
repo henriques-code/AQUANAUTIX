@@ -1,3 +1,5 @@
+import 'package:supabase_flutter/supabase_flutter.dart';
+
 import '../domain/entities/community_activity.dart';
 import '../domain/entities/featured_spot.dart';
 import '../domain/entities/hourly_condition.dart';
@@ -14,7 +16,7 @@ class HomeRepositoryImpl implements HomeRepository {
     await Future<void>.delayed(const Duration(milliseconds: 380));
     final now = DateTime.now();
     return HomeDashboardData(
-      userDisplayName: 'Pescador',
+      userDisplayName: _getUserDisplayName(),
       weather: const WeatherData(
         location: 'Cascais, Portugal',
         temperature: 18,
@@ -73,5 +75,25 @@ class HomeRepositoryImpl implements HomeRepository {
         ),
       ],
     );
+  }
+
+  String _getUserDisplayName() {
+    final user = Supabase.instance.client.auth.currentUser;
+    if (user == null) return 'Pescador';
+
+    final fullName = user.userMetadata?['full_name'] as String?;
+    if (fullName != null && fullName.isNotEmpty) {
+      return fullName.trim().split(RegExp(r'\s+')).first;
+    }
+
+    final name = user.userMetadata?['name'] as String?;
+    if (name != null && name.isNotEmpty) {
+      return name.trim().split(RegExp(r'\s+')).first;
+    }
+
+    final email = user.email ?? '';
+    if (email.isNotEmpty) return email.split('@').first;
+
+    return 'Pescador';
   }
 }
