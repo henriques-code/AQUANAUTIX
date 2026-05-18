@@ -1,6 +1,6 @@
 # AQUANAUTIX — Central de contexto
 
-**Última revisão estrutural:** 15 Mai 2026 — sessão Google Sign-In + applicationId.
+**Última revisão estrutural:** 18 Mai 2026 — sessão Home: solunar badge, pressão, direcção vento, nome utilizador.
 
 ## Estrutura do repositório (mono-repo)
 
@@ -44,10 +44,22 @@ AQUANAUTIX/
 ## Estado Flutter
 
 - **`lib/main.dart` / `app.dart`:** bootstrap Supabase, RevenueCat, analytics, tema, `flutter_localizations` e locale derivado de GPS (PT/ES).
-- **Ecrãs:** `home` (tabs), `oraculo` (COSTA/RIO, índice, mini-cards, **pesquisa de local Nominatim** para planeamento além do GPS, cartão isco/cana/técnica), `mapa`, `vision`, `logbook`, `perfil`, `paywall`, `splash`, fluxos login/password.
-- **`lib/core`:** `OracleDataService` + `lib/core/tides/` (Open‑Meteo, Nominatim search/reverse, cache), `lib/core/l10n/`, espécies/compliance, vision, estado (contexto pesca, subscrição, `app_locale_store`), comunidade (repo/store).
+- **Ecrãs:** `home` (tabs; WeatherCard com solunar badge, saudação personalizada com nome Supabase), `oraculo` (COSTA/RIO, índice, mini-cards, **pesquisa de local Nominatim** para planeamento além do GPS, cartão isco/cana/técnica), `mapa`, `vision`, `logbook`, `perfil`, `paywall`, `splash`, fluxos login/password.
+- **`lib/core`:** `OracleDataService` + `lib/core/tides/` (Open‑Meteo, Nominatim search/reverse, cache), `lib/core/l10n/` (AqxL10n completo — PT/ES — cobre Oráculo, Home, Mapa), espécies/compliance, vision, estado (contexto pesca, subscrição, `app_locale_store`), comunidade (repo/store).
 - Design system Midnight Deep Sea (`screens/_shared.dart`).
+- **`lib/features/home/`:** arquitectura feature-first (data/domain/presentation); `WeatherData` com `solunarScore`; `HomeRepositoryImpl` usa `moonFishingFactor` + nome real do utilizador via Supabase metadata.
 - Pendente: monetização RC estável em produção, gates PRO/Elite completos; extender i18n a ecrãs fora de Oráculo/Home se o produto o exigir.
+
+### Sessão 18 Mai 2026
+
+**Home — WeatherCard + Solunar (`lib/features/home/`)**
+- `WeatherData` — novo campo `solunarScore: int` (default 0)
+- `HomeRepositoryImpl._getUserDisplayName()` — lê primeiro nome do utilizador a partir de metadados Supabase: `full_name` → `name` → `display_name` → email prefix → fallback `'Pescador'`
+- `HomeRepositoryImpl.loadDashboard()` — `solunarScore` calculado em tempo real via `moonFishingFactor(now)` (factor 0–1 × 100)
+- `WeatherCard` — recebe `AqxL10n t`; nova secção `_SolunarBar` abaixo das stats:
+  - Barra `LinearProgressIndicator` com cor dinâmica: âmbar ≥75, ciano ≥50, ciano atenuado abaixo
+  - Score numérico (Orbitron 13) + etiqueta de qualidade (EXCELENTE / BOM / MODERADO / FRACO)
+- `AqxL10n` — strings novas: `homeStatSolunar`, `scoreLabel(int)`, `homeGreetingPersonalized(hour, name)`, `pressureStable/Variable/StableShort/VariableShort`, tabs `tabHome`, `homeSectionConditions/Spots/Community`, `homeVerTodas/Mapa`, `homeLoadError/Retry`, `homeStatWind/Waves/Tide/Moon`
 
 ### Sessão 15 Mai 2026
 
