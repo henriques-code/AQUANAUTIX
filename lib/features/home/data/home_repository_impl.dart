@@ -82,13 +82,18 @@ class HomeRepositoryImpl implements HomeRepository {
     if (user == null) return 'Pescador';
 
     final fullName = user.userMetadata?['full_name'] as String?;
-    if (fullName != null && fullName.isNotEmpty) {
+    if (fullName != null && fullName.trim().isNotEmpty) {
       return fullName.trim().split(RegExp(r'\s+')).first;
     }
 
     final name = user.userMetadata?['name'] as String?;
-    if (name != null && name.isNotEmpty) {
+    if (name != null && name.trim().isNotEmpty) {
       return name.trim().split(RegExp(r'\s+')).first;
+    }
+
+    final displayName = user.userMetadata?['display_name'] as String?;
+    if (displayName != null && displayName.trim().isNotEmpty) {
+      return displayName.trim().split(RegExp(r'\s+')).first;
     }
 
     final email = user.email ?? '';

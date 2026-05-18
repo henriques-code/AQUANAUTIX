@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -37,11 +39,21 @@ class _InicioDashboardScreenState extends State<InicioDashboardScreen> {
   bool _loading = true;
   String? _error;
   HomeDashboardData? _data;
+  StreamSubscription<AuthState>? _authSub;
 
   @override
   void initState() {
     super.initState();
     _load();
+    _authSub = Supabase.instance.client.auth.onAuthStateChange.listen((_) {
+      if (mounted) _load();
+    });
+  }
+
+  @override
+  void dispose() {
+    _authSub?.cancel();
+    super.dispose();
   }
 
   Future<void> _load() async {
@@ -52,8 +64,9 @@ class _InicioDashboardScreenState extends State<InicioDashboardScreen> {
     try {
       final d = await _repo.loadDashboard();
       if (!mounted) return;
+      final displayName = _resolveUserDisplay(d.userDisplayName);
       setState(() {
-        _data = d.copyWithUser(_resolveUserDisplay(d.userDisplayName));
+        _data = d.copyWithUser(displayName);
         _loading = false;
       });
     } catch (e) {
@@ -70,7 +83,9 @@ class _InicioDashboardScreenState extends State<InicioDashboardScreen> {
     try {
       final m = Supabase.instance.client.auth.currentUser?.userMetadata;
       final name = m?['full_name'] as String? ?? m?['name'] as String?;
-      if (name != null && name.trim().isNotEmpty) return name.trim();
+      if (name != null && name.trim().isNotEmpty) {
+        return name.trim().split(RegExp(r'\s+')).first;
+      }
       final email = Supabase.instance.client.auth.currentUser?.email;
       if (email != null && email.contains('@')) {
         return email.split('@').first;
