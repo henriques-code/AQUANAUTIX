@@ -473,10 +473,14 @@ class _LoginModuleScreenState extends State<LoginModuleScreen> {
       }
     } on AuthException catch (e) {
       debugPrint('[AUTH] AuthException: ${e.message} | statusCode: ${e.statusCode}');
-      _showSnack(_translateAuthError(e.message));
+      if (mounted) setState(() => _loading = false);
+      await _showAuthError(_translateAuthError(e.message));
+      return;
     } catch (e) {
       debugPrint('[AUTH] Unexpected error: $e');
-      _showSnack('Erro inesperado: $e');
+      if (mounted) setState(() => _loading = false);
+      await _showAuthError('Erro inesperado: $e');
+      return;
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -571,6 +575,28 @@ class _LoginModuleScreenState extends State<LoginModuleScreen> {
     } finally {
       if (mounted) setState(() => _loading = false);
     }
+  }
+
+  Future<void> _showAuthError(String msg) async {
+    if (!mounted) return;
+    await showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFF071428),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text(
+          'Erro de autenticação',
+          style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700),
+        ),
+        content: Text(msg, style: const TextStyle(color: Color(0xFF8AADBE), fontSize: 14)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('OK', style: TextStyle(color: Color(0xFF00F5FF), fontWeight: FontWeight.w700)),
+          ),
+        ],
+      ),
+    );
   }
 
   String _translateAuthError(String supabaseMsg) {
