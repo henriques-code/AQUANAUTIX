@@ -13,6 +13,37 @@ class WeatherCard extends StatelessWidget {
   final WeatherData weather;
   final AqxL10n t;
 
+  static String _solunarRating(int score) {
+    if (score >= 70) return 'Major';
+    if (score >= 40) return 'Minor';
+    return 'Inativo';
+  }
+
+  static Widget _buildSolunarBadge(String rating) {
+    final color = rating == 'Major'
+        ? const Color(0xFF39FF14)
+        : rating == 'Minor'
+            ? const Color(0xFFF3C64D)
+            : Colors.white38;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: color.withValues(alpha: 0.5)),
+      ),
+      child: Text(
+        '◉ SOLUNAR $rating',
+        style: TextStyle(
+          color: color,
+          fontSize: 10,
+          fontWeight: FontWeight.bold,
+          letterSpacing: 0.5,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return AquaCard(
@@ -74,11 +105,17 @@ class WeatherCard extends StatelessWidget {
                 ),
               ),
               Expanded(
-                child: _StatCol(
-                  label: t.homeStatMoon,
-                  icon: Icons.nightlight_round,
-                  value: '${weather.moonIcon} ${weather.moonPhase}',
-                  rawIcon: false,
+                child: Column(
+                  children: [
+                    _StatCol(
+                      label: t.homeStatMoon,
+                      icon: Icons.nightlight_round,
+                      value: '${weather.moonIcon} ${weather.moonPhase}',
+                      rawIcon: false,
+                    ),
+                    const SizedBox(height: 6),
+                    _buildSolunarBadge(_solunarRating(weather.solunarScore)),
+                  ],
                 ),
               ),
             ],
