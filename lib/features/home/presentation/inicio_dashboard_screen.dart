@@ -184,10 +184,24 @@ class _InicioDashboardScreenState extends State<InicioDashboardScreen> {
             const SizedBox(height: AppSpacing.md),
             HomeSectionHeader(title: t.homeSectionCommunity),
             const SizedBox(height: AppSpacing.sm),
-            ...data.communityActivities.map((a) => Padding(
-                  padding: const EdgeInsets.only(bottom: AppSpacing.sm),
-                  child: CommunityActivityCard(activity: a),
-                )),
+            if (data.communityActivities.isEmpty)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
+                child: Center(
+                  child: Text(
+                    t.es
+                        ? 'Sé el primero en compartir una captura'
+                        : 'Sê o primeiro a partilhar uma captura',
+                    textAlign: TextAlign.center,
+                    style: AppTextStyles.ibmSans(14, color: AppColors.textSecondary),
+                  ),
+                ),
+              )
+            else
+              ...data.communityActivities.map((a) => Padding(
+                    padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+                    child: CommunityActivityCard(activity: a),
+                  )),
           ],
         ),
       ),

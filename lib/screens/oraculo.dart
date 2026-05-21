@@ -101,6 +101,12 @@ const _costa = _ModoData(
       sub: 'Estável →',
     ),
     _MetricTile(
+      icon: Icons.air_rounded,
+      label: 'VENTO',
+      value: '14 km/h',
+      sub: 'NW',
+    ),
+    _MetricTile(
       icon: Icons.speed_rounded,
       label: 'PRESSÃO',
       value: '1010 hPa',
@@ -134,6 +140,12 @@ const _rio = _ModoData(
       icon: Icons.thermostat_rounded,
       label: 'TEMP. ÁGUA',
       value: '14.0 °C',
+    ),
+    _MetricTile(
+      icon: Icons.speed_rounded,
+      label: 'PRESSÃO',
+      value: '1013 hPa',
+      sub: '↗ Estável',
     ),
     _MetricTile(icon: Icons.visibility_rounded, label: 'VISIB.', value: 'Boa'),
   ],
@@ -572,26 +584,33 @@ class _OraculoScreenState extends State<OraculoScreen>
 
           const SizedBox(height: 8),
 
-          // ── 4 mini-cards ───────────────────────────────
+          // ── Mini-cards métricas (scroll horizontal) ────
           FadeTransition(
             opacity: _fade,
-            child: Row(
-              children: [
-                for (var i = 0; i < d.cards.length; i++) ...[
-                  if (i > 0) const SizedBox(width: 6),
-                  _metricTile(d.cards[i])
-                      .animate(key: ValueKey('${d.score}_${d.cards[i].value}_$i'))
-                      .fadeIn(
-                        delay: Duration(milliseconds: 140 + i * 55),
-                        duration: 400.ms,
-                      )
-                      .slideY(
-                        begin: 0.07,
-                        duration: 400.ms,
-                        curve: Curves.easeOutCubic,
-                      ),
-                ],
-              ],
+            child: SizedBox(
+              height: 104,
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                physics: const BouncingScrollPhysics(),
+                child: Row(
+                  children: [
+                    for (var i = 0; i < d.cards.length; i++) ...[
+                      if (i > 0) const SizedBox(width: 6),
+                      _metricTile(d.cards[i], width: 76)
+                          .animate(key: ValueKey('${d.score}_${d.cards[i].value}_$i'))
+                          .fadeIn(
+                            delay: Duration(milliseconds: 140 + i * 55),
+                            duration: 400.ms,
+                          )
+                          .slideY(
+                            begin: 0.07,
+                            duration: 400.ms,
+                            curve: Curves.easeOutCubic,
+                          ),
+                    ],
+                  ],
+                ),
+              ),
             ),
           ),
 
@@ -1098,6 +1117,12 @@ class _OraculoScreenState extends State<OraculoScreen>
           sub: b.tempTrendPt,
         ),
         _MetricTile(
+          icon: Icons.speed_rounded,
+          label: t.metricPressure,
+          value: '—',
+          sub: '',
+        ),
+        _MetricTile(
           icon: Icons.visibility_rounded,
           label: t.metricVis,
           value: b.visibValue,
@@ -1153,6 +1178,12 @@ class _OraculoScreenState extends State<OraculoScreen>
           label: t.metricWaterTemp,
           value: tempStr,
           sub: b.tempTrendPt,
+        ),
+        _MetricTile(
+          icon: Icons.air_rounded,
+          label: t.es ? 'VIENTO' : 'VENTO',
+          value: '—',
+          sub: '—',
         ),
         _MetricTile(
           icon: Icons.speed_rounded,
@@ -1554,53 +1585,55 @@ class _OraculoScreenState extends State<OraculoScreen>
       );
 
   // ── Mini-cards métricas (ícone + rótulo + valor + subtítulo opcional) ──
-  Widget _metricTile(_MetricTile m) => Expanded(
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 7, horizontal: 2),
-          decoration: BoxDecoration(
-            color: kCard,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: kCyan.withValues(alpha: 0.1)),
+  Widget _metricTile(_MetricTile m, {double? width}) {
+    final card = Container(
+      width: width,
+      padding: const EdgeInsets.symmetric(vertical: 7, horizontal: 2),
+      decoration: BoxDecoration(
+        color: kCard,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: kCyan.withValues(alpha: 0.1)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(m.icon, color: kCyan, size: 19),
+          const SizedBox(height: 4),
+          Text(
+            m.label,
+            style: mono(8.4, c: kCyan, ls: 0.6),
+            textAlign: TextAlign.center,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(m.icon, color: kCyan, size: 19),
-              const SizedBox(height: 4),
-              Text(
-                m.label,
-                style: mono(8.4, c: kCyan, ls: 0.6),
+          const SizedBox(height: 3),
+          Text(
+            m.value,
+            style: orb(12, c: Colors.white, fw: FontWeight.w700, ls: 0),
+            textAlign: TextAlign.center,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
+          const SizedBox(height: 3),
+          SizedBox(
+            height: 30,
+            width: double.infinity,
+            child: Align(
+              alignment: Alignment.topCenter,
+              child: Text(
+                m.sub,
+                style: ibm(10.5, c: kCyan),
                 textAlign: TextAlign.center,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
-              const SizedBox(height: 3),
-              Text(
-                m.value,
-                style: orb(12, c: Colors.white, fw: FontWeight.w700, ls: 0),
-                textAlign: TextAlign.center,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-              const SizedBox(height: 3),
-              SizedBox(
-                height: 30,
-                width: double.infinity,
-                child: Align(
-                  alignment: Alignment.topCenter,
-                  child: Text(
-                    m.sub,
-                    style: ibm(10.5, c: kCyan),
-                    textAlign: TextAlign.center,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-              ),
-            ],
+            ),
           ),
-        ),
-      );
+        ],
+      ),
+    );
+    return width != null ? card : Expanded(child: card);
+  }
 
   // ── Dia card ─────────────────────────────────────────────
   Widget _diaCard(_Dia d, bool active) => Expanded(

@@ -1,7 +1,6 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/tides/moon_phase.dart';
-import '../domain/entities/community_activity.dart';
 import '../domain/entities/featured_spot.dart';
 import '../domain/entities/hourly_condition.dart';
 import '../domain/entities/weather_data.dart';
@@ -42,13 +41,13 @@ class HomeRepositoryImpl implements HomeRepository {
         FeaturedSpot(
           id: '1',
           name: 'Cabo da Roca',
-          imageUrl: 'https://picsum.photos/seed/aqxroca/400/260',
+          imageUrl: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400',
           quality: SpotQuality.excelente,
         ),
         FeaturedSpot(
           id: '2',
           name: 'Peniche',
-          imageUrl: 'https://picsum.photos/seed/aqxpen/400/260',
+          imageUrl: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=400',
           quality: SpotQuality.muitoBom,
         ),
         FeaturedSpot(
@@ -58,24 +57,7 @@ class HomeRepositoryImpl implements HomeRepository {
           quality: SpotQuality.bom,
         ),
       ],
-      communityActivities: [
-        CommunityActivity(
-          userId: 'u1',
-          username: 'BrunoPescas',
-          avatarUrl: 'https://picsum.photos/seed/aqxav1/96/96',
-          activityText: 'apanhou uma Dourada',
-          catchImageUrl: 'https://picsum.photos/seed/aqxcatch1/120/96',
-          timestamp: now.subtract(const Duration(hours: 2)),
-        ),
-        CommunityActivity(
-          userId: 'u2',
-          username: 'MariaCosta',
-          avatarUrl: 'https://picsum.photos/seed/aqxav2/96/96',
-          activityText: 'registou um Robalo',
-          catchImageUrl: 'https://picsum.photos/seed/aqxcatch2/120/96',
-          timestamp: now.subtract(const Duration(hours: 6)),
-        ),
-      ],
+      communityActivities: const [],
     );
   }
 
