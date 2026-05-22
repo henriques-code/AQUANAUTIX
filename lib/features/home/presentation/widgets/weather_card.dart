@@ -46,11 +46,23 @@ class WeatherCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AquaCard(
-      borderRadius: 16,
-      borderAlpha: 0.3,
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 14),
-      child: Column(
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFF2563EB), width: 1.5),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF2563EB).withValues(alpha: 0.3),
+            blurRadius: 20,
+            spreadRadius: 2,
+          ),
+        ],
+      ),
+      child: AquaCard(
+        borderRadius: 16,
+        borderAlpha: 0.0,
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 14),
+        child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
@@ -93,38 +105,62 @@ class WeatherCard extends StatelessWidget {
           const SizedBox(height: 12),
           Divider(height: 1, color: AppColors.accent.withValues(alpha: 0.15)),
           const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(child: _StatCol(label: t.homeStatWind, icon: Icons.air_rounded, value: '${weather.windSpeed.round()} km/h')),
-              Expanded(child: _StatCol(label: t.homeStatWaves, icon: Icons.waves_rounded, value: '${weather.waveHeight.toStringAsFixed(1)} m')),
-              Expanded(
-                child: _StatCol(
-                  label: t.homeStatTide,
-                  icon: weather.tideRising ? Icons.trending_up_rounded : Icons.trending_down_rounded,
-                  value: '${weather.tideHeight.toStringAsFixed(1)} m',
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [
+                SizedBox(
+                  width: 80,
+                  child: _StatCol(label: t.homeStatWind, icon: Icons.air_rounded, value: '${weather.windSpeed.round()} km/h ${weather.windDir ?? ''}'.trim()),
                 ),
-              ),
-              Expanded(
-                child: Column(
-                  children: [
-                    _StatCol(
-                      label: t.homeStatMoon,
-                      icon: Icons.nightlight_round,
-                      value: '${weather.moonIcon} ${weather.moonPhase}',
-                      rawIcon: false,
-                    ),
-                    const SizedBox(height: 6),
-                    _buildSolunarBadge(_solunarRating(weather.solunarScore)),
-                  ],
+                const SizedBox(width: 8),
+                SizedBox(
+                  width: 72,
+                  child: _StatCol(label: t.homeStatWaves, icon: Icons.waves_rounded, value: '${weather.waveHeight.toStringAsFixed(1)} m'),
                 ),
-              ),
-            ],
+                const SizedBox(width: 8),
+                SizedBox(
+                  width: 72,
+                  child: _StatCol(
+                    label: t.homeStatTide,
+                    icon: weather.tideRising ? Icons.trending_up_rounded : Icons.trending_down_rounded,
+                    value: '${weather.tideHeight.toStringAsFixed(1)} m',
+                  ),
+                ),
+                const SizedBox(width: 8),
+                SizedBox(
+                  width: 96,
+                  child: Column(
+                    children: [
+                      _StatCol(
+                        label: t.homeStatMoon,
+                        icon: Icons.nightlight_round,
+                        value: '${weather.moonIcon} ${weather.moonPhase}',
+                        rawIcon: false,
+                      ),
+                      const SizedBox(height: 6),
+                      _buildSolunarBadge(_solunarRating(weather.solunarScore)),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                SizedBox(
+                  width: 76,
+                  child: _StatCol(
+                    label: 'Pressão',
+                    icon: Icons.speed_rounded,
+                    value: '${weather.pressure ?? 1021} mb',
+                  ),
+                ),
+              ],
+            ),
           ),
           const SizedBox(height: AppSpacing.sm),
           Divider(height: 1, color: AppColors.accent.withValues(alpha: 0.10)),
           const SizedBox(height: 10),
           _SolunarBar(score: weather.solunarScore, label: t.homeStatSolunar, qualityLabel: t.scoreLabel(weather.solunarScore)),
         ],
+      ),
       ),
     );
   }

@@ -15,10 +15,7 @@ class FeaturedSpotCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final qc = qualityColor(spot.quality);
     final nameColor = spot.quality == SpotQuality.muitoBom ? AppColors.accent : AppColors.textPrimary;
-    return SizedBox(
-      width: 200,
-      height: 130,
-      child: ClipRRect(
+    return ClipRRect(
         borderRadius: BorderRadius.circular(12),
         child: Stack(
           fit: StackFit.expand,
@@ -90,7 +87,7 @@ class FeaturedSpotCard extends StatelessWidget {
             ),
           ],
         ),
-      ),
-    );
+      );
   }
 }
+

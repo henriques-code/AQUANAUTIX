@@ -1,6 +1,7 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/tides/moon_phase.dart';
+import '../domain/entities/community_activity.dart';
 import '../domain/entities/featured_spot.dart';
 import '../domain/entities/hourly_condition.dart';
 import '../domain/entities/weather_data.dart';
@@ -23,6 +24,8 @@ class HomeRepositoryImpl implements HomeRepository {
         condition: 'Céu limpo',
         conditionIcon: '☀️',
         windSpeed: 14,
+        windDir: 'NW',
+        pressure: 1021,
         waveHeight: 0.6,
         tideHeight: 1.2,
         tideRising: true,
@@ -53,11 +56,20 @@ class HomeRepositoryImpl implements HomeRepository {
         FeaturedSpot(
           id: '3',
           name: 'Sesimbra',
-          imageUrl: 'https://picsum.photos/seed/aqxses/400/260',
+          imageUrl: 'https://images.unsplash.com/photo-1505118380757-91f5f5632de0?w=400&q=80',
           quality: SpotQuality.bom,
         ),
       ],
-      communityActivities: const [],
+      communityActivities: [
+        CommunityActivity(
+          userId: 'brunopescas',
+          username: 'BrunoPescas',
+          avatarUrl: 'https://images.unsplash.com/photo-1568602471122-7832951cc4c5?w=96&q=80',
+          activityText: 'Apanhou uma Dourada de 2.4 kg em Sesimbra',
+          catchImageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/Sparus_aurata.jpg/120px-Sparus_aurata.jpg',
+          timestamp: DateTime.now().subtract(const Duration(hours: 2)),
+        ),
+      ],
     );
   }
 

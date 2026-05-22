@@ -172,14 +172,16 @@ class _InicioDashboardScreenState extends State<InicioDashboardScreen> {
             const SizedBox(height: AppSpacing.md),
             HomeSectionHeader(title: t.homeSectionSpots, actionLabel: t.homeVerMapa, onActionTap: widget.onVerMapa),
             const SizedBox(height: AppSpacing.sm),
-            SizedBox(
-              height: 140,
-              child: ListView.separated(
-                scrollDirection: Axis.horizontal,
-                itemCount: data.featuredSpots.length,
-                separatorBuilder: (_, __) => const SizedBox(width: 10),
-                itemBuilder: (context, i) => FeaturedSpotCard(spot: data.featuredSpots[i], es: t.es),
-              ),
+            GridView.count(
+              crossAxisCount: 3,
+              crossAxisSpacing: 8,
+              mainAxisSpacing: 8,
+              childAspectRatio: 0.75,
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              children: data.featuredSpots
+                  .map((s) => FeaturedSpotCard(spot: s, es: t.es))
+                  .toList(),
             ),
             const SizedBox(height: AppSpacing.md),
             HomeSectionHeader(title: t.homeSectionCommunity),
@@ -200,7 +202,27 @@ class _InicioDashboardScreenState extends State<InicioDashboardScreen> {
             else
               ...data.communityActivities.map((a) => Padding(
                     padding: const EdgeInsets.only(bottom: AppSpacing.sm),
-                    child: CommunityActivityCard(activity: a),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        CommunityActivityCard(activity: a),
+                        const SizedBox(height: 6),
+                        Row(
+                          children: [
+                            Icon(Icons.favorite_border, size: 14, color: AppColors.textSecondary),
+                            Text(
+                              ' 24  ',
+                              style: AppTextStyles.ibmSans(11, color: AppColors.textSecondary),
+                            ),
+                            Icon(Icons.chat_bubble_outline, size: 14, color: AppColors.textSecondary),
+                            Text(
+                              ' 5 comentários',
+                              style: AppTextStyles.ibmSans(11, color: AppColors.textSecondary),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                   )),
           ],
         ),

@@ -11,6 +11,8 @@ class WeatherData {
     required this.moonPhase,
     required this.moonIcon,
     this.solunarScore = 0,
+    this.windDir,
+    this.pressure,
   });
 
   final String location;
@@ -24,4 +26,6 @@ class WeatherData {
   final String moonPhase;
   final String moonIcon;
   final int solunarScore;
+  final String? windDir;
+  final int? pressure;
 }
