@@ -59,3 +59,6 @@ Site V2/.vercel/
 
 # Windows
 desktop.ini
+
+# AI session exports (local only)
+context_export.txt
