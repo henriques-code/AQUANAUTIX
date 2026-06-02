@@ -1,6 +1,6 @@
 # AQUANAUTIX — Central de contexto
 
-**Última revisão estrutural:** 18 Mai 2026 — sessão Home: solunar badge, pressão, direcção vento, nome utilizador.
+**Última revisão estrutural:** 2 Jun 2026 — limpeza de segurança, assets, código morto e dependências.
 
 ## Estrutura do repositório (mono-repo)
 
@@ -22,7 +22,7 @@ AQUANAUTIX/
 │   ├── images/               # Marketing, hero, capturas de ecrã
 │   ├── package.json          # Puppeteer local + npm scripts de screenshot
 │   └── tools/                # screenshot.js … screenshot4.js → grava em images/
-├── tools/                    # Raiz: Flutter/env (`flutter_run_with_env.ps1`, …)
+├── tools/                    # Raiz: `run_dev.ps1` (arranque com env), `convert_mockups.py`
 ├── CLAUDE.md                 # Instruções para assistentes IA
 ├── .cursorrules              # Regras do projecto (PT)
 └── AQUANAUTIX_CONTEXT.md     # Este ficheiro
@@ -44,10 +44,11 @@ AQUANAUTIX/
 ## Estado Flutter
 
 - **`lib/main.dart` / `app.dart`:** bootstrap Supabase, RevenueCat, analytics, tema, `flutter_localizations` e locale derivado de GPS (PT/ES).
-- **Ecrãs:** `home` (tabs; WeatherCard com solunar badge, saudação personalizada com nome Supabase), `oraculo` (COSTA/RIO, índice, mini-cards, **pesquisa de local Nominatim** para planeamento além do GPS, cartão isco/cana/técnica), `mapa`, `vision`, `logbook`, `perfil`, `paywall`, `splash`, fluxos login/password.
-- **`lib/core`:** `OracleDataService` + `lib/core/tides/` (Open‑Meteo, Nominatim search/reverse, cache), `lib/core/l10n/` (AqxL10n completo — PT/ES — cobre Oráculo, Home, Mapa), espécies/compliance, vision, estado (contexto pesca, subscrição, `app_locale_store`), comunidade (repo/store).
+- **Navegação:** `AquanautixHome` com **6 tabs** — Início · Oráculo · Mapa · Vision · Log · Perfil (via `HomeTabIndex`).
+- **Ecrãs:** `home` (6 tabs; WeatherCard com solunar badge + direcção vento + pressão, saudação personalizada com nome Supabase, grid 3×spots com imagens reais, comunidade limpa), `oraculo` (COSTA/RIO, índice, mini-cards, **pesquisa de local Nominatim** para planeamento além do GPS, cartão isco/cana/técnica), `mapa`, `vision`, `logbook`, `perfil`, `paywall`, `splash`, fluxos login/password.
+- **`lib/core`:** `OracleDataService` + `lib/core/tides/` (Open‑Meteo, Nominatim search/reverse, cache; portos de referência PT/ES em `tide_reference_ports.dart` para uso futuro), `lib/core/l10n/` (AqxL10n completo — PT/ES — cobre Oráculo, Home, Mapa), espécies/compliance, vision, estado (contexto pesca, subscrição, `app_locale_store`), comunidade (repo/store).
 - Design system Midnight Deep Sea (`screens/_shared.dart`).
-- **`lib/features/home/`:** arquitectura feature-first (data/domain/presentation); `WeatherData` com `solunarScore`; `HomeRepositoryImpl` usa `moonFishingFactor` + nome real do utilizador via Supabase metadata.
+- **`lib/features/home/`:** arquitectura feature-first (data/domain/presentation); `WeatherData` com `solunarScore`, `windDir`, `pressure`; `HomeRepositoryImpl` usa `moonFishingFactor` + nome real do utilizador via Supabase metadata; spots com imagens reais (Unsplash); comunidade real (BrunoPescas com foto real, MariaCosta removida).
 - Pendente: monetização RC estável em produção, gates PRO/Elite completos; extender i18n a ecrãs fora de Oráculo/Home se o produto o exigir.
 
 ### Sessão 18 Mai 2026
@@ -91,25 +92,44 @@ AQUANAUTIX/
 - Supabase Dashboard: Google provider activado com ambos os Client IDs
 
 **Packages adicionados**
-- `google_sign_in: ^6.2.1` (resolvido como 6.3.0)
-- `crypto: ^3.0.3` (resolvido como 3.0.7 — transitivo, mantido)
+- `google_sign_in: ^6.2.1`
 
-**Atenção**
-- `android/app/google-services.json` é uma **pasta vazia** criada por engano — deve ser substituída pelo ficheiro JSON real do Firebase/Google Cloud Console e adicionada ao `.gitignore`
+**Resolvido (2 Jun 2026)**
+- `android/app/google-services.json/` — pasta órfã removida (não era usada; auth via Supabase OAuth)
+- `.gitignore` reforçado: cobre `google-services.json` (ficheiro + pasta) + `GoogleService-Info.plist`
 
 ## Estado Site V2
 
 - Mapa 3D, spots PT/ES, lojas de isco, Oráculo, waitlist (localStorage-first)
 - Pendente: Formspree com endpoint real, restrição de URL do token Mapbox no dashboard
 
+## Sessão 2 Jun 2026 — Limpeza e organização
+
+**Segurança**
+- Pasta órfã `android/app/google-services.json/` removida (conteúdo era `client_id` público, nunca esteve no git)
+- `.gitignore` reforçado para cobrir Firebase + iOS (`GoogleService-Info.plist`)
+
+**Assets**
+- 7 mockups de design movidos de `assets/` → `prototypes/design-mockups/` (com `git mv`, histórico preservado)
+- `assets/videos/login_bg.mp4` removido — duplicado exacto de `assets/video_bg.mp4` (7.5 MB recuperados)
+- `assets/` agora só contém ficheiros usados pela app: `data/`, `icons/`, `onboarding/`, `robalo_scanner.png`, `video_bg.mp4`
+
+**Código morto**
+- `lib/screens/onboarding/slides/vision_scanner_slide.dart` removido (605 linhas, zero imports)
+- `oracle_live_widgets.dart` confirmado como **activo** (glifo de peixe animado no Oráculo)
+- Cluster `tide_reference_ports` / `tide_offset_store` / `tide_location_prefs` **mantido** — dados reais de 18 portos PT/ES para feature futura de calibração de marés
+
+**Dependências**
+- Removidas 6 dependências não usadas: `speech_to_text`, `qr_flutter`, `crypto`, `flutter_local_notifications`, `timezone`, `flutter_timezone`
+- `pubspec.yaml`: 23 → 17 dependências; `pubspec.lock`: menos 15 pacotes transitivos
+
 ## Próximos passos (sugestão)
 
-1. **Google Sign-In** — testar em dispositivo com SHA-1 registado; confirmar login end-to-end
-2. **`google-services.json`** — substituir pasta por ficheiro JSON real; adicionar ao `.gitignore`
-3. **RevenueCat** — configurar produtos PRO/ELITE no dashboard e testar gates
-4. **Onboarding Flutter** — ecrãs de boas-vindas pós-login
-5. Formspree — endpoint `formspree.io/f/…`
-6. Domínio `aquanautix.app`
+1. **RevenueCat** — configurar produtos PRO/ELITE no dashboard e testar gates
+2. **Onboarding Flutter** — ligar `onboarding.dart` ao fluxo de arranque (só na primeira vez)
+3. **Google Sign-In** — testar em dispositivo com SHA-1 registado; confirmar login end-to-end
+4. **Formspree** — endpoint `formspree.io/f/…` no site
+5. **Domínio** `aquanautix.app`
 
 ## Regras de trabalho
 

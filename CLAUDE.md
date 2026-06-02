@@ -143,20 +143,24 @@ vercel --prod
 
 ---
 
-## Estado actual do projecto (Maio 2026)
+## Estado actual do projecto (Jun 2026)
 
 ### App Flutter
 | Área | Estado |
 |---|---|
-| Shell / `home.dart` | ✅ Tabs principais |
-| Oráculo (`oraculo.dart`) | ✅ Índice, COSTA/RIO, métricas, Open‑Meteo, **planeamento por pesquisa de local**, heurísticas isco/cana/técnica, i18n PT/ES por país (GPS) |
-| Mapa (`mapa.dart`) | ✅ `flutter_map` · **COSTA:** ArcGIS World Imagery (satélite) + ArcGIS Roads overlay · **RIO:** OSM topográfico · OpenSeaMap toggle · **pins custom Canvas** por tier · spots PT/ES · lojas ≤5 km · sheet colapsável · FishingModeStore sync com Oráculo · pop-up de spot premium (`_showSpotDetail`) |
+| Shell / `home.dart` | ✅ **6 tabs**: Início · Oráculo · Mapa · Vision · Log · Perfil |
+| Início (`features/home/`) | ✅ WeatherCard (vento+direcção, pressão, solunar), spots reais (Unsplash), grid 3 colunas, comunidade real |
+| Oráculo (`oraculo.dart`) | ✅ Índice, COSTA/RIO, Open‑Meteo, **pesquisa de local Nominatim**, heurísticas isco/cana/técnica, i18n PT/ES |
+| Mapa (`mapa.dart`) | ✅ `flutter_map` · COSTA: ArcGIS satélite · RIO: OSM · OpenSeaMap toggle · pins custom Canvas · spots PT/ES · lojas ≤5 km · sheet colapsável |
 | Vision (`vision.dart`) | ✅ Scanner + compliance espécies |
 | Logbook (`logbook.dart`) | ✅ Registo de capturas |
 | Perfil / paywall | 🔄 RevenueCat a consolidar |
-| Auth (Supabase) | ✅ Login, recuperação de password |
-| Splash | ✅ Entrada |
+| Auth (Supabase) | ✅ Login, Google Sign-In, recuperação de password |
+| Splash | ✅ Vídeo de fundo + barra de progresso |
 | Comunidade (core) | 🔄 Repositório/store preparados |
+
+### Dependências actuais (17)
+`google_fonts` · `http` · `image_picker` · `geolocator` · `shared_preferences` · `url_launcher` · `supabase_flutter` · `package_info_plus` · `purchases_flutter` · `mapbox_maps_flutter` · `flutter_map` · `latlong2` · `flutter_animate` · `video_player` · `google_sign_in` + `flutter_localizations` + `flutter`
 
 ### Site V2
 | Ficheiro | Estado |
@@ -168,9 +172,9 @@ vercel --prod
 
 ### Pendente prioritário
 1. RevenueCat — configurar produtos PRO/ELITE e gates
-2. Onboarding Flutter — ecrãs de boas-vindas
-3. Testes end-to-end das features core
-4. Domínio `Aquanautix.app`
+2. Onboarding Flutter — ligar `onboarding.dart` ao arranque (só na primeira vez)
+3. Google Sign-In — testar end-to-end em dispositivo com SHA-1 registado
+4. Domínio `aquanautix.app`
 5. Formspree endpoint real na waitlist
 
 ---
