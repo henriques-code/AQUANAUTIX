@@ -127,6 +127,69 @@ class OpenMeteoTidesRepository {
     return out;
   }
 
+  /// Condições actuais pontuais: vento + ondas + código WMO (para Home dashboard).
+  ///
+  /// Faz dois pedidos paralelos com timeout de 8 s cada; falhas individuais
+  /// retornam null nos campos correspondentes — nunca lança excepção.
+  Future<
+      ({
+        double? tempC,
+        double? windSpeedKmh,
+        int? windDirDeg,
+        double? waveHeightM,
+        int? weatherCode,
+      })> fetchCurrentConditions({
+    required double latitude,
+    required double longitude,
+  }) async {
+    final forecastUri = Uri.https(_weatherHost, '/v1/forecast', {
+      'latitude': latitude.toString(),
+      'longitude': longitude.toString(),
+      'current':
+          'temperature_2m,wind_speed_10m,wind_direction_10m,weather_code',
+      'wind_speed_unit': 'kmh',
+    });
+    final marineUri = Uri.https(_marineHost, '/v1/marine', {
+      'latitude': latitude.toString(),
+      'longitude': longitude.toString(),
+      'current': 'wave_height',
+    });
+
+    double? tempC, windSpeedKmh, waveHeightM;
+    int? windDirDeg, weatherCode;
+
+    try {
+      final (wRes, mRes) = await (
+        _client.get(forecastUri).timeout(const Duration(seconds: 8)),
+        _client.get(marineUri).timeout(const Duration(seconds: 8)),
+      ).wait;
+
+      if (wRes.statusCode == 200) {
+        final w = jsonDecode(wRes.body) as Map<String, dynamic>;
+        final c = w['current'] as Map<String, dynamic>?;
+        tempC = (c?['temperature_2m'] as num?)?.toDouble();
+        windSpeedKmh = (c?['wind_speed_10m'] as num?)?.toDouble();
+        windDirDeg = (c?['wind_direction_10m'] as num?)?.toInt();
+        weatherCode = (c?['weather_code'] as num?)?.toInt();
+      }
+      if (mRes.statusCode == 200) {
+        final m = jsonDecode(mRes.body) as Map<String, dynamic>;
+        final c = m['current'] as Map<String, dynamic>?;
+        waveHeightM = (c?['wave_height'] as num?)?.toDouble();
+      }
+    } catch (_) {
+      // best-effort — caller usa fallbacks
+    }
+
+    return (
+      tempC: tempC,
+      windSpeedKmh: windSpeedKmh,
+      windDirDeg: windDirDeg,
+      waveHeightM: waveHeightM,
+      weatherCode: weatherCode,
+    );
+  }
+
   /// Série horária só tempo (interior / rio — sem API marine).
   Future<List<ForecastWeatherHour>> fetchForecastWeatherSeries({
     required double latitude,
