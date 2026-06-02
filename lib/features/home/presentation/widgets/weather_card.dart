@@ -1,4 +1,7 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 
 import '../../../../core/l10n/aqx_l10n.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -100,10 +103,24 @@ class WeatherCard extends StatelessWidget {
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // Vento com bússola
                 SizedBox(
-                  width: 80,
-                  child: _StatCol(label: t.homeStatWind, icon: Icons.air_rounded, value: '${weather.windSpeed.round()} km/h ${weather.windDir ?? ''}'.trim()),
+                  width: 76,
+                  child: Column(
+                    children: [
+                      _StatCol(
+                        label: t.homeStatWind,
+                        icon: Icons.air_rounded,
+                        value: '${weather.windSpeed.round()} km/h',
+                      ),
+                      if (weather.windDir != null) ...[
+                        const SizedBox(height: 4),
+                        _WindCompass(direction: weather.windDir!),
+                      ],
+                    ],
+                  ),
                 ),
                 const SizedBox(width: 8),
                 SizedBox(
@@ -111,12 +128,29 @@ class WeatherCard extends StatelessWidget {
                   child: _StatCol(label: t.homeStatWaves, icon: Icons.waves_rounded, value: '${weather.waveHeight.toStringAsFixed(1)} m'),
                 ),
                 const SizedBox(width: 8),
+                // Maré com tendência
                 SizedBox(
-                  width: 72,
-                  child: _StatCol(
-                    label: t.homeStatTide,
-                    icon: weather.tideRising ? Icons.trending_up_rounded : Icons.trending_down_rounded,
-                    value: '${weather.tideHeight.toStringAsFixed(1)} m',
+                  width: 80,
+                  child: Column(
+                    children: [
+                      _StatCol(
+                        label: t.homeStatTide,
+                        icon: weather.tideRising ? Icons.trending_up_rounded : Icons.trending_down_rounded,
+                        value: '${weather.tideHeight.toStringAsFixed(1)} m',
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        weather.tideRising ? '↑ Enchente' : '↓ Vazante',
+                        style: TextStyle(
+                          fontSize: 9,
+                          color: weather.tideRising
+                              ? const Color(0xFF00F5FF)
+                              : const Color(0xFFF3C64D),
+                          fontWeight: FontWeight.w600,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -130,14 +164,14 @@ class WeatherCard extends StatelessWidget {
                         value: '${weather.moonIcon} ${weather.moonPhase}',
                         rawIcon: false,
                       ),
-                      const SizedBox(height: 6),
+                      const SizedBox(height: 4),
                       _buildSolunarBadge(_solunarRating(weather.solunarScore)),
                     ],
                   ),
                 ),
                 const SizedBox(width: 8),
                 SizedBox(
-                  width: 76,
+                  width: 72,
                   child: _StatCol(
                     label: 'Pressão',
                     icon: Icons.speed_rounded,
@@ -154,7 +188,10 @@ class WeatherCard extends StatelessWidget {
         ],
       ),
       ),
-    );
+    )
+    .animate()
+    .fadeIn(duration: 600.ms, curve: Curves.easeOut)
+    .slideY(begin: 0.05, end: 0, duration: 500.ms, curve: Curves.easeOutCubic);
   }
 }
 
@@ -258,6 +295,52 @@ class _StatCol extends StatelessWidget {
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
           ),
+      ],
+    );
+  }
+}
+
+/// Bússola compacta com seta animada para a direcção do vento.
+class _WindCompass extends StatelessWidget {
+  const _WindCompass({required this.direction});
+  final String direction;
+
+  static double _toRadians(String dir) {
+    const map = {
+      'N': 0.0, 'NNE': 22.5, 'NE': 45.0, 'ENE': 67.5,
+      'E': 90.0, 'ESE': 112.5, 'SE': 135.0, 'SSE': 157.5,
+      'S': 180.0, 'SSW': 202.5, 'SW': 225.0, 'WSW': 247.5,
+      'W': 270.0, 'WNW': 292.5, 'NW': 315.0, 'NNW': 337.5,
+    };
+    final deg = map[dir.toUpperCase()] ?? 0.0;
+    return deg * math.pi / 180;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Transform.rotate(
+          angle: _toRadians(direction),
+          child: const Icon(
+            Icons.navigation_rounded,
+            size: 12,
+            color: Color(0xFF00F5FF),
+          ),
+        )
+        .animate(onPlay: (c) => c.repeat(period: 4000.ms))
+        .shimmer(duration: 1200.ms, color: const Color(0xFF00F5FF).withValues(alpha: 0.5)),
+        const SizedBox(width: 3),
+        Text(
+          direction,
+          style: const TextStyle(
+            fontSize: 9,
+            color: Color(0xFF00F5FF),
+            fontWeight: FontWeight.w700,
+          ),
+        ),
       ],
     );
   }

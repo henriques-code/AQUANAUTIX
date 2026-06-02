@@ -146,7 +146,12 @@ class _InicioDashboardScreenState extends State<InicioDashboardScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: const HomeAppBar(),
-      body: SingleChildScrollView(
+      body: RefreshIndicator(
+        color: AppColors.accent,
+        backgroundColor: const Color(0xFF071428),
+        onRefresh: _load,
+        child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.fromLTRB(AppSpacing.md, AppSpacing.xs, AppSpacing.md, AppSpacing.lg),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -225,6 +230,7 @@ class _InicioDashboardScreenState extends State<InicioDashboardScreen> {
                     ),
                   )),
           ],
+        ),
         ),
       ),
     );
