@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/l10n/aqx_l10n.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/widgets/aqua_card.dart';
 import '../../domain/entities/weather_data.dart';
