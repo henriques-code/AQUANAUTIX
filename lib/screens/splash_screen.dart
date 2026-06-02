@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:video_player/video_player.dart';
 import 'login_module.dart';
+import 'onboarding.dart';
 
 // ══════════════════════════════════════════════════════════
 // ECRÃ INICIAL — AQUANAUTIX vem do fundo do mar
@@ -95,12 +96,22 @@ class _SplashScreenState extends State<SplashScreen>
     if (mounted) setState(() {});
   }
 
-  void _navigateNext() {
+  Future<void> _navigateNext() async {
     if (_navigated || !mounted) return;
     _navigated = true;
+    final showOnboarding = await OnboardingScreen.shouldShow();
+    if (!mounted) return;
     Navigator.of(context).pushReplacement(
       PageRouteBuilder(
-        pageBuilder: (_, __, ___) => const LoginModuleScreen(),
+        pageBuilder: (_, __, ___) => showOnboarding
+            ? OnboardingScreen(
+                onDone: () => Navigator.of(context).pushReplacement(
+                  MaterialPageRoute(
+                    builder: (_) => const LoginModuleScreen(),
+                  ),
+                ),
+              )
+            : const LoginModuleScreen(),
         transitionDuration: const Duration(milliseconds: 700),
         transitionsBuilder: (_, anim, __, child) => FadeTransition(
           opacity: anim,
