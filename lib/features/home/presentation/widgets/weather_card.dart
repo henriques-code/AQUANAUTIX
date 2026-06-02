@@ -61,7 +61,7 @@ class WeatherCard extends StatelessWidget {
       child: AquaCard(
         borderRadius: 16,
         borderAlpha: 0.0,
-        padding: const EdgeInsets.fromLTRB(14, 12, 14, 10),
+        padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
         child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -78,27 +78,26 @@ class WeatherCard extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
-              Text(weather.conditionIcon, style: const TextStyle(fontSize: 32)),
+              Text(weather.conditionIcon, style: const TextStyle(fontSize: 26)),
             ],
           ),
-          const SizedBox(height: 2),
           Row(
             crossAxisAlignment: CrossAxisAlignment.baseline,
             textBaseline: TextBaseline.alphabetic,
             children: [
-              Text('${weather.temperature.round()}°C', style: AppTextStyles.orbitron(28, fw: FontWeight.w700)),
-              const SizedBox(width: 8),
+              Text('${weather.temperature.round()}°C', style: AppTextStyles.orbitron(22, fw: FontWeight.w700)),
+              const SizedBox(width: 6),
               Expanded(
                 child: Text(
                   weather.condition,
-                  style: AppTextStyles.ibmSans(12, color: AppColors.textSecondary),
+                  style: AppTextStyles.ibmSans(11, color: AppColors.textSecondary),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 6),
           Divider(height: 1, color: AppColors.accent.withValues(alpha: 0.15)),
-          const SizedBox(height: 8),
+          const SizedBox(height: 6),
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: Row(
@@ -149,9 +148,9 @@ class WeatherCard extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(height: AppSpacing.sm),
+          const SizedBox(height: 4),
           Divider(height: 1, color: AppColors.accent.withValues(alpha: 0.10)),
-          const SizedBox(height: 10),
+          const SizedBox(height: 6),
           _SolunarBar(score: weather.solunarScore, label: t.homeStatSolunar, qualityLabel: t.scoreLabel(weather.solunarScore)),
         ],
       ),
