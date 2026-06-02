@@ -6,7 +6,9 @@ import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '_shared.dart';
+import 'paywall.dart';
 import '../core/config/openai_config.dart';
+import '../core/state/subscription_store.dart';
 import '../core/species/species_catalog.dart';
 import '../core/species/species_compliance.dart';
 import '../core/state/fishing_context_store.dart';
@@ -26,7 +28,10 @@ class VisionScreen extends StatefulWidget {
 class _VisionScreenState extends State<VisionScreen>
     with TickerProviderStateMixin {
   static const _demoSpeciesId = 'dicentrarchus_labrax';
+  static const _kFreeScansKey = 'vision_free_scans_used';
+  static const _kMaxFreeScans = 3;
 
+  int _freeScansUsed = 0;
   _ScanState _state = _ScanState.result;
   VisionScanResult? _scan;
   Uint8List? _previewBytes;
@@ -56,6 +61,7 @@ class _VisionScreenState extends State<VisionScreen>
     _confCtrl.value = 1.0;
     _resultCtrl.value = 1.0;
 
+    _loadFreeUsage();
     SpeciesCatalog.instance.ensureLoaded().then((_) {
       if (!mounted) return;
       final d = SpeciesCatalog.instance.byId(_demoSpeciesId);
@@ -73,6 +79,30 @@ class _VisionScreenState extends State<VisionScreen>
     super.dispose();
   }
 
+  Future<void> _loadFreeUsage() async {
+    final p = await SharedPreferences.getInstance();
+    if (mounted) setState(() => _freeScansUsed = p.getInt(_kFreeScansKey) ?? 0);
+  }
+
+  /// Verifica gate de usos gratuitos. Retorna true se o scan pode avançar.
+  Future<bool> _checkGateAndConsume() async {
+    final isPro =
+        SubscriptionStore.instance.value.value.hasProEntitlement;
+    if (isPro) return true;
+
+    if (_freeScansUsed < _kMaxFreeScans) {
+      final p = await SharedPreferences.getInstance();
+      await p.setInt(_kFreeScansKey, _freeScansUsed + 1);
+      if (mounted) setState(() => _freeScansUsed++);
+      return true;
+    }
+
+    if (mounted) {
+      await PaywallScreen.open(context, source: 'vision_free_limit');
+    }
+    return false;
+  }
+
   String _mimeFromPath(String path) {
     final p = path.toLowerCase();
     if (p.endsWith('.png')) return 'image/png';
@@ -81,6 +111,7 @@ class _VisionScreenState extends State<VisionScreen>
   }
 
   Future<void> _pickAndScan(ImageSource source) async {
+    if (!await _checkGateAndConsume()) return;
     final picker = ImagePicker();
     final xFile = await picker.pickImage(
       source: source,
@@ -226,7 +257,27 @@ class _VisionScreenState extends State<VisionScreen>
                       ),
                     ],
                   ),
-                  const SizedBox(height: 14),
+                  const SizedBox(height: 8),
+                  ValueListenableBuilder<SubscriptionState>(
+                    valueListenable: SubscriptionStore.instance.value,
+                    builder: (_, sub, __) {
+                      if (sub.hasProEntitlement) return const SizedBox.shrink();
+                      final left =
+                          (_kMaxFreeScans - _freeScansUsed).clamp(0, _kMaxFreeScans);
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 6),
+                        child: Text(
+                          left > 0
+                              ? '$left scan${left == 1 ? '' : 's'} gratuito${left == 1 ? '' : 's'} restante${left == 1 ? '' : 's'}'
+                              : 'Limite atingido — upgrade para PRO',
+                          style: mono(10,
+                              c: left > 0 ? kHint : kAmber),
+                          textAlign: TextAlign.center,
+                        ),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 6),
                   GestureDetector(
                     onTap: _state == _ScanState.idle ? () => _pickAndScan(ImageSource.camera) : null,
                     child: Container(
