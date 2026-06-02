@@ -27,13 +27,26 @@ Get-Content $envFile | ForEach-Object {
 }
 
 # Constrói os flags --dart-define para as chaves relevantes
-$dartDefines = @(
+$coreDefines = @(
     "MAPBOX_ACCESS_TOKEN=$($defines['MAPBOX_ACCESS_TOKEN'])",
     "SUPABASE_URL=$($defines['SUPABASE_URL'])",
     "SUPABASE_ANON_KEY=$($defines['SUPABASE_ANON_KEY'])",
     "OPENAI_API_KEY=$($defines['OPENAI_API_KEY'])",
     "REVENUECAT_API_KEY_ANDROID=$($defines['REVENUECAT_API_KEY_ANDROID'])"
-) | ForEach-Object { "--dart-define=$_" }
+)
+
+# Defines opcionais RevenueCat (só incluídos se preenchidos no .env)
+$rcOptional = @(
+    'REVENUECAT_API_KEY_IOS',
+    'REVENUECAT_ENTITLEMENT_PRO',
+    'REVENUECAT_ENTITLEMENT_ELITE',
+    'REVENUECAT_PACKAGE_PRO_MONTHLY',
+    'REVENUECAT_PACKAGE_PRO_ANNUAL',
+    'REVENUECAT_PACKAGE_ELITE_ANNUAL'
+)
+$optDefines = $rcOptional | Where-Object { $defines.ContainsKey($_) -and $defines[$_] } | ForEach-Object { "$_=$($defines[$_])" }
+
+$dartDefines = ($coreDefines + $optDefines) | ForEach-Object { "--dart-define=$_" }
 
 # Exporta token de downloads da Mapbox para Gradle (Maven auth).
 # Aceita ambas as chaves por compatibilidade.
