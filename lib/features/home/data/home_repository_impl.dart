@@ -1,7 +1,6 @@
 import 'package:geolocator/geolocator.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../../../core/state/app_locale_store.dart';
 import '../../../core/state/fishing_context_store.dart';
 import '../../../core/tides/marine_bundle.dart';
 import '../../../core/tides/open_meteo_tides_repository.dart';
@@ -63,8 +62,9 @@ class HomeRepositoryImpl implements HomeRepository {
   Future<HomeDashboardData> loadDashboard() async {
     final now = DateTime.now();
 
-    // 1. GPS — best effort (12 s timeout; falha silenciosa)
+    // 1. GPS — best effort (8 s timeout); se falhar usa região padrão
     double? lat, lon;
+    // ignore: unused_local_variable — reservado para futura distinção GPS/fallback
     try {
       var perm = await Geolocator.checkPermission();
       if (perm == LocationPermission.denied) {
@@ -76,7 +76,7 @@ class HomeRepositoryImpl implements HomeRepository {
           final pos = await Geolocator.getCurrentPosition(
             locationSettings: const LocationSettings(
               accuracy: LocationAccuracy.medium,
-              timeLimit: Duration(seconds: 12),
+              timeLimit: Duration(seconds: 8),
             ),
           );
           lat = pos.latitude;
@@ -84,14 +84,23 @@ class HomeRepositoryImpl implements HomeRepository {
         }
       }
     } catch (_) {
-      // sem GPS — usa cache do Oráculo se disponível
+      // GPS indisponível — usa coordenadas da região padrão abaixo
+    }
+
+    // Fallback de coordenadas: região padrão do utilizador (sem GPS)
+    if (lat == null || lon == null) {
+      final preset = TideMapPreset.forRegion(
+        FishingContextStore.instance.value.value.region,
+      );
+      lat = preset.latitude;
+      lon = preset.longitude;
     }
 
     // 2. OracleBundle — reutiliza cache de 30 min se disponível
     OracleBundle? bundle;
     // Primeiro tenta o cache sem nova chamada GPS
     bundle = OracleDataService.instance.lastBundle;
-    if (bundle == null && lat != null && lon != null) {
+    if (bundle == null) {
       try {
         bundle = await OracleDataService.instance.fetch(
           ctx: FishingContextStore.instance.value.value,
@@ -107,16 +116,14 @@ class HomeRepositoryImpl implements HomeRepository {
       double? waveHeightM,
       int? weatherCode,
     })? cur;
-    if (lat != null && lon != null) {
-      cur = await _meteo.fetchCurrentConditions(
-        latitude: lat,
-        longitude: lon,
-      );
-    }
+    cur = await _meteo.fetchCurrentConditions(
+      latitude: lat,
+      longitude: lon,
+    );
 
     // 4. Condições horárias (próximas 5 horas)
     var hourly = _fallbackHourly(now);
-    if (lat != null && lon != null) {
+    {
       try {
         final tz = TideMapPreset.timezoneForCountry(
           FishingContextStore.instance.value.value.country,
@@ -160,12 +167,18 @@ class HomeRepositoryImpl implements HomeRepository {
     // Temperatura: preferência bundle (Open-Meteo marine+weather) > current
     final tempC = bundle?.tempC ?? cur?.tempC ?? 18.0;
 
-    // Localização
-    final location = (bundle != null &&
-            bundle.locationHeadline.isNotEmpty &&
-            bundle.locationHeadline != AppLocaleStore.instance.locale.languageCode)
-        ? bundle.locationHeadline
-        : 'A localizar…';
+    // Localização: usa bundle (geocodificado) ou região padrão como fallback
+    final String location;
+    if (bundle != null && bundle.locationHeadline.isNotEmpty &&
+        !bundle.locationHeadline.contains('pt') &&
+        !bundle.locationHeadline.contains('es')) {
+      location = bundle.locationHeadline;
+    } else {
+      final preset = TideMapPreset.forRegion(
+        FishingContextStore.instance.value.value.region,
+      );
+      location = preset.label;
+    }
 
     // Pressão
     final pressureHpa = bundle?.pressureHpa ?? cur?.tempC;
