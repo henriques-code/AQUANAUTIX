@@ -61,50 +61,44 @@ class WeatherCard extends StatelessWidget {
       child: AquaCard(
         borderRadius: 16,
         borderAlpha: 0.0,
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 14),
+        padding: const EdgeInsets.fromLTRB(14, 12, 14, 10),
         child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
+              Icon(Icons.location_on_rounded, size: 14, color: AppColors.accent),
+              const SizedBox(width: 4),
               Expanded(
-                child: Row(
-                  children: [
-                    Icon(Icons.location_on_rounded, size: 18, color: AppColors.accent),
-                    const SizedBox(width: 4),
-                    Expanded(
-                      child: Text(
-                        weather.location,
-                        style: AppTextStyles.ibmSans(13, color: AppColors.textSecondary),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ],
+                child: Text(
+                  weather.location,
+                  style: AppTextStyles.ibmSans(12, color: AppColors.textSecondary),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
-              Text(weather.conditionIcon, style: const TextStyle(fontSize: 48)),
+              Text(weather.conditionIcon, style: const TextStyle(fontSize: 32)),
             ],
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 2),
           Row(
             crossAxisAlignment: CrossAxisAlignment.baseline,
             textBaseline: TextBaseline.alphabetic,
             children: [
-              Text('${weather.temperature.round()}°C', style: AppTextStyles.orbitron(42, fw: FontWeight.w700)),
-              const SizedBox(width: 10),
+              Text('${weather.temperature.round()}°C', style: AppTextStyles.orbitron(28, fw: FontWeight.w700)),
+              const SizedBox(width: 8),
               Expanded(
                 child: Text(
                   weather.condition,
-                  style: AppTextStyles.ibmSans(14, color: AppColors.textSecondary),
+                  style: AppTextStyles.ibmSans(12, color: AppColors.textSecondary),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
           Divider(height: 1, color: AppColors.accent.withValues(alpha: 0.15)),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: Row(
