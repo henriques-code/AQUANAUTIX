@@ -25,19 +25,19 @@ class WeatherCard extends StatelessWidget {
             ? const Color(0xFFF3C64D)
             : Colors.white38;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: color.withValues(alpha: 0.5)),
       ),
       child: Text(
-        '◉ SOLUNAR $rating',
+        '◉ $rating',
         style: TextStyle(
           color: color,
-          fontSize: 10,
+          fontSize: 9,
           fontWeight: FontWeight.bold,
-          letterSpacing: 0.5,
+          letterSpacing: 0.3,
         ),
       ),
     );

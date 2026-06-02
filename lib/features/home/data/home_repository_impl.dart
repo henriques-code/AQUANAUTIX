@@ -21,9 +21,9 @@ class HomeRepositoryImpl implements HomeRepository {
     FeaturedSpot(
       id: '1',
       name: 'Cabo da Roca',
-      // Costa rochosa atlântica — Cabo da Roca, Portugal
+      // Praia rochosa atlântica — costa portuguesa
       imageUrl:
-          'https://images.unsplash.com/photo-1555881400-74d7acaacd8b?w=400&q=80',
+          'https://images.unsplash.com/photo-1596367407372-96cb88503db6?w=400&q=80',
       quality: SpotQuality.excelente,
     ),
     FeaturedSpot(
