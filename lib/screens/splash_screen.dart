@@ -101,11 +101,14 @@ class _SplashScreenState extends State<SplashScreen>
     _navigated = true;
     final showOnboarding = await OnboardingScreen.shouldShow();
     if (!mounted) return;
-    Navigator.of(context).pushReplacement(
+    // Captura o NavigatorState antes de pushReplacement — o context do
+    // SplashScreen fica inválido após a navegação, mas o NavigatorState persiste.
+    final nav = Navigator.of(context);
+    nav.pushReplacement(
       PageRouteBuilder(
         pageBuilder: (_, __, ___) => showOnboarding
             ? OnboardingScreen(
-                onDone: () => Navigator.of(context).pushReplacement(
+                onDone: () => nav.pushReplacement(
                   MaterialPageRoute(
                     builder: (_) => const LoginModuleScreen(),
                   ),
