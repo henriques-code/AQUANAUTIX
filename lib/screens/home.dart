@@ -7,11 +7,12 @@ import 'mapa.dart';
 import 'vision.dart';
 import 'logbook.dart';
 import 'perfil.dart';
+import '../features/home/presentation/inicio_dashboard_screen.dart';
 import '../core/l10n/aqx_l10n.dart';
 import '../core/services/analytics_service.dart';
 import '../core/state/home_tab_index.dart';
 
-/// Ecrã principal com navegação entre os 5 ecrãs AQUANAUTIX.
+/// Ecrã principal com navegação entre os 6 ecrãs AQUANAUTIX.
 class AquanautixHome extends StatefulWidget {
   const AquanautixHome({super.key});
 
@@ -34,6 +35,7 @@ class _AquanautixHomeState extends State<AquanautixHome> {
   }
 
   static const _icons = [
+    Icons.home_outlined,
     Icons.track_changes_rounded,
     Icons.map_outlined,
     Icons.photo_camera_outlined,
@@ -62,6 +64,7 @@ class _AquanautixHomeState extends State<AquanautixHome> {
         child: IndexedStack(
           index: _idx,
           children: [
+            InicioDashboardScreen(onVerMapa: () => _setTab(HomeTabIndex.mapTabIndex)),
             const OraculoScreen(),
             MapaScreen(onSpotOpensOracle: _openOracleFromMap),
             const VisionScreen(),
@@ -75,6 +78,7 @@ class _AquanautixHomeState extends State<AquanautixHome> {
   }
 
   List<String> _tabLabels(AqxL10n t) => [
+        t.tabHome,
         t.tabOracle,
         t.tabMap,
         t.tabVision,
@@ -95,7 +99,7 @@ class _AquanautixHomeState extends State<AquanautixHome> {
           ),
           padding: const EdgeInsets.fromLTRB(4, 8, 4, 8),
           child: Row(
-            children: List.generate(5, (i) {
+            children: List.generate(6, (i) {
               final sel = _idx == i;
               final c   = sel ? kCyan : kInact;
               return Expanded(
