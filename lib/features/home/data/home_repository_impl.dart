@@ -21,22 +21,25 @@ class HomeRepositoryImpl implements HomeRepository {
     FeaturedSpot(
       id: '1',
       name: 'Cabo da Roca',
+      // Costa rochosa atlântica — Cabo da Roca, Portugal
       imageUrl:
-          'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400',
+          'https://images.unsplash.com/photo-1555881400-74d7acaacd8b?w=400&q=80',
       quality: SpotQuality.excelente,
     ),
     FeaturedSpot(
       id: '2',
       name: 'Peniche',
+      // Ilha e mar atlântico — Peniche, Portugal
       imageUrl:
-          'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=400',
+          'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&q=80',
       quality: SpotQuality.muitoBom,
     ),
     FeaturedSpot(
       id: '3',
       name: 'Sesimbra',
+      // Praia e costa rochosa — Sesimbra, Portugal
       imageUrl:
-          'https://images.unsplash.com/photo-1505118380757-91f5f5632de0?w=400',
+          'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=400&q=80',
       quality: SpotQuality.bom,
     ),
   ];
@@ -237,9 +240,11 @@ class HomeRepositoryImpl implements HomeRepository {
   List<HourlyCondition> _fallbackHourly(DateTime now) {
     return List.generate(5, (i) {
       final h = (now.hour + i + 1) % 24;
+      // Ícone baseado na hora do dia (fallback sem dados da API)
+      final icon = (h >= 7 && h < 19) ? '☀️' : '🌙';
       return HourlyCondition(
         hour: '${h.toString().padLeft(2, '0')}:00',
-        weatherIcon: '—',
+        weatherIcon: icon,
         temperature: 18.0,
       );
     });
