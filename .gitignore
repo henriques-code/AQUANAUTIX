@@ -25,9 +25,11 @@ android/.gradle/
 *.jks
 androidkey.properties.txt
 
-# Google OAuth client secrets (NEVER commit)
+# Google OAuth client secrets / Firebase config (NEVER commit)
+android/app/google-services.json
 android/app/google-services.json/
 client_secret*.json
+GoogleService-Info.plist
 
 # iOS
 ios/Pods/
