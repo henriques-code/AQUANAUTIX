@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/widgets/aqua_card.dart';
 
@@ -39,78 +38,69 @@ class ConditionsMetricCard extends StatelessWidget {
       label: semanticLabel ?? '$label: $value',
       child: AquaCard(
         // Padding lateral; bottom = 0 porque o separador cola ao fundo
-        padding: const EdgeInsets.fromLTRB(AppSpacing.xs, 10, AppSpacing.xs, 0),
+        padding: const EdgeInsets.fromLTRB(4, 5, 4, 0),
         child: Column(
-          // mainAxisSize.max + Expanded = separa conteúdo do separador
+          mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            // Conteúdo central — ocupa todo o espaço disponível
-            Expanded(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // Ícone
-                  SizedBox(
-                    width: 26,
-                    height: 26,
-                    child: Center(child: icon),
-                  ),
-                  const SizedBox(height: 6),
+            // Ícone
+            SizedBox(
+              width: 16,
+              height: 16,
+              child: Center(child: icon),
+            ),
+            const SizedBox(height: 3),
 
-                  // Label
-                  Text(
-                    label.toUpperCase(),
-                    style: AppTextStyles.ibmSans(
-                      9,
-                      color: AppColors.textSecondary,
-                      fw: FontWeight.w600,
-                      ls: 0.5,
-                    ),
-                    textAlign: TextAlign.center,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 4),
-
-                  // Valor principal
-                  Text(
-                    value,
-                    style: AppTextStyles.orbitron(15, fw: FontWeight.w700),
-                    textAlign: TextAlign.center,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-
-                  // Sub-valor ou espaçador (só quando não há bottomWidget)
-                  if (subValue != null) ...[
-                    const SizedBox(height: 3),
-                    Text(
-                      subValue!,
-                      style: AppTextStyles.ibmSans(
-                        10,
-                        color: subValueColor ?? AppColors.accent,
-                        fw: FontWeight.w600,
-                      ),
-                      textAlign: TextAlign.center,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ] else if (bottomWidget == null)
-                    const SizedBox(height: 15),
-
-                  // Widget extra (ex.: bússola)
-                  if (bottomWidget != null) ...[
-                    const SizedBox(height: 7),
-                    bottomWidget!,
-                  ],
-                ],
+            // Label
+            Text(
+              label.toUpperCase(),
+              style: AppTextStyles.ibmSans(
+                7,
+                color: AppColors.textSecondary,
+                fw: FontWeight.w600,
+                ls: 0.3,
               ),
+              textAlign: TextAlign.center,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(height: 2),
+
+            // Valor principal
+            Text(
+              value,
+              style: AppTextStyles.orbitron(12, fw: FontWeight.w700),
+              textAlign: TextAlign.center,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
 
-            const SizedBox(height: 8),
+            // Sub-valor ou espaçador (só quando não há bottomWidget)
+            if (subValue != null) ...[
+              const SizedBox(height: 1),
+              Text(
+                subValue!,
+                style: AppTextStyles.ibmSans(
+                  8,
+                  color: subValueColor ?? AppColors.accent,
+                  fw: FontWeight.w600,
+                ),
+                textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ] else if (bottomWidget == null)
+              const SizedBox(height: 11),
 
-            // Separador inferior com gradiente — sempre no fundo
+            // Widget extra (ex.: bússola)
+            if (bottomWidget != null) ...[
+              const SizedBox(height: 4),
+              bottomWidget!,
+            ],
+
+            const SizedBox(height: 4),
+
+            // Separador inferior com gradiente
             Container(
               height: 0.5,
               decoration: BoxDecoration(

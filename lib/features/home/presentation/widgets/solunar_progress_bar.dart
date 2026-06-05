@@ -82,26 +82,36 @@ class _SolunarBarContent extends StatelessWidget {
                     ls: 0.3,
                   ),
                 ),
-                // Peixes animados com bob escalonado
+                // Peixes iguais com degradê amber→cyan + bob escalonado
                 Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     for (int i = 0; i < 3; i++) ...[
-                      Text(
-                        i == 1 ? '🐠' : '🐟',
-                        style: const TextStyle(fontSize: 13),
+                      ColorFiltered(
+                        colorFilter: ColorFilter.mode(
+                          Color.lerp(
+                            const Color(0xFF0055FF), // azul royal
+                            AppColors.accent,        // cyan #00F5FF
+                            i / 2.0,
+                          )!,
+                          BlendMode.srcIn,
+                        ),
+                        child: const Text(
+                          '🐟',
+                          style: TextStyle(fontSize: 15),
+                        ),
                       )
                           .animate(
                             onPlay: (c) => c.repeat(reverse: true),
                             delay: Duration(milliseconds: i * 280),
                           )
                           .moveY(
-                            begin: 1.5,
-                            end: -1.5,
+                            begin: 2.0,
+                            end: -2.0,
                             duration: 900.ms,
                             curve: Curves.easeInOut,
                           ),
-                      if (i < 2) const SizedBox(width: 3),
+                      if (i < 2) const SizedBox(width: 4),
                     ],
                   ],
                 ),
@@ -116,12 +126,12 @@ class _SolunarBarContent extends StatelessWidget {
                 ),
               ],
             ),
-        const SizedBox(height: 7),
+        const SizedBox(height: 4),
 
         // Barra com gradiente + indicador com glow
         LayoutBuilder(
           builder: (context, constraints) {
-            const double dotSize = 14.0;
+            const double dotSize = 10.0;
             final double fillWidth =
                 (constraints.maxWidth * fraction).clamp(0.0, constraints.maxWidth);
 
@@ -132,8 +142,8 @@ class _SolunarBarContent extends StatelessWidget {
                 children: [
                   // Track (fundo)
                   Positioned(
-                    top: (dotSize - 8) / 2,
-                    bottom: (dotSize - 8) / 2,
+                    top: (dotSize - 6) / 2,
+                    bottom: (dotSize - 6) / 2,
                     left: 0,
                     right: 0,
                     child: Container(
@@ -150,10 +160,10 @@ class _SolunarBarContent extends StatelessWidget {
                   // Fill gradiente
                   if (fillWidth > 0)
                     Positioned(
-                      top: (dotSize - 8) / 2,
-                      bottom: (dotSize - 8) / 2,
-                      left: 0,
-                      width: fillWidth,
+                  top: (dotSize - 6) / 2,
+                    bottom: (dotSize - 6) / 2,
+                    left: 0,
+                    width: fillWidth,
                       child: Container(
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(4),
@@ -192,7 +202,7 @@ class _SolunarBarContent extends StatelessWidget {
           },
         ),
 
-        const SizedBox(height: 8),
+        const SizedBox(height: 5),
 
         // Score + badge de qualidade
         Row(
@@ -201,7 +211,7 @@ class _SolunarBarContent extends StatelessWidget {
           children: [
             Text(
               '$score',
-              style: AppTextStyles.orbitron(18, fw: FontWeight.w700),
+              style: AppTextStyles.orbitron(15, fw: FontWeight.w700),
             ),
             const SizedBox(width: 8),
             Container(

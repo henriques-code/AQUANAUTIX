@@ -10,71 +10,91 @@ class CommunityActivityCard extends StatelessWidget {
 
   final CommunityActivity activity;
 
+  static const _avatarSize = 28.0;
+  static const _catchSize = 40.0;
+
   @override
   Widget build(BuildContext context) {
     return AquaCard(
-      borderRadius: 16,
+      borderRadius: 12,
       borderAlpha: 0.2,
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       child: Row(
         children: [
-          ClipOval(
-            child: activity.avatarUrl.isEmpty
-                ? Container(
-                    width: 40,
-                    height: 40,
-                    color: AppColors.nav,
-                    child: Icon(Icons.person_outline_rounded, color: AppColors.textSecondary, size: 22),
-                  )
-                : Image.network(
-                    activity.avatarUrl,
-                    width: 40,
-                    height: 40,
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => Container(
-                      width: 40,
-                      height: 40,
-                      color: AppColors.nav,
-                      child: Icon(Icons.person_outline_rounded, color: AppColors.textSecondary, size: 22),
-                    ),
-                  ),
-          ),
-          const SizedBox(width: 12),
+          ClipOval(child: _avatar(activity.avatarUrl)),
+          const SizedBox(width: 8),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(activity.username, style: AppTextStyles.ibmSans(14, fw: FontWeight.w700)),
-                const SizedBox(height: 2),
-                Text(activity.activityText, style: AppTextStyles.ibmSans(13, color: AppColors.textSecondary)),
+                Text(activity.username, style: AppTextStyles.ibmSans(12, fw: FontWeight.w700)),
+                const SizedBox(height: 1),
+                Text(
+                  activity.activityText,
+                  style: AppTextStyles.ibmSans(11, color: AppColors.textSecondary),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ],
             ),
           ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              if (activity.catchImageUrl != null && activity.catchImageUrl!.isNotEmpty)
+          if (activity.catchImageUrl != null && activity.catchImageUrl!.isNotEmpty) ...[
+            const SizedBox(width: 8),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
                 ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child: Image.network(
-                    activity.catchImageUrl!,
-                    width: 60,
-                    height: 60,
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => Container(
-                      width: 60,
-                      height: 60,
-                      color: AppColors.nav,
-                      child: Icon(Icons.image_not_supported_outlined, color: AppColors.inactive, size: 22),
-                    ),
-                  ),
+                  borderRadius: BorderRadius.circular(6),
+                  child: _catchPhoto(activity.catchImageUrl!),
                 ),
-              const SizedBox(height: 6),
-              Text(_relative(activity.timestamp), style: AppTextStyles.ibmSans(11, color: AppColors.textSecondary)),
-            ],
-          ),
+                const SizedBox(height: 3),
+                Text(
+                  _relative(activity.timestamp),
+                  style: AppTextStyles.ibmSans(10, color: AppColors.textSecondary),
+                ),
+              ],
+            ),
+          ],
         ],
       ),
+    );
+  }
+
+  Widget _avatar(String source) {
+    final fallback = Container(
+      width: _avatarSize,
+      height: _avatarSize,
+      color: AppColors.nav,
+      child: Icon(Icons.person_outline_rounded, color: AppColors.textSecondary, size: 16),
+    );
+    if (source.startsWith('assets/')) {
+      return Image.asset(source, width: _avatarSize, height: _avatarSize, fit: BoxFit.cover, errorBuilder: (_, __, ___) => fallback);
+    }
+    return Image.network(
+      source,
+      width: _avatarSize,
+      height: _avatarSize,
+      fit: BoxFit.cover,
+      errorBuilder: (_, __, ___) => fallback,
+    );
+  }
+
+  Widget _catchPhoto(String source) {
+    final fallback = Container(
+      width: _catchSize,
+      height: _catchSize,
+      color: AppColors.nav,
+      child: Icon(Icons.image_not_supported_outlined, color: AppColors.inactive, size: 16),
+    );
+    if (source.startsWith('assets/')) {
+      return Image.asset(source, width: _catchSize, height: _catchSize, fit: BoxFit.cover, errorBuilder: (_, __, ___) => fallback);
+    }
+    return Image.network(
+      source,
+      width: _catchSize,
+      height: _catchSize,
+      fit: BoxFit.cover,
+      errorBuilder: (_, __, ___) => fallback,
     );
   }
 

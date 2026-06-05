@@ -1,11 +1,13 @@
 class HourlyCondition {
   const HourlyCondition({
     required this.hour,
-    required this.weatherIcon,
-    required this.temperature,
+    required this.oracleScore,
+    this.isBestHour = false,
   });
 
   final String hour;
-  final String weatherIcon;
-  final double temperature;
+  final int oracleScore;
+
+  /// Hora com melhor score na janela visível.
+  final bool isBestHour;
 }

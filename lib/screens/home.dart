@@ -64,7 +64,10 @@ class _AquanautixHomeState extends State<AquanautixHome> {
         child: IndexedStack(
           index: _idx,
           children: [
-            InicioDashboardScreen(onVerMapa: () => _setTab(HomeTabIndex.mapTabIndex)),
+            InicioDashboardScreen(
+              onVerMapa: () => _setTab(HomeTabIndex.mapTabIndex),
+              onVerOracle: () => _setTab(HomeTabIndex.oracleTabIndex),
+            ),
             const OraculoScreen(),
             MapaScreen(onSpotOpensOracle: _openOracleFromMap),
             const VisionScreen(),

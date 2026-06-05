@@ -23,10 +23,12 @@ class InicioDashboardScreen extends StatefulWidget {
   const InicioDashboardScreen({
     super.key,
     required this.onVerMapa,
+    required this.onVerOracle,
     this.repository,
   });
 
   final VoidCallback onVerMapa;
+  final VoidCallback onVerOracle;
   final HomeRepository? repository;
 
   @override
@@ -157,22 +159,37 @@ class _InicioDashboardScreenState extends State<InicioDashboardScreen> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             GreetingHeader(
-              greetingLine: t.homeGreetingPersonalized(hour, data.userDisplayName),
+              greetingLine: t.homeGreetingLine(hour),
               tagline: t.homeTagline,
             ),
             const SizedBox(height: AppSpacing.md),
             WeatherCard(weather: data.weather, t: t),
             const SizedBox(height: AppSpacing.md),
-            HomeSectionHeader(title: t.homeSectionConditions, actionLabel: t.homeVerTodas, onActionTap: () {}),
+            HomeSectionHeader(
+              title: t.homeSectionConditions,
+              actionLabel: t.homeVerTodas,
+              onActionTap: widget.onVerOracle,
+            ),
             const SizedBox(height: AppSpacing.sm),
-            SizedBox(
-              height: 118,
-              child: ListView.separated(
-                scrollDirection: Axis.horizontal,
-                itemCount: data.hourlyConditions.length,
-                separatorBuilder: (_, __) => const SizedBox(width: 10),
-                itemBuilder: (context, i) => HourlyConditionCard(item: data.hourlyConditions[i]),
-              ),
+            // 5 slots iguais — sem altura fixa, sem scroll
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                for (var i = 0; i < data.hourlyConditions.length; i++) ...[
+                  if (i > 0)
+                    Container(
+                      width: 0.5,
+                      margin: const EdgeInsets.symmetric(horizontal: 3),
+                      color: AppColors.accent.withValues(alpha: 0.12),
+                    ),
+                  Expanded(
+                    child: HourlyConditionCard(
+                      item: data.hourlyConditions[i],
+                      t: t,
+                    ),
+                  ),
+                ],
+              ],
             ),
             const SizedBox(height: AppSpacing.md),
             HomeSectionHeader(title: t.homeSectionSpots, actionLabel: t.homeVerMapa, onActionTap: widget.onVerMapa),
@@ -206,23 +223,23 @@ class _InicioDashboardScreenState extends State<InicioDashboardScreen> {
               )
             else
               ...data.communityActivities.map((a) => Padding(
-                    padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+                    padding: const EdgeInsets.only(bottom: 6),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         CommunityActivityCard(activity: a),
-                        const SizedBox(height: 6),
+                        const SizedBox(height: 3),
                         Row(
                           children: [
-                            Icon(Icons.favorite_border, size: 14, color: AppColors.textSecondary),
+                            Icon(Icons.favorite_border, size: 12, color: AppColors.textSecondary),
                             Text(
                               ' 24  ',
-                              style: AppTextStyles.ibmSans(11, color: AppColors.textSecondary),
+                              style: AppTextStyles.ibmSans(10, color: AppColors.textSecondary),
                             ),
-                            Icon(Icons.chat_bubble_outline, size: 14, color: AppColors.textSecondary),
+                            Icon(Icons.chat_bubble_outline, size: 12, color: AppColors.textSecondary),
                             Text(
                               ' 5 comentários',
-                              style: AppTextStyles.ibmSans(11, color: AppColors.textSecondary),
+                              style: AppTextStyles.ibmSans(10, color: AppColors.textSecondary),
                             ),
                           ],
                         ),

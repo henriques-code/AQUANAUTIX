@@ -20,23 +20,7 @@ class FeaturedSpotCard extends StatelessWidget {
         child: Stack(
           fit: StackFit.expand,
           children: [
-            Image.network(
-              spot.imageUrl,
-              fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      AppColors.surface,
-                      AppColors.surface.withValues(alpha: 0.6),
-                      AppColors.nav,
-                    ],
-                  ),
-                ),
-              ),
-            ),
+            _spotPhoto(spot.imageUrl),
             DecoratedBox(
               decoration: BoxDecoration(
                 gradient: LinearGradient(
@@ -88,6 +72,34 @@ class FeaturedSpotCard extends StatelessWidget {
           ],
         ),
       );
+  }
+
+  Widget _spotPhoto(String source) {
+    final fallback = Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            AppColors.surface,
+            AppColors.surface.withValues(alpha: 0.6),
+            AppColors.nav,
+          ],
+        ),
+      ),
+    );
+    if (source.startsWith('assets/')) {
+      return Image.asset(
+        source,
+        fit: BoxFit.cover,
+        errorBuilder: (_, __, ___) => fallback,
+      );
+    }
+    return Image.network(
+      source,
+      fit: BoxFit.cover,
+      errorBuilder: (_, __, ___) => fallback,
+    );
   }
 }
 
