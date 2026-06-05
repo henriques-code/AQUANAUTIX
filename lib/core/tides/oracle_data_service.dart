@@ -694,7 +694,7 @@ class OracleDataService {
     return t.tempStable;
   }
 
-  /// Legenda para o mini-card de pressão (coerente com [_pressureLabel]).
+  /// Legenda para o cartão de pressão na grelha meteorologia (coerente com [_pressureLabel]).
   String _pressureTrendSubtitle(List<MarineHourPoint> hours, AqxL10n t) {
     final pressures =
         hours.map((e) => e.pressureHpa).whereType<double>().toList();

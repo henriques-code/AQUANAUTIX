@@ -61,8 +61,14 @@ _Criado: 2026-05-11 · Revisão módulo a módulo · Prioridade decrescente_
 ---
 
 ## MÓDULO 3 — Oráculo
-**Ficheiro:** `screens/oraculo.dart`, `core/tides/oracle_data_service.dart`
-**Estado:** ✅ Core funcional; pontos de polimento identificados
+**Ficheiro:** `screens/oraculo.dart`, `screens/widgets/oracle_weather_details_grid.dart`, `core/tides/oracle_data_service.dart`, `core/tides/weather_details_snapshot.dart`, `core/tides/open_meteo_tides_repository.dart`
+**Estado:** ✅ Core funcional + grelha meteorologia 16 cartões (Jun 2026); pontos de polimento identificados
+
+### Concluído (Jun 2026)
+- [x] Grelha «Detalhes de meteorologia» — 16 cartões brancos, dados Open‑Meteo + marine + AQI
+- [x] Cartões Marés (onda isométrica 3D) e Correntes (velocidade/direcção oceânica)
+- [x] Pull-to-refresh no Oráculo (`invalidateCache`, `_loadWeatherDetails`)
+- [x] `OracleDataService.lastCoords` para meteorologia com GPS ou planeamento Nominatim
 
 ### Problemas
 - [ ] Detecção de modo rio por string (`ctx.region == 'ABRANTES'`) — frágil se região mudar

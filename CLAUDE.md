@@ -42,6 +42,7 @@ AQUANAUTIX/
 │   ├── main.dart               # Bootstrap: Mapbox, Supabase, RevenueCat, analytics
 │   ├── app.dart                # MaterialApp, tema, splash
 │   ├── screens/                # home, oraculo, mapa, vision, logbook, perfil, paywall, …
+│   │   └── widgets/            # oracle_weather_details_grid.dart (grelha meteorologia)
 │   └── core/                   # Supabase, tides/Open‑Meteo, espécies, vision, estado, RC
 ├── pubspec.yaml
 ├── assets/                     # Ex.: species_ibero.json
@@ -150,7 +151,7 @@ vercel --prod
 |---|---|
 | Shell / `home.dart` | ✅ **6 tabs**: Início · Oráculo · Mapa · Vision · Log · Perfil |
 | Início (`features/home/`) | ✅ WeatherCard compacto (4 métricas, barra solunar animada), Condições Favoráveis com score Oráculo, spots reais (`assets/marketing/spots/`), comunidade 3 entradas compactas (`assets/marketing/catches/`) |
-| Oráculo (`oraculo.dart`) | ✅ Índice, COSTA/RIO, Open‑Meteo, **pesquisa de local Nominatim**, heurísticas isco/cana/técnica, i18n PT/ES |
+| Oráculo (`oraculo.dart`) | ✅ Índice, COSTA/RIO, Open‑Meteo, **pesquisa Nominatim**, **grelha «Detalhes de meteorologia»** (16 cartões brancos + CustomPainters 3D), cartões **Marés** (onda isométrica) e **Correntes** (marine API), pull-to-refresh, isco/cana/técnica, i18n PT/ES |
 | Mapa (`mapa.dart`) | ✅ `flutter_map` · COSTA: ArcGIS satélite · RIO: OSM · OpenSeaMap toggle · pins custom Canvas · spots PT/ES · lojas ≤5 km · sheet colapsável |
 | Vision (`vision.dart`) | ✅ Scanner + compliance espécies |
 | Logbook (`logbook.dart`) | ✅ Registo de capturas |

@@ -1,12 +1,12 @@
 # AQUANAUTIX — Central de contexto
 
-**Última revisão estrutural:** 2 Jun 2026 — limpeza de segurança, assets, código morto e dependências.
+**Última revisão estrutural:** 5 Jun 2026 — grelha meteorologia Oráculo (16 cartões 3D, Marés/Correntes, Open‑Meteo marine/AQI).
 
 ## Estrutura do repositório (mono-repo)
 
 ```
 AQUANAUTIX/
-├── lib/                      # App Flutter — main.dart, app.dart, screens/, core/
+├── lib/                      # App Flutter — main.dart, app.dart, screens/ (+ widgets/), core/
 ├── pubspec.yaml              # Dependências Flutter
 ├── assets/                   # Imagens, vídeos e dados da app Flutter
 ├── Site V2/                  # Site estático + deploy Vercel
@@ -45,13 +45,23 @@ AQUANAUTIX/
 
 - **`lib/main.dart` / `app.dart`:** bootstrap Supabase, RevenueCat, analytics, tema, `flutter_localizations` e locale derivado de GPS (PT/ES).
 - **Navegação:** `AquanautixHome` com **6 tabs** — Início · Oráculo · Mapa · Vision · Log · Perfil (via `HomeTabIndex`).
-- **Ecrãs:** `home` (6 tabs; WeatherCard compacto + barra solunar, Condições Favoráveis horárias com score Oráculo, grid 3×spots com fotos locais, comunidade 3 entradas compactas com fotos de espécies), `oraculo` (COSTA/RIO, índice, mini-cards, **pesquisa de local Nominatim** para planeamento além do GPS, cartão isco/cana/técnica), `mapa`, `vision`, `logbook`, `perfil`, `paywall`, `splash`, fluxos login/password.
-- **`lib/core`:** `OracleDataService` + `lib/core/tides/` (Open‑Meteo, Nominatim search/reverse, cache; portos de referência PT/ES em `tide_reference_ports.dart` para uso futuro), `lib/core/l10n/` (AqxL10n completo — PT/ES — cobre Oráculo, Home, Mapa), espécies/compliance, vision, estado (contexto pesca, subscrição, `app_locale_store`), comunidade (repo/store).
+- **Ecrãs:** `home` (6 tabs; WeatherCard compacto + barra solunar, Condições Favoráveis horárias com score Oráculo, grid 3×spots com fotos locais, comunidade 3 entradas compactas com fotos de espécies), `oraculo` (COSTA/RIO, índice, **grelha «Detalhes de meteorologia»** 16 cartões brancos com gráficos 3D, cartões **Marés** + **Correntes**, pull-to-refresh, **pesquisa Nominatim**, cartão isco/cana/técnica), `mapa`, `vision`, `logbook`, `perfil`, `paywall`, `splash`, fluxos login/password.
+- **`lib/screens/widgets/`:** `oracle_weather_details_grid.dart` — grelha meteorologia (CustomPainters: vento, IQA, lua, marés isométricas, correntes oceânicas, etc.).
+- **`lib/core`:** `OracleDataService` (`lastCoords`, `invalidateCache`) + `lib/core/tides/` (`weather_details_snapshot.dart`, `fetchWeatherDetails` Open‑Meteo + marine + air-quality; Nominatim search/reverse; cache; portos PT/ES em `tide_reference_ports.dart`), `lib/core/l10n/` (AqxL10n PT/ES), espécies/compliance, vision, estado, comunidade (repo/store).
 - Design system Midnight Deep Sea (`screens/_shared.dart`).
 - **`lib/features/home/`:** arquitectura feature-first (data/domain/presentation); `WeatherData` com `solunarScore`, `windDir`, `pressure`; `HomeRepositoryImpl` usa `moonFishingFactor` + score Oráculo horário; spots em `assets/marketing/spots/` (Cabo da Roca, Peniche, Sesimbra — Wikimedia); comunidade em `assets/marketing/catches/` (BrunoPescas, Nuno_Sesimbra, Miguel_Peniche); cards compactos com `Image.asset`.
 - Pendente: monetização RC estável em produção, gates PRO/Elite completos; extender i18n a ecrãs fora de Oráculo/Home se o produto o exigir.
 
 ### Sessão 5 Jun 2026
+
+**Oráculo — Grelha meteorologia (`lib/screens/oraculo.dart`, `lib/screens/widgets/oracle_weather_details_grid.dart`)**
+- Substituição das mini-cards horizontais por grelha 2 colunas (referência `Imagens/preview.webp`)
+- 16 cartões: temperatura, sensação, nebulosidade, precipitação, vento, humidade, UV, IQA, pólen, visibilidade, pressão, sol, lua, fase da lua, **marés**, **correntes**
+- Dados: `OpenMeteoTidesRepository.fetchWeatherDetails` (forecast + marine `sea_level_height_msl` / `ocean_current_*` + air-quality AQI/pólen)
+- `WeatherDetailsSnapshot` + fallback; integração com bundle Oráculo (`tideHeightM`, `tideRangeM`, fase enchente/vazante)
+- Gráficos CustomPaint 3D (bússola vento, onda marés isométrica, correntes oceânicas, barras humidade/precipitação, etc.)
+- Pull-to-refresh no Oráculo (`invalidateCache` + reload score + meteorologia)
+- Commits: `4b02d96` (código), `256d472` (screenshots `Imagens/`)
 
 **Home — Início dashboard (`lib/features/home/`)**
 - `assets/marketing/spots/` — Cabo da Roca, Peniche (porto de pesca), Sesimbra (marina); bundlados offline

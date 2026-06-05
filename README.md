@@ -15,8 +15,9 @@ AQUANAUTIX/
 ├── lib/                          # App Flutter (ecrãs + serviços; ver também AQUANAUTIX_CONTEXT.md)
 │   ├── main.dart                 # Bootstrap: analytics, Supabase, stores, orientação
 │   ├── app.dart                  # MaterialApp / tema
-│   ├── screens/                  # Oráculo, Mapa, Vision, Logbook, Perfil, Paywall, IA, marés, …
-│   └── core/                     # analytics, tides, vision, species, licenses, state (subscrição, tab), Supabase
+│   ├── screens/                  # Oráculo, Mapa, Vision, Logbook, Perfil, Paywall, …
+│   │   └── widgets/              # oracle_weather_details_grid.dart (16 cartões meteorologia 3D)
+│   └── core/                     # analytics, tides (weather_details_snapshot), vision, species, state, Supabase
 │   # Nota: roadmap histórico previa lib/features/* (auth, prediction, …); o código actual
 │   # está maioritariamente em screens/ + core/. Alinhar docs ao abrir PRs de refactor.
 ├── assets/
@@ -145,7 +146,7 @@ vercel --prod
 
 ---
 
-## Estado actual (Abril 2026)
+## Estado actual (Jun 2026)
 
 ### App Flutter
 | Feature | Estado |
@@ -153,7 +154,7 @@ vercel --prod
 | Splash animada (AQUANAUTIX emerge) | ✅ Funcional |
 | Login / Registo (Supabase Auth) | ✅ Funcional |
 | Modo demonstração offline | ✅ Funcional |
-| Oráculo + Dashboard | ✅ BLoC + UI completos |
+| Oráculo + grelha meteorologia (16 cartões 3D, Marés/Correntes) | ✅ Open‑Meteo + marine API |
 | Calendário solunar | ✅ Estrutura completa |
 | Mapa Mapbox + spots | ✅ Android/iOS (sem Windows) |
 | Vision Scanner IA | ✅ Estrutura completa |
