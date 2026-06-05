@@ -15,8 +15,13 @@ import '../core/state/fishing_context_store.dart';
 import '../core/state/fishing_mode_store.dart';
 import '../core/state/home_tab_index.dart';
 import '../core/state/subscription_store.dart';
+import '../core/tides/moon_phase.dart';
+import '../core/tides/open_meteo_tides_repository.dart';
 import '../core/tides/oracle_data_service.dart';
 import '../core/tides/osm_place_search.dart';
+import '../core/tides/region_presets.dart';
+import '../core/tides/weather_details_snapshot.dart';
+import 'widgets/oracle_weather_details_grid.dart';
 
 // ── Dados por modo ─────────────────────────────────────────
 class _ModoData {
@@ -179,6 +184,10 @@ class _OraculoScreenState extends State<OraculoScreen>
   bool _costaGpsError = false;
   bool _rioGpsError = false;
   OsmPlace? _planningPlace;
+  WeatherDetailsSnapshot? _weatherDetails;
+  bool _weatherDetailsLoading = false;
+  bool _weatherDetailsFailed = false;
+  final _meteoRepo = OpenMeteoTidesRepository();
 
   @override
   void initState() {
@@ -219,6 +228,10 @@ class _OraculoScreenState extends State<OraculoScreen>
     )..repeat();
     unawaited(_loadCosta());
     unawaited(_loadRio());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      unawaited(_loadWeatherDetails(costaBundle: _costaBundle));
+    });
   }
 
   void _trackNorthStar() {
@@ -430,9 +443,14 @@ class _OraculoScreenState extends State<OraculoScreen>
   Widget build(BuildContext context) {
     final t = AqxL10n(Localizations.localeOf(context).languageCode);
     final d = _rioMode ? _buildRioData(t) : _buildCostaData(t);
-    return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 14),
-      child: Column(
+    return RefreshIndicator(
+      color: kCyan,
+      backgroundColor: kCard,
+      onRefresh: _refreshPage,
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 14),
+        child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
 
@@ -584,33 +602,17 @@ class _OraculoScreenState extends State<OraculoScreen>
 
           const SizedBox(height: 8),
 
-          // ── Mini-cards métricas (scroll horizontal) ────
+          // ── Detalhes de meteorologia (grelha cartões brancos) ────
           FadeTransition(
             opacity: _fade,
-            child: SizedBox(
-              height: 104,
-              child: SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                physics: const BouncingScrollPhysics(),
-                child: Row(
-                  children: [
-                    for (var i = 0; i < d.cards.length; i++) ...[
-                      if (i > 0) const SizedBox(width: 6),
-                      _metricTile(d.cards[i], width: 76)
-                          .animate(key: ValueKey('${d.score}_${d.cards[i].value}_$i'))
-                          .fadeIn(
-                            delay: Duration(milliseconds: 140 + i * 55),
-                            duration: 400.ms,
-                          )
-                          .slideY(
-                            begin: 0.07,
-                            duration: 400.ms,
-                            curve: Curves.easeOutCubic,
-                          ),
-                    ],
-                  ],
-                ),
-              ),
+            child: OracleWeatherDetailsGrid(
+              data: _weatherDetails,
+              loading: _weatherDetailsLoading,
+              loadFailed: _weatherDetailsFailed,
+              onRetry: () => unawaited(_loadWeatherDetails(
+                costaBundle: _costaBundle,
+                force: true,
+              )),
             ),
           ),
 
@@ -886,6 +888,7 @@ class _OraculoScreenState extends State<OraculoScreen>
           const SizedBox(height: 8),
         ],
       ),
+      ),
     );
   }
 
@@ -1022,6 +1025,7 @@ class _OraculoScreenState extends State<OraculoScreen>
         _costaLoad = _LoadState.ok;
         _costaGpsError = false;
       });
+      unawaited(_loadWeatherDetails(costaBundle: bundle));
     } catch (e) {
       if (!mounted) return;
       if (e is OracleGpsRequiredException) {
@@ -1039,6 +1043,123 @@ class _OraculoScreenState extends State<OraculoScreen>
         );
         _costaLoad = _LoadState.error;
         _costaGpsError = false;
+      });
+    }
+  }
+
+  Future<void> _refreshPage() async {
+    HapticFeedback.lightImpact();
+    OracleDataService.instance.invalidateCache();
+    setState(() {
+      _weatherDetails = null;
+      _weatherDetailsFailed = false;
+    });
+    if (_rioMode) {
+      await _loadRio();
+    } else {
+      await _loadCosta();
+    }
+    await _loadWeatherDetails(
+      costaBundle: _costaBundle,
+      force: true,
+    );
+  }
+
+  Future<void> _loadWeatherDetails({
+    OracleBundle? costaBundle,
+    bool force = false,
+  }) async {
+    if (!mounted) return;
+
+    var coords = OracleDataService.instance.lastCoords;
+    if (coords == null && _planningPlace != null) {
+      coords = (lat: _planningPlace!.lat, lon: _planningPlace!.lon);
+    }
+    if (coords == null) {
+      final bundle = costaBundle ?? _costaBundle;
+      if (bundle != null && !_rioMode) {
+        // Aguarda fetch do Oráculo definir coordenadas
+        await Future<void>.delayed(const Duration(milliseconds: 400));
+        coords = OracleDataService.instance.lastCoords;
+      }
+    }
+    if (coords == null) {
+      if (!mounted) return;
+      setState(() {
+        _weatherDetailsLoading = false;
+        _weatherDetailsFailed = true;
+      });
+      return;
+    }
+
+    if (_weatherDetailsLoading && !force) return;
+
+    setState(() {
+      _weatherDetailsLoading = true;
+      _weatherDetailsFailed = false;
+    });
+
+    final ctx = FishingContextStore.instance.value.value;
+    final lang = AppLocaleStore.instance.locale.languageCode;
+    final t = AqxL10n(lang);
+    final tz = TideMapPreset.timezoneForCountry(ctx.country);
+    final now = DateTime.now();
+    final moonPhase = moonPhase01(now);
+    final moonPct = costaBundle?.moonPct ??
+        _costaBundle?.moonPct ??
+        (moonFishingFactor(now) * 100).round().clamp(0, 100);
+    final moonLabel = costaBundle?.moonPhaseShortPt ??
+        _costaBundle?.moonPhaseShortPt ??
+        t.moonTileShort(moonPhase);
+    final tide = costaBundle ?? _costaBundle;
+
+    try {
+      var snap = await _meteoRepo.fetchWeatherDetails(
+        latitude: coords.lat,
+        longitude: coords.lon,
+        timezone: tz,
+        tideHeightM: tide?.tideHeightM,
+        tideTrendPt: tide?.tideTrendPt ?? '',
+        tideRangeM: tide?.tideRangeM,
+        moonPct: moonPct,
+        moonPhaseLabel: moonLabel,
+      );
+
+      if (snap == null) {
+        final cur = await _meteoRepo.fetchCurrentConditions(
+          latitude: coords.lat,
+          longitude: coords.lon,
+        );
+        snap = WeatherDetailsSnapshot.fallback(
+          fetchedAt: now,
+          airTempC: cur.tempC ?? tide?.tempC,
+          pressureHpa: tide?.pressureHpa,
+          windSpeedKmh: cur.windSpeedKmh,
+          windDirDeg: cur.windDirDeg,
+          waveHeightM: cur.waveHeightM,
+          tideHeightM: tide?.tideHeightM,
+          tideTrendPt: tide?.tideTrendPt ?? '',
+          tideRangeM: tide?.tideRangeM,
+          tidePhasePt: WeatherDetailsSnapshot.tidePhaseFromTrend(
+            tide?.tideTrendPt ?? '',
+            const [],
+          ),
+          moonPct: moonPct,
+          moonPhaseLabel: moonLabel,
+        );
+      }
+
+      if (!mounted) return;
+      setState(() {
+        _weatherDetails = snap;
+        _weatherDetailsLoading = false;
+        _weatherDetailsFailed = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _weatherDetailsLoading = false;
+        _weatherDetailsFailed = true;
       });
     }
   }
@@ -1061,6 +1182,7 @@ class _OraculoScreenState extends State<OraculoScreen>
         _rioLoad = _LoadState.ok;
         _rioGpsError = false;
       });
+      unawaited(_loadWeatherDetails());
     } catch (e) {
       if (!mounted) return;
       if (e is OracleGpsRequiredException) {
@@ -1583,57 +1705,6 @@ class _OraculoScreenState extends State<OraculoScreen>
           ],
         ),
       );
-
-  // ── Mini-cards métricas (ícone + rótulo + valor + subtítulo opcional) ──
-  Widget _metricTile(_MetricTile m, {double? width}) {
-    final card = Container(
-      width: width,
-      padding: const EdgeInsets.symmetric(vertical: 7, horizontal: 2),
-      decoration: BoxDecoration(
-        color: kCard,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: kCyan.withValues(alpha: 0.1)),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(m.icon, color: kCyan, size: 19),
-          const SizedBox(height: 4),
-          Text(
-            m.label,
-            style: mono(8.4, c: kCyan, ls: 0.6),
-            textAlign: TextAlign.center,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-          ),
-          const SizedBox(height: 3),
-          Text(
-            m.value,
-            style: orb(12, c: Colors.white, fw: FontWeight.w700, ls: 0),
-            textAlign: TextAlign.center,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-          ),
-          const SizedBox(height: 3),
-          SizedBox(
-            height: 30,
-            width: double.infinity,
-            child: Align(
-              alignment: Alignment.topCenter,
-              child: Text(
-                m.sub,
-                style: ibm(10.5, c: kCyan),
-                textAlign: TextAlign.center,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-    return width != null ? card : Expanded(child: card);
-  }
 
   // ── Dia card ─────────────────────────────────────────────
   Widget _diaCard(_Dia d, bool active) => Expanded(

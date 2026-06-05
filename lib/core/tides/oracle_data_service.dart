@@ -173,6 +173,20 @@ class OracleDataService {
   /// Bundle COSTA em cache (pode ser null se ainda não houve fetch).
   OracleBundle? get lastBundle => _cache;
 
+  /// Últimas coordenadas usadas num fetch COSTA/RIO (para meteorologia detalhada).
+  ({double lat, double lon})? _lastCoords;
+  ({double lat, double lon})? get lastCoords => _lastCoords;
+
+  /// Força novo fetch (pull-to-refresh no Oráculo).
+  void invalidateCache() {
+    _cache = null;
+    _cacheKey = null;
+    _cacheTime = null;
+    _riverCache = null;
+    _riverCacheKey = null;
+    _riverCacheTime = null;
+  }
+
   /// Posição actual obrigatória — sem GPS não há índice fiável para a zona de pesca.
   Future<({double lat, double lon})> _requireGpsFix(AqxL10n t) async {
     var perm = await Geolocator.checkPermission();
@@ -220,6 +234,7 @@ class OracleDataService {
       lat = fix.lat;
       lon = fix.lon;
     }
+    _lastCoords = (lat: lat, lon: lon);
 
     final isPlanning = planningPlace != null;
 
@@ -418,6 +433,7 @@ class OracleDataService {
       lat = fix.lat;
       lon = fix.lon;
     }
+    _lastCoords = (lat: lat, lon: lon);
 
     final isPlanning = planningPlace != null;
 

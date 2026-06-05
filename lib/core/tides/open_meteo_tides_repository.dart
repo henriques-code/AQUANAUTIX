@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 import 'marine_bundle.dart';
+import 'weather_details_snapshot.dart';
 
 /// Par (temperatura °C, pressão hPa) interpolado linearmente no tempo.
 (double?, double?) _interpolateWeather(
@@ -237,5 +238,210 @@ class OpenMeteoTidesRepository {
     }
     out.sort((a, b) => a.time.compareTo(b.time));
     return out;
+  }
+
+  /// Snapshot completo para a grelha de meteorologia do Oráculo (best-effort).
+  Future<WeatherDetailsSnapshot?> fetchWeatherDetails({
+    required double latitude,
+    required double longitude,
+    required String timezone,
+    double? tideHeightM,
+    String tideTrendPt = '',
+    double? tideRangeM,
+    int moonPct = 0,
+    String moonPhaseLabel = '',
+  }) async {
+    final forecastUri = Uri.https(_weatherHost, '/v1/forecast', {
+      'latitude': latitude.toString(),
+      'longitude': longitude.toString(),
+      'timezone': timezone,
+      'current':
+          'temperature_2m,apparent_temperature,relative_humidity_2m,'
+          'wind_speed_10m,wind_direction_10m,wind_gusts_10m,'
+          'cloud_cover,precipitation,uv_index,surface_pressure',
+      'hourly':
+          'temperature_2m,surface_pressure,cloud_cover,precipitation,'
+          'relative_humidity_2m,visibility',
+      'daily': 'sunrise,sunset,uv_index_max',
+      'past_days': '1',
+      'forecast_days': '2',
+      'wind_speed_unit': 'kmh',
+    });
+    final marineUri = Uri.https(_marineHost, '/v1/marine', {
+      'latitude': latitude.toString(),
+      'longitude': longitude.toString(),
+      'timezone': timezone,
+      'current': 'wave_height,ocean_current_velocity,ocean_current_direction',
+      'hourly': 'sea_level_height_msl,ocean_current_velocity',
+      'forecast_days': '1',
+    });
+    final aqUri = Uri.https('air-quality-api.open-meteo.com', '/v1/air-quality', {
+      'latitude': latitude.toString(),
+      'longitude': longitude.toString(),
+      'timezone': timezone,
+      'current': 'european_aqi',
+      'hourly': 'grass_pollen',
+      'forecast_days': '2',
+    });
+
+    try {
+      final (wRes, mRes, aqRes) = await (
+        _client.get(forecastUri).timeout(const Duration(seconds: 10)),
+        _client.get(marineUri).timeout(const Duration(seconds: 8)),
+        _client.get(aqUri).timeout(const Duration(seconds: 8)),
+      ).wait;
+
+      if (wRes.statusCode != 200) return null;
+
+      final w = jsonDecode(wRes.body) as Map<String, dynamic>;
+      final c = w['current'] as Map<String, dynamic>?;
+      final wh = w['hourly'] as Map<String, dynamic>?;
+      final daily = w['daily'] as Map<String, dynamic>?;
+
+      double? waveHeightM;
+      double? oceanCurrentMs;
+      int? oceanCurrentDirDeg;
+      List<double> tideSpark = const [];
+      List<double> currentSpark = const [];
+      double? computedTideRange = tideRangeM;
+
+      if (mRes.statusCode == 200) {
+        final m = jsonDecode(mRes.body) as Map<String, dynamic>;
+        final mc = m['current'] as Map<String, dynamic>?;
+        final mh = m['hourly'] as Map<String, dynamic>?;
+        waveHeightM = (mc?['wave_height'] as num?)?.toDouble();
+        oceanCurrentMs = (mc?['ocean_current_velocity'] as num?)?.toDouble();
+        oceanCurrentDirDeg =
+            (mc?['ocean_current_direction'] as num?)?.round();
+
+        List<double> sparkFrom(List<dynamic>? list, {int take = 12}) {
+          if (list == null || list.isEmpty) return const [];
+          final start = (list.length - take).clamp(0, list.length - 1);
+          final out = <double>[];
+          for (var i = start; i < list.length; i++) {
+            final v = list[i];
+            if (v is num) out.add(v.toDouble());
+          }
+          return out;
+        }
+
+        tideSpark = sparkFrom(mh?['sea_level_height_msl'], take: 14);
+        currentSpark = sparkFrom(mh?['ocean_current_velocity'], take: 10);
+
+        if (tideSpark.length >= 2) {
+          final minH = tideSpark.reduce((a, b) => a < b ? a : b);
+          final maxH = tideSpark.reduce((a, b) => a > b ? a : b);
+          computedTideRange ??= maxH - minH;
+        }
+      }
+
+      int? aqi;
+      double? pollenGrass;
+      if (aqRes.statusCode == 200) {
+        final aq = jsonDecode(aqRes.body) as Map<String, dynamic>;
+        final ac = aq['current'] as Map<String, dynamic>?;
+        aqi = (ac?['european_aqi'] as num?)?.round();
+        final ah = aq['hourly'] as Map<String, dynamic>?;
+        final pollen = ah?['grass_pollen'] as List<dynamic>?;
+        if (pollen != null && pollen.isNotEmpty) {
+          pollenGrass = (pollen.first as num?)?.toDouble();
+        }
+      }
+
+      final now = DateTime.now();
+      List<double> spark(List<dynamic>? list, {int take = 10}) {
+        if (list == null || list.isEmpty) return const [];
+        final start = (list.length - take).clamp(0, list.length - 1);
+        final out = <double>[];
+        for (var i = start; i < list.length; i++) {
+          final v = list[i];
+          if (v is num) out.add(v.toDouble());
+        }
+        return out;
+      }
+
+      double precip24 = 0;
+      if (wh != null) {
+        final times = (wh['time'] as List<dynamic>?)?.cast<String>() ?? [];
+        final precip = wh['precipitation'] as List<dynamic>?;
+        final end = now.add(const Duration(hours: 24));
+        for (var i = 0; i < times.length; i++) {
+          final t = DateTime.parse(times[i]);
+          if (t.isBefore(now) || t.isAfter(end)) continue;
+          precip24 += (precip != null && i < precip.length
+                  ? (precip[i] as num?)?.toDouble()
+                  : null) ??
+              0;
+        }
+      }
+
+      double? visibilityKm;
+      if (wh != null) {
+        final vis = wh['visibility'] as List<dynamic>?;
+        if (vis != null && vis.isNotEmpty) {
+          final v = vis.last as num?;
+          if (v != null) visibilityKm = v.toDouble() / 1000.0;
+        }
+      }
+
+      DateTime? sunrise;
+      DateTime? sunset;
+      double? uvMaxTomorrow;
+      if (daily != null) {
+        final sr = (daily['sunrise'] as List<dynamic>?)?.cast<String>();
+        final ss = (daily['sunset'] as List<dynamic>?)?.cast<String>();
+        final uvMax = daily['uv_index_max'] as List<dynamic>?;
+        if (sr != null && sr.isNotEmpty) sunrise = DateTime.parse(sr.first);
+        if (ss != null && ss.isNotEmpty) sunset = DateTime.parse(ss.first);
+        if (uvMax != null && uvMax.length > 1) {
+          uvMaxTomorrow = (uvMax[1] as num?)?.toDouble();
+        }
+      }
+
+      final airTemp = (c?['temperature_2m'] as num?)?.toDouble();
+      final rh = (c?['relative_humidity_2m'] as num?)?.toDouble();
+      final dew = WeatherDetailsSnapshot.estimateDewPoint(airTemp, rh) ??
+          (c?['apparent_temperature'] as num?)?.toDouble();
+
+      return WeatherDetailsSnapshot(
+        fetchedAt: now,
+        airTempC: airTemp,
+        tempSparkline: spark(wh?['temperature_2m']),
+        feelsLikeC: (c?['apparent_temperature'] as num?)?.toDouble(),
+        humidityPct: rh,
+        dewPointC: dew,
+        cloudPct: (c?['cloud_cover'] as num?)?.toDouble(),
+        precipNext24hMm: precip24,
+        windSpeedKmh: (c?['wind_speed_10m'] as num?)?.toDouble(),
+        windGustKmh: (c?['wind_gusts_10m'] as num?)?.toDouble(),
+        windDirDeg: (c?['wind_direction_10m'] as num?)?.round(),
+        uvIndex: (c?['uv_index'] as num?)?.toDouble(),
+        uvMaxTomorrow: uvMaxTomorrow,
+        aqi: aqi,
+        pollenGrass: pollenGrass,
+        visibilityKm: visibilityKm,
+        pressureHpa: (c?['surface_pressure'] as num?)?.toDouble(),
+        pressureSparkline: spark(wh?['surface_pressure']),
+        sunrise: sunrise,
+        sunset: sunset,
+        waveHeightM: waveHeightM,
+        tideHeightM: tideHeightM,
+        tideTrendPt: tideTrendPt,
+        tideRangeM: computedTideRange,
+        tideSparkline: tideSpark,
+        tidePhasePt: WeatherDetailsSnapshot.tidePhaseFromTrend(
+          tideTrendPt,
+          tideSpark,
+        ),
+        oceanCurrentMs: oceanCurrentMs,
+        oceanCurrentDirDeg: oceanCurrentDirDeg,
+        currentSparkline: currentSpark,
+        moonPct: moonPct,
+        moonPhaseLabel: moonPhaseLabel,
+        humiditySparkline: spark(wh?['relative_humidity_2m']),
+      );
+    } catch (_) {
+      return null;
+    }
   }
 }
