@@ -45,11 +45,22 @@ AQUANAUTIX/
 
 - **`lib/main.dart` / `app.dart`:** bootstrap Supabase, RevenueCat, analytics, tema, `flutter_localizations` e locale derivado de GPS (PT/ES).
 - **Navegação:** `AquanautixHome` com **6 tabs** — Início · Oráculo · Mapa · Vision · Log · Perfil (via `HomeTabIndex`).
-- **Ecrãs:** `home` (6 tabs; WeatherCard com solunar badge + direcção vento + pressão, saudação personalizada com nome Supabase, grid 3×spots com imagens reais, comunidade limpa), `oraculo` (COSTA/RIO, índice, mini-cards, **pesquisa de local Nominatim** para planeamento além do GPS, cartão isco/cana/técnica), `mapa`, `vision`, `logbook`, `perfil`, `paywall`, `splash`, fluxos login/password.
+- **Ecrãs:** `home` (6 tabs; WeatherCard compacto + barra solunar, Condições Favoráveis horárias com score Oráculo, grid 3×spots com fotos locais, comunidade 3 entradas compactas com fotos de espécies), `oraculo` (COSTA/RIO, índice, mini-cards, **pesquisa de local Nominatim** para planeamento além do GPS, cartão isco/cana/técnica), `mapa`, `vision`, `logbook`, `perfil`, `paywall`, `splash`, fluxos login/password.
 - **`lib/core`:** `OracleDataService` + `lib/core/tides/` (Open‑Meteo, Nominatim search/reverse, cache; portos de referência PT/ES em `tide_reference_ports.dart` para uso futuro), `lib/core/l10n/` (AqxL10n completo — PT/ES — cobre Oráculo, Home, Mapa), espécies/compliance, vision, estado (contexto pesca, subscrição, `app_locale_store`), comunidade (repo/store).
 - Design system Midnight Deep Sea (`screens/_shared.dart`).
-- **`lib/features/home/`:** arquitectura feature-first (data/domain/presentation); `WeatherData` com `solunarScore`, `windDir`, `pressure`; `HomeRepositoryImpl` usa `moonFishingFactor` + nome real do utilizador via Supabase metadata; spots com imagens reais (Unsplash); comunidade real (BrunoPescas com foto real, MariaCosta removida).
+- **`lib/features/home/`:** arquitectura feature-first (data/domain/presentation); `WeatherData` com `solunarScore`, `windDir`, `pressure`; `HomeRepositoryImpl` usa `moonFishingFactor` + score Oráculo horário; spots em `assets/marketing/spots/` (Cabo da Roca, Peniche, Sesimbra — Wikimedia); comunidade em `assets/marketing/catches/` (BrunoPescas, Nuno_Sesimbra, Miguel_Peniche); cards compactos com `Image.asset`.
 - Pendente: monetização RC estável em produção, gates PRO/Elite completos; extender i18n a ecrãs fora de Oráculo/Home se o produto o exigir.
+
+### Sessão 5 Jun 2026
+
+**Home — Início dashboard (`lib/features/home/`)**
+- `assets/marketing/spots/` — Cabo da Roca, Peniche (porto de pesca), Sesimbra (marina); bundlados offline
+- `assets/marketing/catches/` — dourada, robalo, sargo (Wikimedia); comunidade com 3 entradas
+- `WeatherCard` — layout 4 colunas compacto; `SolunarProgressBar` com peixes animados
+- `HourlyCondition` — score Oráculo + badge MELHOR; chips em linha sem scroll
+- `FeaturedSpotCard` / `CommunityActivityCard` — suporte `Image.asset` + fallback `Image.network`
+- `home.dart` — "Ver todas" e "Ver mapa" navegam para Oráculo/Mapa
+- Commits: `9c4ad75` (Condições Actuais), `50ae0ee` (spots/comunidade/assets)
 
 ### Sessão 18 Mai 2026
 

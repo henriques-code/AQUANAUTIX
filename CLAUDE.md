@@ -149,7 +149,7 @@ vercel --prod
 | Área | Estado |
 |---|---|
 | Shell / `home.dart` | ✅ **6 tabs**: Início · Oráculo · Mapa · Vision · Log · Perfil |
-| Início (`features/home/`) | ✅ WeatherCard (vento+direcção, pressão, solunar), spots reais (Unsplash), grid 3 colunas, comunidade real |
+| Início (`features/home/`) | ✅ WeatherCard compacto (4 métricas, barra solunar animada), Condições Favoráveis com score Oráculo, spots reais (`assets/marketing/spots/`), comunidade 3 entradas compactas (`assets/marketing/catches/`) |
 | Oráculo (`oraculo.dart`) | ✅ Índice, COSTA/RIO, Open‑Meteo, **pesquisa de local Nominatim**, heurísticas isco/cana/técnica, i18n PT/ES |
 | Mapa (`mapa.dart`) | ✅ `flutter_map` · COSTA: ArcGIS satélite · RIO: OSM · OpenSeaMap toggle · pins custom Canvas · spots PT/ES · lojas ≤5 km · sheet colapsável |
 | Vision (`vision.dart`) | ✅ Scanner + compliance espécies |
