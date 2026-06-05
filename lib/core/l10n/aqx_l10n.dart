@@ -186,6 +186,12 @@ class AqxL10n {
   String get homeSectionCommunity =>
       es ? 'Actividad de la comunidad' : 'Atividade da Comunidade';
 
+  String get drawerCommunity => es ? 'Comunidad' : 'Comunidade';
+
+  String get drawerSpecies => es ? 'Especies' : 'Espécies';
+
+  String get drawerTechniques => es ? 'Técnicas' : 'Técnicas';
+
   String get homeVerTodas => es ? 'Ver todas >' : 'Ver todas >';
 
   String get homeVerMapa => es ? 'Ver mapa >' : 'Ver mapa >';

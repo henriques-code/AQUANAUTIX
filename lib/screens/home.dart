@@ -67,6 +67,7 @@ class _AquanautixHomeState extends State<AquanautixHome> {
             InicioDashboardScreen(
               onVerMapa: () => _setTab(HomeTabIndex.mapTabIndex),
               onVerOracle: () => _setTab(HomeTabIndex.oracleTabIndex),
+              onOpenTab: _setTab,
             ),
             const OraculoScreen(),
             MapaScreen(onSpotOpensOracle: _openOracleFromMap),

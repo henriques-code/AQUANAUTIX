@@ -14,6 +14,7 @@ import 'widgets/community_activity_card.dart';
 import 'widgets/featured_spot_card.dart';
 import 'widgets/greeting_header.dart';
 import 'widgets/home_app_bar.dart';
+import 'widgets/home_navigation_drawer.dart';
 import 'widgets/hourly_condition_card.dart';
 import 'widgets/section_header.dart';
 import 'widgets/weather_card.dart';
@@ -24,11 +25,13 @@ class InicioDashboardScreen extends StatefulWidget {
     super.key,
     required this.onVerMapa,
     required this.onVerOracle,
+    required this.onOpenTab,
     this.repository,
   });
 
   final VoidCallback onVerMapa;
   final VoidCallback onVerOracle;
+  final ValueChanged<int> onOpenTab;
   final HomeRepository? repository;
 
   @override
@@ -102,9 +105,7 @@ class _InicioDashboardScreenState extends State<InicioDashboardScreen> {
     final t = AqxL10n(lang);
 
     if (_loading) {
-      return Scaffold(
-        backgroundColor: AppColors.background,
-        appBar: const HomeAppBar(),
+      return _homeScaffold(
         body: const Center(
           child: SizedBox(
             width: 36,
@@ -116,9 +117,7 @@ class _InicioDashboardScreenState extends State<InicioDashboardScreen> {
     }
 
     if (_error != null || _data == null) {
-      return Scaffold(
-        backgroundColor: AppColors.background,
-        appBar: const HomeAppBar(),
+      return _homeScaffold(
         body: Center(
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
@@ -145,9 +144,7 @@ class _InicioDashboardScreenState extends State<InicioDashboardScreen> {
     final data = _data!;
     final hour = DateTime.now().hour;
 
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: const HomeAppBar(),
+    return _homeScaffold(
       body: RefreshIndicator(
         color: AppColors.accent,
         backgroundColor: const Color(0xFF071428),
@@ -250,6 +247,15 @@ class _InicioDashboardScreenState extends State<InicioDashboardScreen> {
         ),
         ),
       ),
+    );
+  }
+
+  Widget _homeScaffold({required Widget body}) {
+    return Scaffold(
+      backgroundColor: AppColors.background,
+      appBar: const HomeAppBar(),
+      drawer: HomeNavigationDrawer(onOpenTab: widget.onOpenTab),
+      body: body,
     );
   }
 }

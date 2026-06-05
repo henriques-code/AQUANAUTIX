@@ -13,6 +13,7 @@ import 'paywall.dart';
 import '../core/services/app_insights_service.dart';
 import '../core/services/analytics_service.dart';
 import '../core/state/fishing_context_store.dart';
+import '../core/state/logbook_tab_index.dart';
 import '../core/supabase_bootstrap.dart';
 import '../core/community/community_post.dart';
 import '../core/community/community_store.dart';
@@ -119,6 +120,8 @@ class _LogbookScreenState extends State<LogbookScreen>
     );
     _tabCtrl = TabController(length: 3, vsync: this);
     _tabCtrl.addListener(() => setState(() => _tabIndex = _tabCtrl.index));
+    LogbookTabIndex.pendingTab.addListener(_applyPendingLogTab);
+    _applyPendingLogTab();
     unawaited(_loadCapturas());
     if (isSupabaseConfigured) {
       final ctx = FishingContextStore.instance.value.value;
@@ -126,8 +129,21 @@ class _LogbookScreenState extends State<LogbookScreen>
     }
   }
 
+  void _applyPendingLogTab() {
+    final pending = LogbookTabIndex.pendingTab.value;
+    if (pending == null || pending < 0 || pending >= _tabCtrl.length) return;
+    if (_tabCtrl.index != pending) {
+      _tabCtrl.animateTo(pending);
+    }
+    LogbookTabIndex.pendingTab.value = null;
+  }
+
   @override
-  void dispose() { _tabCtrl.dispose(); super.dispose(); }
+  void dispose() {
+    LogbookTabIndex.pendingTab.removeListener(_applyPendingLogTab);
+    _tabCtrl.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
