@@ -23,6 +23,33 @@ class AqxL10n {
       ? 'No se pudo obtener tu posición. Sal al exterior o a la ventana, espera el fix GPS e inténtalo de nuevo.'
       : 'Não foi possível obter a tua posição. Vai para o exterior ou à janela, espera o GPS fixar e tenta de novo.';
 
+  String get locationPromptTitle =>
+      es ? 'Ubicación necesaria' : 'Localização necessária';
+
+  String get enableLocation =>
+      es ? 'ACTIVAR UBICACIÓN' : 'ACTIVAR LOCALIZAÇÃO';
+
+  String get locationPromptChoosePlace => es
+      ? 'Elegir lugar manualmente'
+      : 'Escolher local manualmente';
+
+  String get locationNeededTitle =>
+      es ? 'Sin ubicación GPS' : 'Sem localização GPS';
+
+  String get locatingSubtitle =>
+      es ? 'Obteniendo posición…' : 'A obter posição…';
+
+  String get locationBannerAction =>
+      es ? 'Activar GPS' : 'Activar GPS';
+
+  String get regionalWithoutGps => es
+      ? 'Sin GPS · datos de la región · activa ubicación para precisión'
+      : 'Sem GPS · dados da região · activa localização para precisão';
+
+  String get loadingRegionalData => es
+      ? 'Sin GPS · cargando datos de la región…'
+      : 'Sem GPS · a carregar dados da região…';
+
   // ── Cabeçalhos / planeamento ────────────────────────────
   String get yourPosition => es ? 'En tu posición' : 'À tua posição';
 

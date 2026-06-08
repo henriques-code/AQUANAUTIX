@@ -9,4 +9,7 @@ class LogbookTabIndex {
   static const int trofeusTab = 2;
 
   static final ValueNotifier<int?> pendingTab = ValueNotifier<int?>(null);
+
+  /// `nova_captura` | `novo_post` — dispara sheet após mudar de tab.
+  static final ValueNotifier<String?> pendingAction = ValueNotifier<String?>(null);
 }

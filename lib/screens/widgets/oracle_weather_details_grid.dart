@@ -7,26 +7,50 @@ import '../../core/theme/app_colors.dart';
 import '../../core/tides/weather_details_snapshot.dart';
 
 /// Grelha «Detalhes de meteorologia» — cartões brancos (referência preview.webp).
-class OracleWeatherDetailsGrid extends StatelessWidget {
+class OracleWeatherDetailsGrid extends StatefulWidget {
   const OracleWeatherDetailsGrid({
     super.key,
     required this.data,
     this.loading = false,
     this.loadFailed = false,
     this.onRetry,
+    this.collapsible = true,
+    this.initiallyExpanded = false,
   });
 
   final WeatherDetailsSnapshot? data;
   final bool loading;
   final bool loadFailed;
   final VoidCallback? onRetry;
+  final bool collapsible;
+  final bool initiallyExpanded;
 
-  static const _cardBg = Color(0xFFFFFFFF);
-  static const _titleColor = Color(0xFF2C3E50);
-  static const _bodyColor = Color(0xFF7A8B99);
-  static const _valueColor = Color(0xFF1A1A1A);
-  static const _chartBlue = Color(0xFF5B9BD5);
-  static const _chartLine = Color(0xFF4FC3F7);
+  @override
+  State<OracleWeatherDetailsGrid> createState() =>
+      _OracleWeatherDetailsGridState();
+
+  static const cardBg = Color(0xFFFFFFFF);
+  static const titleColor = Color(0xFF2C3E50);
+  static const bodyColor = Color(0xFF7A8B99);
+  static const valueColor = Color(0xFF1A1A1A);
+  static const chartBlue = Color(0xFF5B9BD5);
+  static const chartLine = Color(0xFF4FC3F7);
+}
+
+class _OracleWeatherDetailsGridState extends State<OracleWeatherDetailsGrid> {
+  late bool _expanded;
+
+  @override
+  void initState() {
+    super.initState();
+    _expanded = !widget.collapsible || widget.initiallyExpanded;
+  }
+
+  static const _titleColor = OracleWeatherDetailsGrid.titleColor;
+  static const _bodyColor = OracleWeatherDetailsGrid.bodyColor;
+  static const _valueColor = OracleWeatherDetailsGrid.valueColor;
+  static const _chartBlue = OracleWeatherDetailsGrid.chartBlue;
+  static const _chartLine = OracleWeatherDetailsGrid.chartLine;
 
   TextStyle _body(double size, {Color? color, FontWeight? fw}) =>
       GoogleFonts.ibmPlexSans(
@@ -46,40 +70,88 @@ class OracleWeatherDetailsGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final d = data;
+    final d = widget.data;
     final timeLabel = d != null
         ? '${d.fetchedAt.hour.toString().padLeft(2, '0')}:'
             '${d.fetchedAt.minute.toString().padLeft(2, '0')}'
         : '--:--';
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Row(
+    if (widget.collapsible) {
+      return Container(
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppColors.accent.withValues(alpha: 0.12)),
+        ),
+        child: Column(
           children: [
-            Expanded(
-              child: Text(
-                'Detalhes de meteorologia $timeLabel',
-                style: GoogleFonts.ibmPlexSans(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.textPrimary,
+            Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: () => setState(() => _expanded = !_expanded),
+                borderRadius: BorderRadius.circular(12),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 12,
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          'Meteorologia completa · $timeLabel',
+                          style: GoogleFonts.ibmPlexSans(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                      ),
+                      Icon(
+                        _expanded
+                            ? Icons.keyboard_arrow_up_rounded
+                            : Icons.keyboard_arrow_down_rounded,
+                        color: AppColors.accent,
+                        size: 22,
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
-            Text(
-              'SUGESTÕES PARA O SEU DIA >',
-              style: GoogleFonts.ibmPlexSans(
-                fontSize: 10,
-                fontWeight: FontWeight.w600,
-                color: AppColors.accent,
-                letterSpacing: 0.3,
+            if (_expanded)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(10, 0, 10, 10),
+                child: _gridBody(d, timeLabel),
               ),
-            ),
           ],
         ),
-        const SizedBox(height: 10),
-        if (loading && d == null)
+      );
+    }
+
+    return _gridBody(d, timeLabel, showHeader: true);
+  }
+
+  Widget _gridBody(
+    WeatherDetailsSnapshot? d,
+    String timeLabel, {
+    bool showHeader = false,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (showHeader) ...[
+          Text(
+            'Detalhes de meteorologia $timeLabel',
+            style: GoogleFonts.ibmPlexSans(
+              fontSize: 15,
+              fontWeight: FontWeight.w700,
+              color: AppColors.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 10),
+        ],
+        if (widget.loading && d == null)
           const Center(
             child: Padding(
               padding: EdgeInsets.all(24),
@@ -90,7 +162,7 @@ class OracleWeatherDetailsGrid extends StatelessWidget {
             ),
           )
         else if (d == null)
-          _emptyState(loadFailed)
+          _emptyState(widget.loadFailed)
         else
           LayoutBuilder(
             builder: (context, constraints) {
@@ -139,9 +211,9 @@ class OracleWeatherDetailsGrid extends StatelessWidget {
             'Puxa para baixo para actualizar',
             style: _body(11, color: AppColors.accent.withValues(alpha: 0.85)),
           ),
-          if (onRetry != null) ...[
+          if (widget.onRetry != null) ...[
             const SizedBox(height: 10),
-            TextButton(onPressed: onRetry, child: Text('Tentar novamente', style: _body(13, color: AppColors.accent, fw: FontWeight.w600))),
+            TextButton(onPressed: widget.onRetry, child: Text('Tentar novamente', style: _body(13, color: AppColors.accent, fw: FontWeight.w600))),
           ],
         ],
       ),
@@ -630,24 +702,25 @@ class OracleWeatherDetailsGrid extends StatelessWidget {
         title: 'Fase da Lua',
         body: LayoutBuilder(
           builder: (context, constraints) {
-            final moonSize = math.min(constraints.maxWidth, constraints.maxHeight) * 0.78;
-            return Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  SizedBox(
-                    width: moonSize,
-                    height: moonSize,
-                    child: CustomPaint(
-                      painter: _MoonCrescentPainter(d.moonPct / 100.0),
+            return FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.center,
+              child: SizedBox(
+                width: constraints.maxWidth,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    AspectRatio(
+                      aspectRatio: 1,
+                      child: CustomPaint(
+                        painter: _MoonCrescentPainter(d.moonPct / 100.0),
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text('${d.moonPct}%', style: _value(22)),
-                  Text('Fase da lua', style: _body(10)),
-                ],
+                    const SizedBox(height: 4),
+                    Text('${d.moonPct}%', style: _value(20)),
+                    Text('Fase da lua', style: _body(9)),
+                  ],
+                ),
               ),
             );
           },
@@ -662,19 +735,67 @@ class OracleWeatherDetailsGrid extends StatelessWidget {
         title: 'Marés',
         body: LayoutBuilder(
           builder: (context, constraints) {
-            return Center(
-              child: SizedBox(
-                width: constraints.maxWidth,
-                height: constraints.maxHeight,
-                child: CustomPaint(
-                  painter: _TideGaugePainter(
-                    heightM: d.tideHeightM ?? 0,
-                    phase: tidePhase,
-                    sparkline: d.tideSparkline,
-                    rangeM: d.tideRangeM,
+            final isRising = tidePhase == 'Enchente';
+            final isFalling = tidePhase == 'Vazante';
+            final phaseColor = isRising
+                ? const Color(0xFF00C853)
+                : isFalling
+                    ? const Color(0xFFFF6D00)
+                    : const Color(0xFF5C6BC0);
+            final phaseLabel = isRising
+                ? '↑ Enchente'
+                : isFalling
+                    ? '↓ Vazante'
+                    : tidePhase;
+            final heightVal = d.tideHeightM;
+            final heightStr = heightVal != null && heightVal != 0
+                ? '${heightVal.toStringAsFixed(2)} m'
+                : '—';
+
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Text(heightStr, style: _value(15)),
+                    if (d.tideRangeM != null) ...[
+                      const SizedBox(width: 6),
+                      Text(
+                        'Amp. ${d.tideRangeM!.toStringAsFixed(1)} m',
+                        style: _body(9, color: const Color(0xFF607D8B)),
+                      ),
+                    ],
+                    const Spacer(),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 7,
+                        vertical: 3,
+                      ),
+                      decoration: BoxDecoration(
+                        color: phaseColor.withValues(alpha: 0.14),
+                        borderRadius: BorderRadius.circular(7),
+                        border: Border.all(
+                          color: phaseColor.withValues(alpha: 0.45),
+                        ),
+                      ),
+                      child: Text(
+                        phaseLabel,
+                        style: _body(8, color: phaseColor, fw: FontWeight.w800),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 5),
+                Expanded(
+                  child: CustomPaint(
+                    painter: _TideChartPainter(
+                      phase: tidePhase,
+                      sparkline: d.tideSparkline,
+                    ),
                   ),
                 ),
-              ),
+              ],
             );
           },
         ),
@@ -781,7 +902,7 @@ class _RefCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.fromLTRB(14, 12, 14, 10),
       decoration: BoxDecoration(
-        color: OracleWeatherDetailsGrid._cardBg,
+        color: OracleWeatherDetailsGrid.cardBg,
         borderRadius: BorderRadius.circular(14),
         boxShadow: [
           BoxShadow(
@@ -799,7 +920,7 @@ class _RefCard extends StatelessWidget {
             style: GoogleFonts.ibmPlexSans(
               fontSize: 13,
               fontWeight: FontWeight.w700,
-              color: OracleWeatherDetailsGrid._titleColor,
+              color: OracleWeatherDetailsGrid.titleColor,
             ),
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
@@ -816,7 +937,7 @@ class _RefCard extends StatelessWidget {
               description,
               style: GoogleFonts.ibmPlexSans(
                 fontSize: 10,
-                color: OracleWeatherDetailsGrid._bodyColor,
+                color: OracleWeatherDetailsGrid.bodyColor,
                 height: 1.35,
               ),
               maxLines: 3,
@@ -866,7 +987,7 @@ class _StatusBadge extends StatelessWidget {
             style: GoogleFonts.ibmPlexSans(
               fontSize: 11,
               fontWeight: FontWeight.w700,
-              color: OracleWeatherDetailsGrid._titleColor,
+              color: OracleWeatherDetailsGrid.titleColor,
             ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
@@ -1918,22 +2039,19 @@ class _MoonCrescentPainter extends CustomPainter {
   bool shouldRepaint(covariant _MoonCrescentPainter old) => old.phase != phase;
 }
 
-/// Onda de maré isométrica 3D — ribbon extrudido, eixos legíveis (ALTA/BAIXA/AGORA).
-class _TideGaugePainter extends CustomPainter {
-  _TideGaugePainter({
-    required this.heightM,
+/// Curva de maré 2D — preenchimento gradiente, eixo ALTA/MÉDIA/BAIXA, PM/BM/AGORA.
+class _TideChartPainter extends CustomPainter {
+  _TideChartPainter({
     required this.phase,
     required this.sparkline,
-    this.rangeM,
   });
 
-  final double heightM;
   final String phase;
   final List<double> sparkline;
-  final double? rangeM;
 
   static const _cyan = Color(0xFF00E5FF);
   static const _deep = Color(0xFF01579B);
+
   void _text(
     Canvas canvas,
     String text,
@@ -1957,16 +2075,6 @@ class _TideGaugePainter extends CustomPainter {
     tp.paint(canvas, Offset(dx, at.dy - tp.height / 2));
   }
 
-  void _quad(Canvas canvas, List<Offset> pts, Paint paint) {
-    if (pts.length < 3) return;
-    final path = Path()..moveTo(pts[0].dx, pts[0].dy);
-    for (var i = 1; i < pts.length; i++) {
-      path.lineTo(pts[i].dx, pts[i].dy);
-    }
-    path.close();
-    canvas.drawPath(path, paint);
-  }
-
   List<double> _resample(int n) {
     final raw = sparkline.length >= 4
         ? sparkline
@@ -1986,135 +2094,122 @@ class _TideGaugePainter extends CustomPainter {
     return out;
   }
 
+  Path _smoothPath(List<Offset> points) {
+    final path = Path()..moveTo(points.first.dx, points.first.dy);
+    for (var i = 0; i < points.length - 1; i++) {
+      final p0 = points[i];
+      final p1 = points[i + 1];
+      final cpX = (p0.dx + p1.dx) / 2;
+      path.cubicTo(cpX, p0.dy, cpX, p1.dy, p1.dx, p1.dy);
+    }
+    return path;
+  }
+
   @override
   void paint(Canvas canvas, Size size) {
     final w = size.width;
     final h = size.height;
-    final isRising = phase == 'Enchente';
-    final isFalling = phase == 'Vazante';
-    final phaseColor = isRising
-        ? const Color(0xFF00E676)
-        : isFalling
-            ? const Color(0xFFFF6D00)
-            : const Color(0xFF5C6BC0);
+    const chartL = 2.0;
+    final chartR = w - 30;
+    const chartT = 2.0;
+    final chartB = h - 4;
+    final chartW = chartR - chartL;
+    final chartH = chartB - chartT;
 
-    // Fundo oceano → céu
-    canvas.drawRect(
-      Rect.fromLTWH(0, 0, w, h),
+    final bgRect = Rect.fromLTWH(0, 0, w, h);
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(bgRect, const Radius.circular(10)),
       Paint()
         ..shader = const LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: [Color(0xFFE3F2FD), Color(0xFFB3E5FC), Color(0xFF80DEEA)],
-          stops: [0.0, 0.45, 1.0],
-        ).createShader(Rect.fromLTWH(0, 0, w, h)),
+          colors: [Color(0xFFE8F4FD), Color(0xFFB3E5FC), Color(0xFF4DD0E1)],
+        ).createShader(bgRect),
     );
 
-    // Projeção isométrica
-    final origin = Offset(w * 0.48, h * 0.78);
-    const sx = 52.0;
-    const sy = 58.0;
-    const sz = 22.0;
-    const thick = 0.32;
-
-    Offset iso(double x, double elev, double z) => Offset(
-          origin.dx + (x - z) * sx,
-          origin.dy - elev * sy + (x + z) * sz,
-        );
-
-    final data = _resample(22);
+    final data = _resample(40);
     final minV = data.reduce(math.min);
     final maxV = data.reduce(math.max);
     final span = (maxV - minV).clamp(0.08, 6.0);
-    final amp = rangeM ?? span;
 
-    double norm(int i) => ((data[i] - minV) / span).clamp(0.05, 0.98);
-    final xs = List<double>.generate(data.length, (i) => i / (data.length - 1));
-
-    // Grelha isométrica no "chão"
-    for (var g = 0; g <= 4; g++) {
-      final x = g / 4;
-      canvas.drawLine(
-        iso(x, 0, 0),
-        iso(x, 0, thick),
-        Paint()..color = Colors.white.withValues(alpha: 0.35)..strokeWidth = 0.8,
-      );
-      canvas.drawLine(
-        iso(0, 0, x * thick),
-        iso(1, 0, x * thick),
-        Paint()..color = Colors.white.withValues(alpha: 0.25)..strokeWidth = 0.6,
-      );
+    double yAt(int i) {
+      final norm = ((data[i] - minV) / span).clamp(0.0, 1.0);
+      return chartB - norm * chartH * 0.82 - chartH * 0.06;
     }
 
-    // Praia isométrica (faixa dourada)
-    _quad(
-      canvas,
-      [iso(0, 0, 0), iso(1, 0, 0), iso(1, 0, thick * 0.55), iso(0, 0, thick * 0.55)],
+    double xAt(int i) => chartL + (i / (data.length - 1)) * chartW;
+    final points = List.generate(data.length, (i) => Offset(xAt(i), yAt(i)));
+
+    // Faixa praia
+    final beachH = chartH * 0.07;
+    canvas.drawRect(
+      Rect.fromLTWH(chartL, chartB - beachH, chartW, beachH + 6),
       Paint()
         ..shader = const LinearGradient(
           colors: [Color(0xFFFFE082), Color(0xFFF3C64D), Color(0xFFE6A817)],
-        ).createShader(Rect.fromLTWH(0, h * 0.55, w, h * 0.45)),
+        ).createShader(Rect.fromLTWH(chartL, chartB - beachH, chartW, beachH)),
     );
-    _text(canvas, 'PRAIA', iso(0.08, 0.02, 0.04), color: const Color(0xFF5D4037), size: 7, fw: FontWeight.w800);
 
-    // Ribbon 3D — segmentos de trás para a frente
-    for (var i = data.length - 2; i >= 0; i--) {
-      final x0 = xs[i];
-      final x1 = xs[i + 1];
-      final y0 = norm(i);
-      final y1 = norm(i + 1);
-      final t = i / (data.length - 2);
-
-      final top0 = iso(x0, y0, thick);
-      final top1 = iso(x1, y1, thick);
-      final top0f = iso(x0, y0, 0);
-      final top1f = iso(x1, y1, 0);
-      final bot0 = iso(x0, 0, 0);
-      final bot1 = iso(x1, 0, 0);
-      final bot1b = iso(x1, 0, thick);
-
-      final faceColor = Color.lerp(_deep, _cyan, t)!;
-
-      // Face frontal da onda
-      _quad(canvas, [top0f, top1f, bot1, bot0], Paint()..color = faceColor.withValues(alpha: 0.92));
-      // Topo brilhante
-      _quad(
-        canvas,
-        [top0f, top1f, top1, top0],
+    // Grelha + eixo direito
+    const levels = ['ALTA', 'MÉDIA', 'BAIXA'];
+    const levelColors = [Color(0xFF01579B), Color(0xFF00838F), Color(0xFF6D4C41)];
+    for (var i = 0; i < 3; i++) {
+      final t = 1.0 - i / 2.0;
+      final gy = chartB - t * chartH * 0.82 - chartH * 0.06;
+      canvas.drawLine(
+        Offset(chartL, gy),
+        Offset(chartR, gy),
         Paint()
-          ..shader = LinearGradient(
-            colors: [_cyan, faceColor],
-          ).createShader(Rect.fromPoints(top0f, top1)),
+          ..color = Colors.white.withValues(alpha: 0.55)
+          ..strokeWidth = 0.9,
       );
-      // Lateral
-      _quad(canvas, [top1f, top1, bot1b, bot1], Paint()..color = Color.lerp(faceColor, _deep, 0.45)!);
+      _text(
+        canvas,
+        levels[i],
+        Offset(w - 3, gy),
+        color: levelColors[i],
+        size: 7,
+        fw: FontWeight.w800,
+        align: TextAlign.right,
+      );
     }
 
-    // Linha de crista (glow)
-    final crest = Path();
-    for (var i = 0; i < data.length; i++) {
-      final p = iso(xs[i], norm(i), thick);
-      if (i == 0) {
-        crest.moveTo(p.dx, p.dy);
-      } else {
-        crest.lineTo(p.dx, p.dy);
-      }
-    }
+    // Preenchimento sob a curva
+    final fillPath = _smoothPath(points)
+      ..lineTo(points.last.dx, chartB)
+      ..lineTo(points.first.dx, chartB)
+      ..close();
     canvas.drawPath(
-      crest,
+      fillPath,
       Paint()
-        ..color = Colors.white.withValues(alpha: 0.85)
+        ..shader = LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            _cyan.withValues(alpha: 0.6),
+            const Color(0xFF0288D1).withValues(alpha: 0.78),
+            _deep.withValues(alpha: 0.92),
+          ],
+        ).createShader(Rect.fromLTWH(chartL, chartT, chartW, chartH)),
+    );
+
+    // Glow + crista
+    final linePath = _smoothPath(points);
+    canvas.drawPath(
+      linePath,
+      Paint()
+        ..color = _cyan.withValues(alpha: 0.4)
         ..style = PaintingStyle.stroke
-        ..strokeWidth = 2.2
-        ..strokeCap = StrokeCap.round,
+        ..strokeWidth = 7
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4),
     );
     canvas.drawPath(
-      crest.shift(const Offset(0, 1)),
+      linePath,
       Paint()
-        ..color = _cyan.withValues(alpha: 0.55)
+        ..color = Colors.white
         ..style = PaintingStyle.stroke
-        ..strokeWidth = 4
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3),
+        ..strokeWidth = 2.4
+        ..strokeCap = StrokeCap.round,
     );
 
     // PM / BM
@@ -2125,101 +2220,61 @@ class _TideGaugePainter extends CustomPainter {
       if (data[i] <= data[bmI]) bmI = i;
     }
 
-    void pin(int idx, String lbl, Color color) {
-      final base = iso(xs[idx], 0, thick * 0.5);
-      final top = iso(xs[idx], norm(idx) + 0.06, thick);
-      canvas.drawLine(base, top, Paint()..color = color.withValues(alpha: 0.7)..strokeWidth = 2.5);
+    void drawMarker(int idx, String label, Color color) {
+      final p = points[idx];
+      canvas.drawCircle(p, 9, Paint()..color = color.withValues(alpha: 0.22));
+      canvas.drawCircle(p, 5.5, Paint()..color = color);
       canvas.drawCircle(
-        top,
-        7,
-        Paint()
-          ..color = color.withValues(alpha: 0.35)
-          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 5),
+        Offset(p.dx - 1.5, p.dy - 1.5),
+        2,
+        Paint()..color = Colors.white,
       );
-      canvas.drawCircle(top, 5, Paint()..color = color);
-      canvas.drawCircle(Offset(top.dx - 1.5, top.dy - 1.5), 2, Paint()..color = Colors.white);
-      _text(canvas, lbl, Offset(top.dx, top.dy - 13), color: color, size: 8, fw: FontWeight.w900, align: TextAlign.center);
+      _text(
+        canvas,
+        label,
+        Offset(p.dx, p.dy - 11),
+        color: color,
+        size: 8,
+        fw: FontWeight.w900,
+        align: TextAlign.center,
+      );
     }
 
-    pin(pmI, 'PM', const Color(0xFF00E676));
-    pin(bmI, 'BM', const Color(0xFFFF6D00));
+    drawMarker(pmI, 'PM', const Color(0xFF00C853));
+    drawMarker(bmI, 'BM', const Color(0xFFFF6D00));
 
-    // AGORA — feixe vertical
-    final nowI = sparkline.isNotEmpty ? data.length - 1 : (data.length * 0.62).round();
-    final nowX = xs[nowI.clamp(0, data.length - 1)];
-    final nowBase = iso(nowX, 0, 0);
-    final nowTop = iso(nowX, norm(nowI) + 0.1, thick);
+    // AGORA
+    final nowI = sparkline.isNotEmpty
+        ? data.length - 1
+        : (data.length * 0.65).round().clamp(0, data.length - 1);
+    final nowP = points[nowI];
     canvas.drawLine(
-      nowBase,
-      nowTop,
+      Offset(nowP.dx, chartB - beachH),
+      Offset(nowP.dx, nowP.dy - 3),
       Paint()
-        ..shader = LinearGradient(
-          colors: [const Color(0xFFFF1744).withValues(alpha: 0.15), const Color(0xFFFF1744)],
-        ).createShader(Rect.fromPoints(nowBase, nowTop))
-        ..strokeWidth = 2.5,
+        ..color = const Color(0xFFFF1744).withValues(alpha: 0.45)
+        ..strokeWidth = 1.5,
     );
-    canvas.drawCircle(nowTop, 8, Paint()..color = const Color(0xFFFF1744).withValues(alpha: 0.3));
-    canvas.drawCircle(nowTop, 5.5, Paint()..color = const Color(0xFFFF1744));
-    canvas.drawCircle(Offset(nowTop.dx - 1, nowTop.dy - 1), 2, Paint()..color = Colors.white);
-    _text(canvas, 'AGORA', Offset(nowTop.dx, nowTop.dy + 12), color: const Color(0xFFFF1744), size: 7, fw: FontWeight.w900, align: TextAlign.center);
-
-    // Escala legível (sem MSL negativo)
-    _text(canvas, 'ALTA', Offset(w - 6, h * 0.22), color: _deep, size: 7, fw: FontWeight.w800, align: TextAlign.right);
-    _text(canvas, 'MÉDIA', Offset(w - 6, h * 0.42), color: const Color(0xFF00838F), size: 7, fw: FontWeight.w700, align: TextAlign.right);
-    _text(canvas, 'BAIXA', Offset(w - 6, h * 0.58), color: const Color(0xFF6D4C41), size: 7, fw: FontWeight.w800, align: TextAlign.right);
-    _text(canvas, 'MAR', iso(0.92, 0.55, thick * 0.7), color: _deep, size: 7, fw: FontWeight.w800);
-
-    // HUD — cota + fase
-    final hud = RRect.fromRectAndRadius(
-      Rect.fromLTWH(6, 4, w - 12, 22),
-      const Radius.circular(11),
+    canvas.drawCircle(
+      nowP,
+      8,
+      Paint()..color = const Color(0xFFFF1744).withValues(alpha: 0.28),
     );
-    canvas.drawRRect(
-      hud,
-      Paint()..color = Colors.white.withValues(alpha: 0.88),
-    );
-    canvas.drawRRect(
-      hud,
-      Paint()
-        ..color = _cyan.withValues(alpha: 0.4)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 1,
-    );
-
-    final heightStr = heightM != 0 ? '${heightM.toStringAsFixed(2)} m' : '—';
-    _text(canvas, heightStr, Offset(14, 15), color: const Color(0xFF1A1A1A), size: 14, fw: FontWeight.w900);
+    canvas.drawCircle(nowP, 5, Paint()..color = const Color(0xFFFF1744));
     _text(
       canvas,
-      'Amp. ${amp.toStringAsFixed(1)} m',
-      Offset(w * 0.42, 15),
-      color: const Color(0xFF607D8B),
-      size: 8,
-    );
-
-    final phaseLabel = isRising ? '↑ ENCHENTE' : isFalling ? '↓ VAZANTE' : phase.toUpperCase();
-    final pillW = phaseLabel.length * 5.2 + 14;
-    final pillRect = RRect.fromRectAndRadius(
-      Rect.fromLTWH(w - pillW - 10, 7, pillW, 16),
-      const Radius.circular(8),
-    );
-    canvas.drawRRect(pillRect, Paint()..color = phaseColor.withValues(alpha: 0.2));
-    _text(
-      canvas,
-      phaseLabel,
-      Offset(w - pillW / 2 - 10, 15),
-      color: phaseColor,
-      size: 7.5,
-      fw: FontWeight.w900,
+      'agora',
+      Offset(nowP.dx, nowP.dy + 10),
+      color: const Color(0xFFFF1744),
+      size: 7,
+      fw: FontWeight.w800,
       align: TextAlign.center,
     );
   }
 
   @override
-  bool shouldRepaint(covariant _TideGaugePainter old) =>
-      old.heightM != heightM ||
-      old.phase != phase ||
-      old.sparkline != sparkline ||
-      old.rangeM != rangeM;
+  bool shouldRepaint(covariant _TideChartPainter old) =>
+      old.phase != phase || old.sparkline != sparkline;
 }
 
 /// Correntes oceânicas — fluxo 3D com setas vivas.

@@ -131,11 +131,21 @@ class _LogbookScreenState extends State<LogbookScreen>
 
   void _applyPendingLogTab() {
     final pending = LogbookTabIndex.pendingTab.value;
-    if (pending == null || pending < 0 || pending >= _tabCtrl.length) return;
-    if (_tabCtrl.index != pending) {
-      _tabCtrl.animateTo(pending);
+    if (pending != null && pending >= 0 && pending < _tabCtrl.length) {
+      if (_tabCtrl.index != pending) {
+        _tabCtrl.animateTo(pending);
+      }
+      LogbookTabIndex.pendingTab.value = null;
     }
-    LogbookTabIndex.pendingTab.value = null;
+
+    final action = LogbookTabIndex.pendingAction.value;
+    if (action == null) return;
+    LogbookTabIndex.pendingAction.value = null;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      if (action == 'nova_captura') _showNovaCapturaSheet();
+      if (action == 'novo_post') _showNovoPostSheet();
+    });
   }
 
   @override

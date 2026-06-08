@@ -9,8 +9,10 @@ import 'logbook.dart';
 import 'perfil.dart';
 import '../features/home/presentation/inicio_dashboard_screen.dart';
 import '../core/l10n/aqx_l10n.dart';
+import '../core/location/gps_access.dart';
 import '../core/services/analytics_service.dart';
 import '../core/state/home_tab_index.dart';
+import 'widgets/location_access_sheet.dart';
 
 /// Ecrã principal com navegação entre os 6 ecrãs AQUANAUTIX.
 class AquanautixHome extends StatefulWidget {
@@ -22,6 +24,7 @@ class AquanautixHome extends StatefulWidget {
 
 class _AquanautixHomeState extends State<AquanautixHome> {
   int _idx = 0;
+  bool _locationPromptShown = false;
 
   void _setTab(int i) {
     setState(() => _idx = i);
@@ -32,6 +35,42 @@ class _AquanautixHomeState extends State<AquanautixHome> {
   void initState() {
     super.initState();
     HomeTabIndex.notifier.value = _idx;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      unawaited(_promptLocationIfNeeded());
+    });
+  }
+
+  Future<void> _promptLocationIfNeeded() async {
+    if (!mounted || _locationPromptShown) return;
+    final status = await GpsAccess.check();
+    if (status == GpsAccessStatus.granted || !mounted) return;
+
+    _locationPromptShown = true;
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      isDismissible: true,
+      builder: (ctx) => LocationAccessSheet(
+        status: status,
+        onEnableGps: () async {
+          Navigator.pop(ctx);
+          var next = await GpsAccess.request();
+          if (next != GpsAccessStatus.granted) {
+            await GpsAccess.openSystemSettings(next);
+          }
+        },
+        onSearchPlace: () {
+          Navigator.pop(ctx);
+          _openOraclePlaceSearch();
+        },
+      ),
+    );
+  }
+
+  void _openOraclePlaceSearch() {
+    _setTab(HomeTabIndex.oracleTabIndex);
+    HomeTabIndex.pendingOraclePlaceSearch.value = true;
   }
 
   static const _icons = [

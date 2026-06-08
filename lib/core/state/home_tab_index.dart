@@ -13,4 +13,8 @@ class HomeTabIndex {
   static const int profileTabIndex  = 5;
 
   static final ValueNotifier<int> notifier = ValueNotifier<int>(0);
+
+  /// Abre pesquisa de local no Oráculo (modo planeamento).
+  static final ValueNotifier<bool> pendingOraclePlaceSearch =
+      ValueNotifier<bool>(false);
 }
