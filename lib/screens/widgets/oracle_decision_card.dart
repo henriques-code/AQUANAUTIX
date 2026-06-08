@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
 import '../_shared.dart';
+import 'aqx_pressable.dart';
 
 /// Card «Decisão do Oráculo» — score, janela, razões, CTAs.
 class OracleDecisionCard extends StatelessWidget {
@@ -151,76 +151,23 @@ class OracleDecisionCard extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                child: _ActionBtn(
+                child: AqxNeonButton(
                   label: registerLabel,
                   icon: Icons.camera_alt_outlined,
-                  filled: true,
                   onTap: onRegisterCatch,
                 ),
               ),
               const SizedBox(width: 8),
               Expanded(
-                child: _ActionBtn(
+                child: AqxGlassButton(
                   label: mapLabel,
                   icon: Icons.map_outlined,
-                  filled: false,
                   onTap: onViewMap,
                 ),
               ),
             ],
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _ActionBtn extends StatelessWidget {
-  const _ActionBtn({
-    required this.label,
-    required this.icon,
-    required this.filled,
-    required this.onTap,
-  });
-
-  final String label;
-  final IconData icon;
-  final bool filled;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: filled ? kCyan : Colors.transparent,
-      borderRadius: BorderRadius.circular(10),
-      child: InkWell(
-        onTap: () {
-          HapticFeedback.mediumImpact();
-          onTap();
-        },
-        borderRadius: BorderRadius.circular(10),
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 6),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(10),
-            border: filled ? null : Border.all(color: kCyan.withValues(alpha: 0.55)),
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(icon, size: 16, color: filled ? Colors.black : kCyan),
-              const SizedBox(width: 5),
-              Flexible(
-                child: Text(
-                  label,
-                  style: mono(9, c: filled ? Colors.black : kCyan, ls: 0.3),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            ],
-          ),
-        ),
       ),
     );
   }

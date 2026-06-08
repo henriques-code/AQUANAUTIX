@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
 import '../../core/l10n/aqx_l10n.dart';
 import '../../core/location/gps_access.dart';
 import '../_shared.dart';
+import 'aqx_pressable.dart';
 
 /// Sheet ao entrar na app (ou no Oráculo) quando GPS bloqueado / negado.
 class LocationAccessSheet extends StatelessWidget {
@@ -73,82 +73,19 @@ class LocationAccessSheet extends StatelessWidget {
           const SizedBox(height: 10),
           Text(_body(t), style: ibm(14, c: Colors.white70)),
           const SizedBox(height: 16),
-          _PrimaryBtn(
+          AqxNeonButton(
             label: t.enableLocation,
+            icon: Icons.my_location_rounded,
             onTap: onEnableGps,
+            pulse: false,
           ),
           const SizedBox(height: 8),
-          _OutlineBtn(
+          AqxGlassButton(
             label: t.locationPromptChoosePlace,
+            icon: Icons.search_rounded,
             onTap: onSearchPlace,
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _PrimaryBtn extends StatelessWidget {
-  const _PrimaryBtn({required this.label, required this.onTap});
-
-  final String label;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: kAmber.withValues(alpha: 0.15),
-      borderRadius: BorderRadius.circular(10),
-      child: InkWell(
-        onTap: () {
-          HapticFeedback.selectionClick();
-          onTap();
-        },
-        borderRadius: BorderRadius.circular(10),
-        child: Container(
-          width: double.infinity,
-          padding: const EdgeInsets.symmetric(vertical: 12),
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: kAmber.withValues(alpha: 0.5)),
-          ),
-          child: Text(
-            label,
-            style: mono(11, c: kAmber, ls: 0.6),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _OutlineBtn extends StatelessWidget {
-  const _OutlineBtn({required this.label, required this.onTap});
-
-  final String label;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: () {
-          HapticFeedback.selectionClick();
-          onTap();
-        },
-        borderRadius: BorderRadius.circular(10),
-        child: Container(
-          width: double.infinity,
-          padding: const EdgeInsets.symmetric(vertical: 12),
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: kCyan.withValues(alpha: 0.4)),
-          ),
-          child: Text(label, style: mono(11, c: kCyan, ls: 0.4)),
-        ),
       ),
     );
   }

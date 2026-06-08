@@ -25,6 +25,7 @@ import '../core/state/logbook_tab_index.dart';
 import '../core/supabase_bootstrap.dart';
 import '../core/tides/oracle_hourly_score.dart';
 import '../features/home/domain/entities/hourly_condition.dart';
+import 'widgets/aqx_pressable.dart';
 import 'widgets/oracle_community_strip.dart';
 import 'widgets/oracle_decision_card.dart';
 import 'widgets/oracle_fishing_metrics_grid.dart';
@@ -437,49 +438,13 @@ class _OraculoScreenState extends State<OraculoScreen>
               for (final code in codes)
                 Padding(
                   padding: const EdgeInsets.only(right: 8),
-                  child: GestureDetector(
+                  child: AqxGlassChip(
+                    label: _speciesUiLabel(code),
+                    icon: Icons.set_meal_outlined,
+                    selected: ctx.species == code,
                     onTap: () {
-                      HapticFeedback.selectionClick();
                       FishingContextStore.instance.update(species: code);
                     },
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 7,
-                      ),
-                      decoration: BoxDecoration(
-                        color: ctx.species == code
-                            ? kCyan.withValues(alpha: 0.14)
-                            : kCard,
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(
-                          color: ctx.species == code
-                              ? kCyan
-                              : kCyan.withValues(alpha: 0.2),
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            Icons.set_meal_outlined,
-                            size: 14,
-                            color: ctx.species == code ? kCyan : kHint,
-                          ),
-                          const SizedBox(width: 5),
-                          Text(
-                            _speciesUiLabel(code),
-                            style: ibm(
-                              12,
-                              c: ctx.species == code ? kCyan : kHint,
-                              fw: ctx.species == code
-                                  ? FontWeight.w700
-                                  : FontWeight.w400,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
                   ),
                 ),
             ],
@@ -747,23 +712,14 @@ class _OraculoScreenState extends State<OraculoScreen>
           const SizedBox(height: 8),
 
           // ── Toggle COSTA / RIO ─────────────────────────
-          Container(
-            height: 34,
-            decoration: BoxDecoration(
-              color: kCard,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: kCyan.withValues(alpha: 0.12)),
-            ),
-            child: Row(children: [
-              _chip(Icons.waves_rounded, t.costa, !_rioMode, () => _toggle(false)),
-              _chip(
-                Icons.landscape_rounded,
-                t.rio,
-                _rioMode,
-                () => _toggle(true),
-                iconSize: 20,
-              ),
-            ]),
+          AqxGlassSegmentToggle(
+            leftIcon: Icons.waves_rounded,
+            leftLabel: t.costa,
+            rightIcon: Icons.landscape_rounded,
+            rightLabel: t.rio,
+            rightSelected: _rioMode,
+            onLeft: () => _toggle(false),
+            onRight: () => _toggle(true),
           ).animate().fadeIn(delay: 90.ms, duration: 380.ms).slideY(
                 begin: 0.05,
                 duration: 380.ms,
@@ -1212,41 +1168,16 @@ class _OraculoScreenState extends State<OraculoScreen>
             Row(
               children: [
                 Expanded(
-                  child: GestureDetector(
+                  child: AqxNeonCompactButton(
+                    label: t.enableLocation,
                     onTap: () => unawaited(_enableLocation(t)),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 8),
-                      alignment: Alignment.center,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: kAmber.withValues(alpha: 0.55)),
-                        color: kAmber.withValues(alpha: 0.1),
-                      ),
-                      child: Text(
-                        t.enableLocation,
-                        style: mono(9, c: kAmber, ls: 0.4),
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
                   ),
                 ),
                 const SizedBox(width: 8),
                 Expanded(
-                  child: GestureDetector(
+                  child: AqxGlassButton(
+                    label: t.searchPlace,
                     onTap: () => _openPlaceSearch(t),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 8),
-                      alignment: Alignment.center,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: kCyan.withValues(alpha: 0.45)),
-                      ),
-                      child: Text(
-                        t.searchPlace,
-                        style: mono(9, c: kCyan, ls: 0.4),
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
                   ),
                 ),
               ],
@@ -2161,45 +2092,6 @@ class _OraculoScreenState extends State<OraculoScreen>
           SizedBox(width: 88, child: Text(k, style: ibm(13, c: kHint))),
           Expanded(child: Text(v, style: ibm(13, c: Colors.white, fw: FontWeight.w600))),
         ]),
-      );
-
-  // ── Toggle chip ───────────────────────────────────────────
-  Widget _chip(
-    IconData icon,
-    String label,
-    bool sel,
-    VoidCallback onTap, {
-    double iconSize = 18,
-  }) =>
-      Expanded(
-        child: GestureDetector(
-          onTap: onTap,
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 220),
-            margin: const EdgeInsets.all(2),
-            decoration: BoxDecoration(
-              color: sel ? kCyan.withValues(alpha: 0.10) : Colors.transparent,
-              borderRadius: BorderRadius.circular(9),
-              border: sel ? Border.all(color: kCyan.withValues(alpha: 0.5)) : null,
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  icon,
-                  size: iconSize,
-                  color: sel ? kCyan : kHint.withValues(alpha: 0.85),
-                ),
-                const SizedBox(width: 6),
-                Text(label,
-                    style: orb(12,
-                        c: sel ? kCyan : kHint,
-                        fw: sel ? FontWeight.w700 : FontWeight.w400,
-                        ls: 1.2)),
-              ],
-            ),
-          ),
-        ),
       );
 
   Widget _melhorJanelaBar(_ModoData d, AqxL10n t) => Container(

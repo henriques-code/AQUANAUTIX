@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
 import '../_shared.dart';
 import '../../core/community/community_post.dart';
+import 'aqx_pressable.dart';
 
 /// Bloco Comunidade Ghost no Oráculo — feed compacto + CTAs.
 class OracleCommunityStrip extends StatelessWidget {
@@ -129,14 +129,14 @@ class OracleCommunityStrip extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                child: _OutlineBtn(
+                child: AqxGlassButton(
                   label: viewLabel,
                   onTap: onViewCommunity,
                 ),
               ),
               const SizedBox(width: 8),
               Expanded(
-                child: _OutlineBtn(
+                child: AqxNeonCompactButton(
                   label: shareLabel,
                   onTap: onShare,
                 ),
@@ -144,43 +144,6 @@ class OracleCommunityStrip extends StatelessWidget {
             ],
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _OutlineBtn extends StatelessWidget {
-  const _OutlineBtn({required this.label, required this.onTap});
-
-  final String label;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: () {
-          HapticFeedback.selectionClick();
-          onTap();
-        },
-        borderRadius: BorderRadius.circular(8),
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 9, horizontal: 6),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: kCyan.withValues(alpha: 0.4)),
-          ),
-          child: Center(
-            child: Text(
-              label,
-              style: mono(9, c: kCyan, ls: 0.3),
-              textAlign: TextAlign.center,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-        ),
       ),
     );
   }
