@@ -16,8 +16,8 @@ AQUANAUTIX/
 │   ├── main.dart                 # Bootstrap: analytics, Supabase, stores, orientação
 │   ├── app.dart                  # MaterialApp / tema
 │   ├── screens/                  # Oráculo, Mapa, Vision, Logbook, Perfil, Paywall, …
-│   │   └── widgets/              # oracle_weather_details_grid.dart (16 cartões meteorologia 3D)
-│   └── core/                     # analytics, tides (weather_details_snapshot), vision, species, state, Supabase
+│   │   └── widgets/              # Oráculo: aqx_pressable (3D), decision, metrics, timeline, community, weather grid, location sheet
+│   └── core/                     # analytics, tides, location/gps_access, community, vision, species, state, Supabase
 │   # Nota: roadmap histórico previa lib/features/* (auth, prediction, …); o código actual
 │   # está maioritariamente em screens/ + core/. Alinhar docs ao abrir PRs de refactor.
 ├── assets/
@@ -121,8 +121,8 @@ flutter pub get
 # Verificar dispositivos
 flutter devices
 
-# Correr no Android físico
-flutter run -d <device-id>
+# Correr no Android físico (recomendado — env + secrets locais)
+.\tools\run_dev.ps1 -d <device-id>
 
 # Correr no Windows (limitado: sem Mapbox nem vídeo)
 flutter run -d windows
@@ -153,8 +153,10 @@ vercel --prod
 |---|---|
 | Splash animada (AQUANAUTIX emerge) | ✅ Funcional |
 | Login / Registo (Supabase Auth) | ✅ Funcional |
-| Modo demonstração offline | ✅ Funcional |
-| Oráculo + grelha meteorologia (16 cartões 3D, Marés/Correntes) | ✅ Open‑Meteo + marine API |
+| GPS + fallback regional (sem dados demo) | ✅ Sheet ao entrar · banner Oráculo · Open‑Meteo |
+| Oráculo Sprint 1 (decisão, 6 métricas, timeline 12h, comunidade) | ✅ Dados reais · CTAs Log/Mapa · botões 3D mix A+B |
+| Oráculo + grelha meteorologia (16 cartões, accordion) | ✅ Open‑Meteo + marine API |
+| Pesquisa local Nominatim (modo planeamento) | ✅ Funcional |
 | Calendário solunar | ✅ Estrutura completa |
 | Mapa Mapbox + spots | ✅ Android/iOS (sem Windows) |
 | Vision Scanner IA | ✅ Estrutura completa |
@@ -162,8 +164,7 @@ vercel --prod
 | Compliance PT/ES | ✅ Espécies + medidas legais |
 | Perfil + Planos | ✅ UI com preços correctos |
 | RevenueCat | 🔄 A configurar produtos |
-| Vídeo fundo login | 🔄 Asset a actualizar |
-| Package name | 🔄 `com.example.aquanautix` → branded |
+| Package name | ✅ `com.aquanautix.app` |
 
 ### Site V2
 | Ficheiro | Estado |
@@ -177,11 +178,11 @@ vercel --prod
 
 ## Próximos passos prioritários
 
-1. **Package name** — mudar `com.example.aquanautix` → `com.aquanautix.app`
-2. **Vídeo/imagem login** — substituir placeholder por imagem underwater real
-3. **RevenueCat** — configurar produtos PRO (€4.99/mês, €39.99/ano) e ELITE (€59.99/ano)
-4. **Testes Android** — validar todos os ecrãs no telemóvel físico
-5. **Domínio** — apontar `aquanautix.app` para Vercel
+1. **RevenueCat** — configurar produtos PRO (€4.99/mês, €39.99/ano) e ELITE (€59.99/ano)
+2. **Push Janela de Ouro** — notificações PRO (UI EM BREVE)
+3. **Testes Android** — validar Oráculo com GPS activo/bloqueado no Xiaomi
+4. **Domínio** — apontar `aquanautix.app` para Vercel
+5. **Onboarding Flutter** — ligar `onboarding.dart` ao arranque (primeira vez)
 
 ---
 

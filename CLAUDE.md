@@ -151,14 +151,14 @@ vercel --prod
 |---|---|
 | Shell / `home.dart` | ✅ **6 tabs**: Início · Oráculo · Mapa · Vision · Log · Perfil |
 | Início (`features/home/`) | ✅ WeatherCard compacto (4 métricas, barra solunar animada), Condições Favoráveis com score Oráculo, spots reais (`assets/marketing/spots/`), comunidade 3 entradas compactas (`assets/marketing/catches/`) |
-| Oráculo (`oraculo.dart`) | ✅ Índice, COSTA/RIO, Open‑Meteo, **pesquisa Nominatim**, **grelha «Detalhes de meteorologia»** (16 cartões brancos + CustomPainters 3D), cartões **Marés** (onda isométrica) e **Correntes** (marine API), pull-to-refresh, isco/cana/técnica, i18n PT/ES |
+| Oráculo (`oraculo.dart`) | ✅ **Sprint 1:** card Decisão, 6 métricas pesca, timeline 12h, comunidade Ghost, GPS/sheet localização, fallback regional, accordion meteorologia 16 cartões, COSTA/RIO, Nominatim, isco/cana/técnica, CTAs Log/Mapa · **botões 3D mix A+B** (`aqx_pressable.dart`) |
 | Mapa (`mapa.dart`) | ✅ `flutter_map` · COSTA: ArcGIS satélite · RIO: OSM · OpenSeaMap toggle · pins custom Canvas · spots PT/ES · lojas ≤5 km · sheet colapsável |
 | Vision (`vision.dart`) | ✅ Scanner + compliance espécies |
 | Logbook (`logbook.dart`) | ✅ Registo de capturas |
 | Perfil / paywall | 🔄 RevenueCat a consolidar |
 | Auth (Supabase) | ✅ Login, Google Sign-In, recuperação de password |
 | Splash | ✅ Vídeo de fundo + barra de progresso |
-| Comunidade (core) | 🔄 Repositório/store preparados |
+| Comunidade (core + Oráculo strip) | ✅ Store + demo offline Ghost · CTAs para Log |
 
 ### Dependências actuais (17)
 `google_fonts` · `http` · `image_picker` · `geolocator` · `shared_preferences` · `url_launcher` · `supabase_flutter` · `package_info_plus` · `purchases_flutter` · `mapbox_maps_flutter` · `flutter_map` · `latlong2` · `flutter_animate` · `video_player` · `google_sign_in` + `flutter_localizations` + `flutter`
@@ -173,10 +173,10 @@ vercel --prod
 
 ### Pendente prioritário
 1. RevenueCat — configurar produtos PRO/ELITE e gates
-2. Onboarding Flutter — ligar `onboarding.dart` ao arranque (só na primeira vez)
-3. Google Sign-In — testar end-to-end em dispositivo com SHA-1 registado
-4. Domínio `aquanautix.app`
-5. Formspree endpoint real na waitlist
+2. Push Janela de Ouro (P5) — backend + permissões
+3. Onboarding Flutter — ligar `onboarding.dart` ao arranque (só na primeira vez)
+4. Google Sign-In — testar end-to-end em dispositivo com SHA-1 registado
+5. Domínio `aquanautix.app`
 
 ---
 
