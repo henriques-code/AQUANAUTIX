@@ -16,7 +16,7 @@ AQUANAUTIX/
 │   ├── main.dart                 # Bootstrap: analytics, Supabase, stores, orientação
 │   ├── app.dart                  # MaterialApp / tema
 │   ├── screens/                  # Oráculo, Mapa, Vision, Logbook, Perfil, Paywall, …
-│   │   └── widgets/              # Oráculo: aqx_pressable (3D), decision, metrics, timeline, community, weather grid, location sheet
+│   │   └── widgets/              # Oráculo: aqx_pressable (3D + AqxMeteoRevealButton), decision, conditions_fold, metrics, timeline, community, weather grid, location sheet
 │   └── core/                     # analytics, tides, location/gps_access, community, vision, species, state, Supabase
 │   # Nota: roadmap histórico previa lib/features/* (auth, prediction, …); o código actual
 │   # está maioritariamente em screens/ + core/. Alinhar docs ao abrir PRs de refactor.
@@ -26,6 +26,9 @@ AQUANAUTIX/
 │   ├── icons/fish_silhouette.svg
 │   └── data/
 ├── android/                      # Plataforma Android (gerada)
+├── supabase/                     # Backend: migrations SQL + README_setup.md
+│   ├── migrations/
+│   └── scripts/
 ├── windows/                      # Plataforma Windows (gerada)
 ├── Site V2/                      # Site marketing + protótipos
 │   ├── index.html                # Landing principal (produção Vercel)
@@ -153,9 +156,10 @@ vercel --prod
 |---|---|
 | Splash animada (AQUANAUTIX emerge) | ✅ Funcional |
 | Login / Registo (Supabase Auth) | ✅ Funcional |
-| GPS + fallback regional (sem dados demo) | ✅ Sheet ao entrar · banner Oráculo · Open‑Meteo |
-| Oráculo Sprint 1 (decisão, 6 métricas, timeline 12h, comunidade) | ✅ Dados reais · CTAs Log/Mapa · botões 3D mix A+B |
-| Oráculo + grelha meteorologia (16 cartões, accordion) | ✅ Open‑Meteo + marine API |
+| GPS + fallback regional (sem dados demo) | ✅ Banner inline no Início · cache GPS · Open‑Meteo regional |
+| Oráculo Sprint 1 + fold condições 12h | ✅ OracleConditionsFold · selector espécie no card isco · CTAs Log/Mapa · botões 3D |
+| Oráculo + grelha meteorologia (16 cartões, accordion) | ✅ Open‑Meteo + marine API · AqxMeteoRevealButton |
+| Fix MIUI (Início/Oráculo responsivos pós-login) | ✅ Tabs lazy · sem modal GPS automático · layout Oráculo estável |
 | Pesquisa local Nominatim (modo planeamento) | ✅ Funcional |
 | Calendário solunar | ✅ Estrutura completa |
 | Mapa Mapbox + spots | ✅ Android/iOS (sem Windows) |
@@ -180,9 +184,8 @@ vercel --prod
 
 1. **RevenueCat** — configurar produtos PRO (€4.99/mês, €39.99/ano) e ELITE (€59.99/ano)
 2. **Push Janela de Ouro** — notificações PRO (UI EM BREVE)
-3. **Testes Android** — validar Oráculo com GPS activo/bloqueado no Xiaomi
+3. **Onboarding Flutter** — ligar `onboarding.dart` ao arranque (primeira vez)
 4. **Domínio** — apontar `aquanautix.app` para Vercel
-5. **Onboarding Flutter** — ligar `onboarding.dart` ao arranque (primeira vez)
 
 ---
 

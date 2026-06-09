@@ -52,6 +52,7 @@ AQUANAUTIX/
 │   ├── community-prototype.html, mapa-prototype.html
 │   ├── images/, package.json, vercel.json, .vercel/, tools/
 ├── tools/                      # Scripts env / Flutter run-build (local)
+├── supabase/                   # Migrations SQL + config.toml (Supabase CLI)
 ├── CLAUDE.md
 ├── AQUANAUTIX_CONTEXT.md
 └── .cursorrules
@@ -149,16 +150,17 @@ vercel --prod
 ### App Flutter
 | Área | Estado |
 |---|---|
-| Shell / `home.dart` | ✅ **6 tabs**: Início · Oráculo · Mapa · Vision · Log · Perfil |
-| Início (`features/home/`) | ✅ WeatherCard compacto (4 métricas, barra solunar animada), Condições Favoráveis com score Oráculo, spots reais (`assets/marketing/spots/`), comunidade 3 entradas compactas (`assets/marketing/catches/`) |
-| Oráculo (`oraculo.dart`) | ✅ **Sprint 1:** card Decisão, 6 métricas pesca, timeline 12h, comunidade Ghost, GPS/sheet localização, fallback regional, accordion meteorologia 16 cartões, COSTA/RIO, Nominatim, isco/cana/técnica, CTAs Log/Mapa · **botões 3D mix A+B** (`aqx_pressable.dart`) |
-| Mapa (`mapa.dart`) | ✅ `flutter_map` · COSTA: ArcGIS satélite · RIO: OSM · OpenSeaMap toggle · pins custom Canvas · spots PT/ES · lojas ≤5 km · sheet colapsável |
+| Shell / `home.dart` | ✅ **6 tabs lazy** (`_tabCache` — só tab activa montada; evita bloqueio MIUI) · Início · Oráculo · Mapa · Vision · Log · Perfil |
+| Início (`features/home/`) | ✅ WeatherCard compacto, Condições Favoráveis score Oráculo, spots/comunidade com assets locais · **fallback imediato** + load background · banner GPS **inline** (não modal) |
+| Oráculo (`oraculo.dart`) | ✅ Sprint 1 + **OracleConditionsFold** (métricas+timeline 12h) · selector espécie no card isco/cana · CTAs Log/Mapa (`pendingMapFocus`) · meteorologia accordion + `AqxMeteoRevealButton` · fallback regional · **fix ecrã preto MIUI** (sem `IntrinsicHeight`/animate em scroll) |
+| Mapa (`mapa.dart`) | ✅ `flutter_map` · COSTA: ArcGIS satélite · RIO: OSM · OpenSeaMap toggle · pins custom Canvas · spots PT/ES · lojas ≤5 km · foco via `pendingMapFocus` |
 | Vision (`vision.dart`) | ✅ Scanner + compliance espécies |
-| Logbook (`logbook.dart`) | ✅ Registo de capturas |
+| Logbook (`logbook.dart`) | ✅ Registo capturas · fix `_NovaCapturaSheet` · navegação desde Oráculo |
 | Perfil / paywall | 🔄 RevenueCat a consolidar |
 | Auth (Supabase) | ✅ Login, Google Sign-In, recuperação de password |
 | Splash | ✅ Vídeo de fundo + barra de progresso |
 | Comunidade (core + Oráculo strip) | ✅ Store + demo offline Ghost · CTAs para Log |
+| GPS (`gps_access.dart`) | ✅ Cache memória · `tryGetFixQuick()` · single-flight · fallback stale/regional |
 
 ### Dependências actuais (17)
 `google_fonts` · `http` · `image_picker` · `geolocator` · `shared_preferences` · `url_launcher` · `supabase_flutter` · `package_info_plus` · `purchases_flutter` · `mapbox_maps_flutter` · `flutter_map` · `latlong2` · `flutter_animate` · `video_player` · `google_sign_in` + `flutter_localizations` + `flutter`
@@ -177,6 +179,13 @@ vercel --prod
 3. Onboarding Flutter — ligar `onboarding.dart` ao arranque (só na primeira vez)
 4. Google Sign-In — testar end-to-end em dispositivo com SHA-1 registado
 5. Domínio `aquanautix.app`
+
+### Notas MIUI / Android (Xiaomi)
+- **Tabs lazy** em `home.dart` — não usar `IndexedStack` com 6 ecrãs pesados (bloqueia toques).
+- **Sem modal GPS automático** ao login — usar banner inline no Início.
+- **Oráculo:** evitar `flutter_animate` + `IntrinsicHeight` dentro de `SingleChildScrollView`.
+- **Install bloqueado:** `adb push build/app/outputs/flutter-apk/app-debug.apk` + `adb shell pm install -r -t /data/local/tmp/app-debug.apk`.
+- **Dispositivo teste:** `WWZLYDXWYXT8PV5D` · `.\tools\run_dev.ps1 -d WWZLYDXWYXT8PV5D`.
 
 ---
 

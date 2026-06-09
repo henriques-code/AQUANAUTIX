@@ -18,23 +18,31 @@ Notas:
 
 ## 2) Migracoes SQL
 
-Aplicar migracao de rate limit persistente:
+### No repo (`supabase/migrations/`) — aplicar com `supabase db push` ou SQL Editor
+
+| Ficheiro | Notas |
+|----------|-------|
+| `20260427_app_insights.sql` | Insights v1 (jsonb) |
+| `20260427_app_insights_v2.sql` | Insights v2 + seed |
+| `20260503_community.sql` | Comunidade Ghost + RLS |
+| `20260512000000_catch_photos.sql` | PostGIS + RLS |
+| `20260512000001_catch_photos_lat_lng.sql` | Trigger lat/lng |
+| `20260609000000_analytics_events.sql` | Analytics funil (RLS insert-only cliente) |
+
+Guia completo: `supabase/README_setup.md`.
+
+### Referenciadas mas ainda nao versionadas no repo
 
 - `supabase/migrations/202604150001_create_function_rate_limits.sql`
 - `supabase/migrations/202604150002_market_mvp_backend.sql`
 
-Validar que a tabela existe:
+Quando existirem, validar:
 
-- `public.function_rate_limits`
-
-Validar politicas/permissoes:
-
-- `RLS` ativa na tabela
-- `anon` e `authenticated` sem acesso direto
+- Tabela `public.function_rate_limits` com RLS (anon/authenticated sem acesso directo)
 
 ## 3) Deploy de Edge Functions
 
-Publicar:
+**Estado:** pasta `supabase/functions/` ainda nao existe neste repo. Quando adicionada, publicar:
 
 - `supabase/functions/oracle/index.ts`
 - `supabase/functions/vision-identify/index.ts`

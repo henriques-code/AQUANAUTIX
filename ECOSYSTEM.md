@@ -14,7 +14,7 @@
 | **Mapbox** | Mapas, batimetria, estilos | Site (`index.html` GL JS v3.3.0) + App (`mapbox_maps_flutter`) | `MAPBOX_ACCESS_TOKEN` + `MAPBOX_DOWNLOAD_TOKEN` no `.env` |
 | **OpenAI** | Vision Scanner (espécie/peso/legal), Assistente IA | App → Supabase Edge Function `vision-identify` | `OPENAI_API_KEY` no `.env` (nunca expor no cliente) |
 | **RevenueCat** | Subscriptions PRO / ELITE | App Flutter (`purchases_flutter`) | `REVENUECAT_API_KEY_ANDROID` + `REVENUECAT_ENTITLEMENT_ID` no `.env` |
-| **Supabase `analytics_events`** | Funil, paywall, North Star, D1/D7 (via params) | App (`AnalyticsService`) + ecrã `GrowthDashboardScreen` | Tabela + políticas RLS (escrita cliente; leitura para equipa) a confirmar no projecto Supabase |
+| **Supabase `analytics_events`** | Funil, paywall, North Star, D1/D7 (via params) | App (`AnalyticsService`) | Migration `20260609000000_analytics_events.sql` — RLS insert cliente, leitura equipa via dashboard/service role |
 
 ---
 
@@ -27,7 +27,7 @@
 | **OpenWeather** | Previsão meteorológica | App Flutter (`OPENWEATHER_API_KEY`) |
 | **Google Places** | Lojas de isco próximas | App Flutter (`GOOGLE_PLACES_API_KEY` — ainda vazia) |
 | **ArcGIS / GEBCO** | Batimetria global (fallback + tiles) | `BATHYMETRY_TILES_URL` no `.env` |
-| **Open-Meteo** | Meteo gratuita (sem API key) | Só em `app-demo.html` (protótipo) |
+| **Open-Meteo** | Marés, tempo, marine API (sem API key) | App Flutter (`lib/core/tides/`) + protótipo `app-demo.html` |
 | **OpenSeaMap** | Tiles náuticos | `index.html` overlay |
 | **CDN CloudFlare** | SunCalc (solunar) | `index.html` |
 | **App Store / Google Play** | Lojas de app | Links em `index.html` (ainda placeholders) |
@@ -36,20 +36,38 @@
 
 ## 3. Backend Supabase — Estado no Repo
 
-> **ATENÇÃO:** Não existe pasta `supabase/` neste workspace.
-> As migrations e Edge Functions mencionadas em `SECURITY_DEPLOY_CHECKLIST.md` **vivem noutro repositório** ou ainda não foram adicionadas aqui.
+A pasta **`supabase/`** existe na raiz do mono-repo (versionada no Git).
 
-Edge Functions referenciadas no checklist (a confirmar/localizar):
-- `supabase/functions/oracle/index.ts`
-- `supabase/functions/vision-identify/index.ts`
-- `supabase/functions/market-recommendations/index.ts`
-- `supabase/functions/market-track-click/index.ts`
+```
+supabase/
+├── config.toml
+├── README_setup.md
+├── migrations/     (6 ficheiros SQL — ver tabela abaixo)
+└── scripts/check_bucket.sql
+```
 
-Migrations:
-- `supabase/migrations/202604150001_create_function_rate_limits.sql`
-- `supabase/migrations/202604150002_market_mvp_backend.sql`
+### Migrations versionadas (aplicar por ordem)
 
-**Acção:** confirmar onde vive o repo Supabase e ligar/documentar aqui.
+| Ficheiro | Conteúdo | App Flutter |
+|----------|----------|-------------|
+| `20260427_app_insights.sql` | `app_insights` (jsonb) | fallback insights |
+| `20260427_app_insights_v2.sql` | `app_insights_v2` + seed PT/ES | `AppInsightsService` |
+| `20260503_community.sql` | comunidade Ghost + RLS | `CommunityRepository` |
+| `20260512000000_catch_photos.sql` | `catch_photos` + PostGIS | `CatchPhotoRepository`, mapa |
+| `20260512000001_catch_photos_lat_lng.sql` | trigger lat/lng → geometry | inserts PostgREST |
+| `20260609000000_analytics_events.sql` | funil / paywall | `AnalyticsService` |
+
+### Pendente no repo (só referenciado em checklists)
+
+| Item | Estado |
+|------|--------|
+| `202604150001_create_function_rate_limits.sql` | ❌ não versionado |
+| `202604150002_market_mvp_backend.sql` | ❌ não versionado |
+| Edge Functions (`oracle`, `vision-identify`, `market-*`) | ❌ pasta `supabase/functions/` ausente |
+
+**Deploy SQL:** `supabase db push` (CLI) ou SQL Editor — ver `supabase/README_setup.md`.
+
+**Projecto remoto:** `ycmvqokcfzxkpinvcyhk.supabase.co`
 
 ---
 
@@ -119,7 +137,7 @@ Um deles pode ser eliminado; confirma qual série é a correcta antes de apagar.
 | `assets/images/login_bg.jpg` com 91 bytes | `assets/images/` | Fallback de imagem não funciona | Substituir por imagem real underwater |
 | `MapScreen` e `ProfileScreen` paralelos às tabs | `lib/features/map/` e `profile/presentation/` | UX duplicada no telemóvel | Refactor: tabs usam sempre `MapPage` e `ProfilePage` |
 | Token Mapbox exposto em `index.html` | `Site V2/index.html` ~linha 3447 | Risco se sem restrição de domínio | Restringir no dashboard Mapbox a `aquanautix.vercel.app` |
-| Backend Supabase não está neste repo | — | Risco de perda / desalinhamento | Localizar e documentar (ou adicionar pasta `supabase/`) |
+| Migrations Supabase em falta (rate limits, Edge Functions) | `supabase/` | Checklist de segurança incompleto | Adicionar SQL/functions ao repo ou documentar só no dashboard |
 
 ---
 
@@ -166,7 +184,8 @@ Criar offering `default` com os packages:
 ```
 Site:  editar Site V2/ → vercel --prod (a partir de Site V2/)
 App:   flutter build apk / ios → submeter às lojas
-Supabase: supabase functions deploy (repo a confirmar)
+Supabase: supabase link && supabase db push  (migrations em supabase/migrations/)
+          supabase functions deploy           (quando functions/ existir no repo)
 ```
 
 ---
@@ -177,7 +196,7 @@ Supabase: supabase functions deploy (repo a confirmar)
 2. ✅ **Duplicado** `app_s3_vision.png` eliminado (hash idêntico a `app_s2_mapa.png`).
 3. ✅ **`pubspec.yaml`** desacoplado de `Site V2/video_bg.mp4`; splash usa `assets/videos/login_bg.mp4`.
 4. ✅ **`DashboardPage`** usa `AppTabStore` para Mapa (tab 1) e Perfil (tab 4); `MapScreen`/`ProfileScreen` já não são chamados a partir do Oráculo.
-5. 🟡 **Confirmar** onde vivem as Edge Functions / migrations Supabase (não estão neste repo).
+5. 🟡 **Adicionar** migrations em falta (rate limits) e Edge Functions ao repo `supabase/`.
 6. 🟡 **Restringir token Mapbox** no dashboard Mapbox a `aquanautix.vercel.app`.
 7. 🟢 **Preencher** `GOOGLE_PLACES_API_KEY` para activar lojas de isco na app.
 8. 🟢 **Avaliar** se `MapScreen` e `ProfileScreen` (legado) podem ser eliminados após confirmação de que nenhuma outra rota os chama.

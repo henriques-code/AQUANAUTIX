@@ -1,6 +1,6 @@
 # AQUANAUTIX — Central de contexto
 
-**Última revisão estrutural:** 8 Jun 2026 — Oráculo Sprint 1 (decisão, métricas, timeline 12h, GPS, comunidade).
+**Última revisão estrutural:** 9 Jun 2026 — fixes MIUI (Início/Oráculo responsivos), fold condições 12h, selector espécie no card isco.
 
 ## Estrutura do repositório (mono-repo)
 
@@ -23,6 +23,10 @@ AQUANAUTIX/
 │   ├── package.json          # Puppeteer local + npm scripts de screenshot
 │   └── tools/                # screenshot.js … screenshot4.js → grava em images/
 ├── tools/                    # Raiz: `run_dev.ps1` (arranque com env), `convert_mockups.py`
+├── supabase/                 # Migrations SQL + setup (Auth, DB, Storage)
+│   ├── migrations/           # app_insights, community, catch_photos
+│   ├── scripts/
+│   └── README_setup.md
 ├── CLAUDE.md                 # Instruções para assistentes IA
 ├── .cursorrules              # Regras do projecto (PT)
 └── AQUANAUTIX_CONTEXT.md     # Este ficheiro
@@ -45,12 +49,13 @@ AQUANAUTIX/
 
 - **`lib/main.dart` / `app.dart`:** bootstrap Supabase, RevenueCat, analytics, tema, `flutter_localizations` e locale derivado de GPS (PT/ES).
 - **Navegação:** `AquanautixHome` com **6 tabs** — Início · Oráculo · Mapa · Vision · Log · Perfil (via `HomeTabIndex`).
-- **Ecrãs:** `home` (6 tabs; WeatherCard compacto + barra solunar, Condições Favoráveis horárias com score Oráculo, grid 3×spots com fotos locais, comunidade 3 entradas compactas com fotos de espécies), `oraculo` (**Sprint 1 Jun 2026:** card **Decisão do Oráculo**, grelha **6 métricas pesca** 2×3, **timeline 12h** score+maré, strip **Comunidade Ghost**, accordion meteorologia 16 cartões, COSTA/RIO, chips espécie, pesquisa Nominatim, fallback **regional Open‑Meteo** sem GPS, banner/sheet **localização**, CTAs registar captura / mapa / comunidade), `mapa`, `vision`, `logbook`, `perfil`, `paywall`, `splash`, fluxos login/password.
-- **`lib/screens/widgets/`:** `aqx_pressable.dart` (botões 3D neon/glass + haptic), `oracle_decision_card.dart`, `oracle_fishing_metrics_grid.dart`, `oracle_timeline_24h.dart`, `oracle_community_strip.dart`, `location_access_sheet.dart`, `oracle_weather_details_grid.dart` (16 cartões 3D; marés 2D; correntes).
-- **`lib/core/location/`:** `gps_access.dart` — estado GPS partilhado (Início / Oráculo).
+- **Ecrãs:** `home` (6 tabs lazy `_tabCache`; WeatherCard compacto + barra solunar, Condições Favoráveis horárias com score Oráculo, grid 3×spots com fotos locais, comunidade 3 entradas compactas com fotos de espécies), `oraculo` (**Sprint 1 + fold 9 Jun:** card **Decisão**, **`OracleConditionsFold`** (métricas + timeline 12h), strip **Comunidade Ghost**, accordion meteorologia 16 cartões + `AqxMeteoRevealButton`, COSTA/RIO, chips espécie no card isco/cana, pesquisa Nominatim, fallback **regional Open‑Meteo** sem GPS, banner GPS **inline** no Início, CTAs registar captura / mapa / comunidade), `mapa`, `vision`, `logbook`, `perfil`, `paywall`, `splash`, fluxos login/password.
+- **`lib/screens/widgets/`:** `aqx_pressable.dart` (botões 3D neon/glass + `AqxMeteoRevealButton` ABRIR), `oracle_decision_card.dart`, `oracle_fishing_metrics_grid.dart`, `oracle_conditions_fold.dart` (card unificado condições 12h), `oracle_timeline_24h.dart`, `oracle_community_strip.dart`, `location_access_sheet.dart`, `oracle_weather_details_grid.dart` (16 cartões 3D; marés 2D; correntes).
+- **`lib/core/location/`:** `gps_access.dart` — cache memória, single-flight, `tryGetFixQuick()`, `cachedFix`/`cachedFixStale` (Início / Oráculo).
 - **`lib/core/tides/`:** `oracle_hourly_score.dart` — score horário solunar+nuvens+chuva (timeline + Início).
 - **`lib/core/community/`:** `community_demo_posts.dart` — feed Ghost offline quando Supabase vazio.
-- **`lib/core`:** `OracleDataService` (`lastCoords`, `invalidateCache`, planeamento Nominatim) + `weather_details_snapshot.dart`, Nominatim search/reverse, espécies/compliance, vision, estado (`logbook_tab_index`, `home_tab_index`), comunidade (repo/store).
+- **`lib/core`:** `OracleDataService` + tides/Nominatim, `supabase_bootstrap.dart`, `community/`, `catch_photos/`, espécies/compliance, vision, estado (`logbook_tab_index`, `home_tab_index`).
+- **`supabase/`:** migrations Postgres (insights, comunidade Ghost, catch_photos PostGIS) — ver `supabase/README_setup.md`.
 - Design system Midnight Deep Sea (`screens/_shared.dart`).
 - **`lib/features/home/`:** arquitectura feature-first (data/domain/presentation); `WeatherData` com `solunarScore`, `windDir`, `pressure`; `HomeRepositoryImpl` usa `moonFishingFactor` + score Oráculo horário; spots em `assets/marketing/spots/` (Cabo da Roca, Peniche, Sesimbra — Wikimedia); comunidade em `assets/marketing/catches/` (BrunoPescas, Nuno_Sesimbra, Miguel_Peniche); cards compactos com `Image.asset`.
 - Pendente: monetização RC estável em produção, gates PRO/Elite completos; push Janela de Ouro (EM BREVE na UI).
@@ -62,14 +67,36 @@ AQUANAUTIX/
 - **Métricas:** `oracle_fishing_metrics_grid.dart` — Maré, Vento, Ondas, Temp. água, Corrente, Pressão (COSTA/RIO).
 - **Timeline:** `oracle_timeline_24h.dart` + `oracle_hourly_score.dart` — próximas 12h score + curva maré.
 - **Comunidade:** `oracle_community_strip.dart` + `community_demo_posts.dart` — preview Ghost; botões VER COMUNIDADE / PARTILHAR 👻.
-- **GPS:** `gps_access.dart`, `location_access_sheet.dart` — sheet ao entrar na app se GPS negado; banner âmbar no Oráculo; **Activar GPS** / **Pesquisar local**; fallback regional (`TideMapPreset`) com dados Open‑Meteo reais (sem copy «demonstração»).
+- **GPS:** `gps_access.dart`, `location_access_sheet.dart` — banner **inline** no Início (sem modal automático pós-login); sheet manual se necessário; banner âmbar no Oráculo; **Activar GPS** / **Pesquisar local**; fallback regional (`TideMapPreset`) com dados Open‑Meteo reais.
 - **Logbook:** `logbook_tab_index.dart` — `pendingAction` abre sheet nova captura / novo post ao navegar desde Oráculo.
 - **Meteorologia:** accordion «Meteorologia completa» (fechado por defeito); gráfico marés 2D legível.
-- **`home.dart`:** prompt localização pós-splash; `HomeTabIndex.pendingOraclePlaceSearch` abre pesquisa no Oráculo.
+- **`home.dart`:** `HomeTabIndex.pendingOraclePlaceSearch` abre pesquisa no Oráculo; **`HomeTabIndex.pendingMapFocus`** centra mapa a partir de CTAs.
 
 **Oráculo — Botões 3D mix A+B (`f39cd26`)**
 - **`aqx_pressable.dart`:** `AqxNeonButton` / `AqxNeonCompactButton` (CTAs acção) + `AqxGlassButton` / `AqxGlassChip` / `AqxGlassSegmentToggle` (secundários); scale 3D, haptic e `SystemSound.click`.
 - Integrado em decision card, comunidade, banner/sheet GPS, toggle COSTA/RIO e chips espécie.
+
+### Sessão 9 Jun 2026
+
+**Oráculo — fold condições + selector espécie (`e81633c`, `3217a4d`)**
+- **`oracle_conditions_fold.dart`** — card unificado (métricas 2×3 + timeline 12h); sparklines vento/ondas; tap expande meteorologia.
+- **Selector espécie** movido para o card isco/cana/técnica (removido do topo).
+- **Timeline 12h** — legenda, janela de ouro, gráfico maré maior; score horário via `oracle_hourly_score.dart`.
+- **CTAs** «Registar captura» / «Ver no mapa» — `HomeTabIndex` + `pendingMapFocus` no `mapa.dart`.
+- **Open‑Meteo** — `windSparkline`, `waveSparkline`, `wavePeriodS` no repositório de marés.
+- **Logbook** — fix crash «Nova captura» (`_NovaCapturaSheet` StatefulWidget).
+
+**Fix MIUI — Início e Oráculo bloqueados pós-login (`678ff0f`)**
+- **Causa:** `showModalBottomSheet` GPS criava barrier modal invisível; `IndexedStack` montava 6 tabs em paralelo (sobrecarga MIUI); `flutter_animate` + `IntrinsicHeight` em scroll causavam `RenderBox was not laid out` (ecrã preto Oráculo).
+- **`home.dart`** — tabs **lazy** via `_tabCache` (só tab activa montada); **sem** modal GPS automático ao entrar.
+- **`inicio_dashboard_screen.dart`** — `instantFallback` imediato; load em background; banner GPS **inline** (dismissível), não modal.
+- **`home_repository_impl.dart`** — zero `requestPermission` no load; coords de cache GPS ou regional; Oracle com `planningPlace`; meteo em paralelo.
+- **`weather_card.dart`** — removido `flutter_animate` (evita jank MIUI).
+- **`oraculo.dart`** — `Scaffold(kBg)`; init sempre em `postFrameCallback`; `_effectivePlanningPlace()`; removido lazy bootstrap; alturas fixas onde havia `IntrinsicHeight`; sem shimmer `.animate()`.
+- **`oracle_weather_details_grid.dart`** — fix layout; header meteorologia + `AqxMeteoRevealButton`.
+- **`gps_access.dart` / `oracle_data_service.dart`** — fetch GPS não bloqueante; fallback cache/stale.
+- **`community_store.dart`** — `loadFeed` com `Future.delayed(Duration.zero)` (evita `setState during build`).
+- **Dispositivo teste:** Xiaomi `WWZLYDXWYXT8PV5D` — install via `.\tools\run_dev.ps1 -d WWZLYDXWYXT8PV5D` (MIUI pode exigir `adb push` + `pm install -r -t`).
 
 ### Sessão 5 Jun 2026
 
