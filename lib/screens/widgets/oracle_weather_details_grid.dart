@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../core/theme/app_colors.dart';
 import '../../core/tides/weather_details_snapshot.dart';
+import 'aqx_pressable.dart';
 
 /// Grelha «Detalhes de meteorologia» — cartões brancos (referência preview.webp).
 class OracleWeatherDetailsGrid extends StatefulWidget {
@@ -45,6 +46,8 @@ class OracleWeatherDetailsGridState extends State<OracleWeatherDetailsGrid> {
     if (!_expanded) setState(() => _expanded = true);
   }
 
+  void _toggleExpanded() => setState(() => _expanded = !_expanded);
+
   @override
   void initState() {
     super.initState();
@@ -82,48 +85,146 @@ class OracleWeatherDetailsGridState extends State<OracleWeatherDetailsGrid> {
         : '--:--';
 
     if (widget.collapsible) {
+      final es = Localizations.localeOf(context).languageCode == 'es';
+      final accentAlpha = _expanded ? 0.38 : 0.32;
+      final statusLabel = widget.loadFailed
+          ? (es ? 'Erro ao cargar' : 'Erro ao carregar')
+          : widget.loading
+              ? (es ? 'Actualizando…' : 'A actualizar…')
+              : (es ? '16 tarjetas · $timeLabel' : '16 cartões · $timeLabel');
+
       return Container(
         decoration: BoxDecoration(
-          color: AppColors.surface,
+          color: const Color(0xFF081C30),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppColors.accent.withValues(alpha: 0.12)),
+          border: Border.all(
+            color: widget.loadFailed
+                ? AppColors.amber.withValues(alpha: 0.45)
+                : AppColors.accent.withValues(alpha: accentAlpha),
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.accent.withValues(alpha: _expanded ? 0.06 : 0.14),
+              blurRadius: 18,
+              offset: const Offset(0, 6),
+            ),
+          ],
         ),
         child: Column(
           children: [
-            Material(
-              color: Colors.transparent,
-              child: InkWell(
-                onTap: () => setState(() => _expanded = !_expanded),
-                borderRadius: BorderRadius.circular(12),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 12,
-                  ),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          'Meteorologia completa · $timeLabel',
-                          style: GoogleFonts.ibmPlexSans(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.textPrimary,
-                          ),
-                        ),
-                      ),
-                      Icon(
-                        _expanded
-                            ? Icons.keyboard_arrow_up_rounded
-                            : Icons.keyboard_arrow_down_rounded,
-                        color: AppColors.accent,
-                        size: 22,
-                      ),
-                    ],
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: 4,
+                  height: _expanded ? 56 : 52,
+                  decoration: BoxDecoration(
+                    color: widget.loadFailed
+                        ? AppColors.amber
+                        : AppColors.accent,
+                    borderRadius: BorderRadius.only(
+                      topLeft: const Radius.circular(12),
+                      bottomLeft: _expanded
+                          ? Radius.zero
+                          : const Radius.circular(12),
+                    ),
                   ),
                 ),
+                Expanded(
+                    child: GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onTap: _toggleExpanded,
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(12, 11, 8, 11),
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color:
+                                    AppColors.accent.withValues(alpha: 0.12),
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(
+                                  color: AppColors.accent
+                                      .withValues(alpha: 0.38),
+                                ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: AppColors.accent
+                                        .withValues(alpha: 0.12),
+                                    blurRadius: 10,
+                                  ),
+                                ],
+                              ),
+                              child: Icon(
+                                widget.loadFailed
+                                    ? Icons.cloud_off_outlined
+                                    : Icons.wb_cloudy_outlined,
+                                color: widget.loadFailed
+                                    ? AppColors.amber
+                                    : AppColors.accent,
+                                size: 21,
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    es
+                                        ? '// METEOROLOGÍA'
+                                        : '// METEOROLOGIA',
+                                    style: GoogleFonts.shareTechMono(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w600,
+                                      color: AppColors.accent,
+                                      letterSpacing: 0.5,
+                                      height: 1.1,
+                                    ),
+                                  ),
+                                  Text(
+                                    'COMPLETA',
+                                    style: GoogleFonts.shareTechMono(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w700,
+                                      color: Colors.white,
+                                      letterSpacing: 1.2,
+                                      height: 1.1,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 3),
+                                  Text(
+                                    statusLabel,
+                                    style: GoogleFonts.ibmPlexSans(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w500,
+                                      color: widget.loadFailed
+                                          ? AppColors.amber
+                                              .withValues(alpha: 0.9)
+                                          : AppColors.textSecondary,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(0, 8, 10, 8),
+                    child: AqxMeteoRevealButton(
+                      expanded: _expanded,
+                      onTap: _toggleExpanded,
+                    ),
+                  ),
+                ],
               ),
-            ),
             if (_expanded)
               Padding(
                 padding: const EdgeInsets.fromLTRB(10, 0, 10, 10),

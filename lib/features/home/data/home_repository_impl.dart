@@ -1,11 +1,12 @@
-import 'package:geolocator/geolocator.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../core/location/gps_access.dart';
 import '../../../core/state/fishing_context_store.dart';
 import '../../../core/tides/marine_bundle.dart';
 import '../../../core/tides/moon_phase.dart';
 import '../../../core/tides/open_meteo_tides_repository.dart';
 import '../../../core/tides/oracle_data_service.dart';
+import '../../../core/tides/osm_place_search.dart';
 import '../../../core/tides/region_presets.dart';
 import '../domain/entities/community_activity.dart';
 import '../domain/entities/featured_spot.dart';
@@ -69,58 +70,64 @@ class HomeRepositoryImpl implements HomeRepository {
         ),
       ];
 
+  /// UI imediata no Início — sem rede nem GPS (actualizada em background).
+  static HomeDashboardData instantFallback() {
+    final now = DateTime.now();
+    final ctx = FishingContextStore.instance.value.value;
+    final preset = TideMapPreset.forRegion(ctx.region);
+    final repo = HomeRepositoryImpl();
+    return HomeDashboardData(
+      userDisplayName: repo._getUserDisplayName(),
+      weather: WeatherData(
+        location: preset.label,
+        temperature: 18,
+        condition: 'A carregar…',
+        conditionIcon: '🌤️',
+        windSpeed: 14,
+        waveHeight: 0.6,
+        tideHeight: 1.2,
+        tideRising: true,
+        moonPhase: 'Crescente',
+        moonIcon: '🌙',
+        solunarScore: OracleDataService.instance.lastBundle?.score ?? 50,
+      ),
+      hourlyConditions: repo._fallbackHourly(now),
+      featuredSpots: _featuredSpots,
+      communityActivities: _communityActivities(now),
+    );
+  }
+
   // ─── loadDashboard ────────────────────────────────────────────────────────
   @override
   Future<HomeDashboardData> loadDashboard() async {
     final now = DateTime.now();
+    final ctx = FishingContextStore.instance.value.value;
+    final preset = TideMapPreset.forRegion(ctx.region);
 
-    // 1. GPS — best effort (8 s timeout); se falhar usa região padrão
-    double? lat, lon;
-    // ignore: unused_local_variable — reservado para futura distinção GPS/fallback
-    try {
-      var perm = await Geolocator.checkPermission();
-      if (perm == LocationPermission.denied) {
-        perm = await Geolocator.requestPermission();
-      }
-      if (perm != LocationPermission.denied &&
-          perm != LocationPermission.deniedForever) {
-        if (await Geolocator.isLocationServiceEnabled()) {
-          final pos = await Geolocator.getCurrentPosition(
-            locationSettings: const LocationSettings(
-              accuracy: LocationAccuracy.medium,
-              timeLimit: Duration(seconds: 8),
-            ),
-          );
-          lat = pos.latitude;
-          lon = pos.longitude;
-        }
-      }
-    } catch (_) {
-      // GPS indisponível — usa coordenadas da região padrão abaixo
-    }
+    // 1. Coordenadas — cache GPS em memória só (zero await GPS no Início).
+    final cachedFix = GpsAccess.cachedFix ?? GpsAccess.cachedFixStale;
+    final lat = cachedFix?.lat ?? preset.latitude;
+    final lon = cachedFix?.lon ?? preset.longitude;
 
-    // Fallback de coordenadas: região padrão do utilizador (sem GPS)
-    if (lat == null || lon == null) {
-      final preset = TideMapPreset.forRegion(
-        FishingContextStore.instance.value.value.region,
-      );
-      lat = preset.latitude;
-      lon = preset.longitude;
-    }
+    final regionalPlace = OsmPlace(
+      lat: preset.latitude,
+      lon: preset.longitude,
+      label: preset.label,
+      displayName: preset.label,
+    );
 
-    // 2. OracleBundle — reutiliza cache de 30 min se disponível
-    OracleBundle? bundle;
-    // Primeiro tenta o cache sem nova chamada GPS
-    bundle = OracleDataService.instance.lastBundle;
+    // 2. OracleBundle — cache; senão planeamento regional (sem GPS).
+    OracleBundle? bundle = OracleDataService.instance.lastBundle;
     if (bundle == null) {
       try {
-        bundle = await OracleDataService.instance.fetch(
-          ctx: FishingContextStore.instance.value.value,
-        );
+        bundle = await OracleDataService.instance
+            .fetch(ctx: ctx, planningPlace: regionalPlace)
+            .timeout(const Duration(seconds: 10));
       } catch (_) {}
     }
 
-    // 3. Condições actuais (vento, ondas, ícone) — paralelo, best effort
+    // 3–4. Meteo actual + horária em paralelo (best effort).
+    var hourly = _fallbackHourly(now);
     ({
       double? tempC,
       double? windSpeedKmh,
@@ -128,27 +135,34 @@ class HomeRepositoryImpl implements HomeRepository {
       double? waveHeightM,
       int? weatherCode,
     })? cur;
-    cur = await _meteo.fetchCurrentConditions(
-      latitude: lat,
-      longitude: lon,
-    );
-
-    // 4. Condições horárias (próximas 5 horas)
-    var hourly = _fallbackHourly(now);
-    {
-      try {
-        final tz = TideMapPreset.timezoneForCountry(
-          FishingContextStore.instance.value.value.country,
-        );
-        final series = await _meteo.fetchForecastWeatherSeries(
+    try {
+      final tz = TideMapPreset.timezoneForCountry(ctx.country);
+      final results = await Future.wait([
+        _meteo.fetchCurrentConditions(latitude: lat, longitude: lon),
+        _meteo.fetchForecastWeatherSeries(
           latitude: lat,
           longitude: lon,
           timezone: tz,
           pastDays: 0,
           forecastDays: 1,
+        ),
+      ]);
+      cur = results[0] as ({
+        double? tempC,
+        double? windSpeedKmh,
+        int? windDirDeg,
+        double? waveHeightM,
+        int? weatherCode,
+      })?;
+      final series = results[1] as List<ForecastWeatherHour>;
+      final mapped = _mapHourly(series, now);
+      if (mapped.isNotEmpty) hourly = mapped;
+    } catch (_) {
+      try {
+        cur = await _meteo.fetchCurrentConditions(
+          latitude: lat,
+          longitude: lon,
         );
-        final mapped = _mapHourly(series, now);
-        if (mapped.isNotEmpty) hourly = mapped;
       } catch (_) {}
     }
 

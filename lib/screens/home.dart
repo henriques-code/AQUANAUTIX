@@ -9,10 +9,8 @@ import 'logbook.dart';
 import 'perfil.dart';
 import '../features/home/presentation/inicio_dashboard_screen.dart';
 import '../core/l10n/aqx_l10n.dart';
-import '../core/location/gps_access.dart';
 import '../core/services/analytics_service.dart';
 import '../core/state/home_tab_index.dart';
-import 'widgets/location_access_sheet.dart';
 
 /// Ecrã principal com navegação entre os 6 ecrãs AQUANAUTIX.
 class AquanautixHome extends StatefulWidget {
@@ -22,10 +20,10 @@ class AquanautixHome extends StatefulWidget {
   State<AquanautixHome> createState() => _AquanautixHomeState();
 }
 
-class _AquanautixHomeState extends State<AquanautixHome>
-    with WidgetsBindingObserver {
+class _AquanautixHomeState extends State<AquanautixHome> {
   int _idx = 0;
-  bool _locationPromptShown = false;
+  /// Um tab de cada vez (sem IndexedStack) — preserva estado após 1.ª visita.
+  final Map<int, Widget> _tabCache = {};
 
   void _setTab(int i) {
     setState(() => _idx = i);
@@ -35,34 +33,14 @@ class _AquanautixHomeState extends State<AquanautixHome>
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addObserver(this);
     HomeTabIndex.notifier.value = _idx;
     HomeTabIndex.notifier.addListener(_onExternalTabRequest);
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      unawaited(_promptLocationIfNeeded());
-    });
   }
 
   @override
   void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
     HomeTabIndex.notifier.removeListener(_onExternalTabRequest);
     super.dispose();
-  }
-
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed) {
-      unawaited(_recheckLocationAfterResume());
-    }
-  }
-
-  Future<void> _recheckLocationAfterResume() async {
-    if (!mounted) return;
-    final status = await GpsAccess.check();
-    if (status == GpsAccessStatus.granted) {
-      _locationPromptShown = true;
-    }
   }
 
   void _onExternalTabRequest() {
@@ -71,37 +49,35 @@ class _AquanautixHomeState extends State<AquanautixHome>
     setState(() => _idx = i);
   }
 
-  Future<void> _promptLocationIfNeeded() async {
-    if (!mounted || _locationPromptShown) return;
-    final status = await GpsAccess.check();
-    if (status == GpsAccessStatus.granted || !mounted) return;
-
-    _locationPromptShown = true;
-    await showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      isDismissible: true,
-      builder: (ctx) => LocationAccessSheet(
-        status: status,
-        onEnableGps: () async {
-          Navigator.pop(ctx);
-          var next = await GpsAccess.request();
-          if (next != GpsAccessStatus.granted) {
-            await GpsAccess.openSystemSettings(next);
-          }
-        },
-        onSearchPlace: () {
-          Navigator.pop(ctx);
-          _openOraclePlaceSearch();
-        },
-      ),
-    );
+  Widget _createTab(int i) {
+    switch (i) {
+      case 0:
+        return InicioDashboardScreen(
+          key: const ValueKey('tab_inicio'),
+          onVerMapa: () => _setTab(HomeTabIndex.mapTabIndex),
+          onVerOracle: () => _setTab(HomeTabIndex.oracleTabIndex),
+          onOpenTab: _setTab,
+        );
+      case 1:
+        return const OraculoScreen(key: ValueKey('tab_oraculo'));
+      case 2:
+        return MapaScreen(
+          key: const ValueKey('tab_mapa'),
+          onSpotOpensOracle: _openOracleFromMap,
+        );
+      case 3:
+        return const VisionScreen(key: ValueKey('tab_vision'));
+      case 4:
+        return const LogbookScreen(key: ValueKey('tab_logbook'));
+      case 5:
+        return const PerfilScreen(key: ValueKey('tab_perfil'));
+      default:
+        return const SizedBox.shrink();
+    }
   }
 
-  void _openOraclePlaceSearch() {
-    _setTab(HomeTabIndex.oracleTabIndex);
-    HomeTabIndex.pendingOraclePlaceSearch.value = true;
+  Widget _activeTab() {
+    return _tabCache.putIfAbsent(_idx, () => _createTab(_idx));
   }
 
   static const _icons = [
@@ -113,7 +89,6 @@ class _AquanautixHomeState extends State<AquanautixHome>
     Icons.person_outline_rounded,
   ];
 
-  /// Sprint A — ao escolher spot no mapa, contexto actualiza e abre o Oráculo.
   void _openOracleFromMap() {
     if (!mounted) return;
     _setTab(HomeTabIndex.oracleTabIndex);
@@ -131,21 +106,7 @@ class _AquanautixHomeState extends State<AquanautixHome>
       backgroundColor: kBg,
       body: SafeArea(
         bottom: false,
-        child: IndexedStack(
-          index: _idx,
-          children: [
-            InicioDashboardScreen(
-              onVerMapa: () => _setTab(HomeTabIndex.mapTabIndex),
-              onVerOracle: () => _setTab(HomeTabIndex.oracleTabIndex),
-              onOpenTab: _setTab,
-            ),
-            const OraculoScreen(),
-            MapaScreen(onSpotOpensOracle: _openOracleFromMap),
-            const VisionScreen(),
-            const LogbookScreen(),
-            const PerfilScreen(),
-          ],
-        ),
+        child: _activeTab(),
       ),
       bottomNavigationBar: _buildNav(),
     );
@@ -175,10 +136,10 @@ class _AquanautixHomeState extends State<AquanautixHome>
           child: Row(
             children: List.generate(6, (i) {
               final sel = _idx == i;
-              final c   = sel ? kCyan : kInact;
+              final c = sel ? kCyan : kInact;
               return Expanded(
                 child: GestureDetector(
-                  onTap: () async {
+                  onTap: () {
                     final nextLabel = labels[i];
                     _setTab(i);
                     unawaited(AnalyticsService.instance.track(
@@ -193,7 +154,8 @@ class _AquanautixHomeState extends State<AquanautixHome>
                     Text(labels[i], style: mono(8, c: c)),
                     const SizedBox(height: 4),
                     Container(
-                      width: 4, height: 4,
+                      width: 4,
+                      height: 4,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         color: sel ? kCyan : Colors.transparent,

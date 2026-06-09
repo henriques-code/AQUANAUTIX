@@ -516,7 +516,8 @@ class _VisionScreenState extends State<VisionScreen>
       'garoupa': 'https://images.unsplash.com/photo-1518568814500-bf0f8d125f46?w=400&q=75&auto=format',
       'sargo': 'https://images.unsplash.com/photo-1504700610630-ac6aba3536d3?w=400&q=75&auto=format',
     };
-    final photoKey = species.nome.toLowerCase().split(' ').first;
+    final displayNome = species.nomeFor(es: t.es);
+    final photoKey = displayNome.toLowerCase().split(' ').first;
     final speciesPhotoUrl = speciesPhotoMap[photoKey]
         ?? speciesPhotoMap['robalo']!;
 
@@ -549,7 +550,7 @@ class _VisionScreenState extends State<VisionScreen>
               bottom: 12, left: 14, right: 14,
               child: Row(children: [
                 Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text(species.nome, style: orb(18, fw: FontWeight.w900, ls: 0)),
+                  Text(displayNome, style: orb(18, fw: FontWeight.w900, ls: 0)),
                   Text(species.cientifico, style: ibm(11, c: kHint)),
                 ])),
                 Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
@@ -627,8 +628,8 @@ class _VisionScreenState extends State<VisionScreen>
             '$minRule  ${compliance.isLegal ? '✓' : compliance.isIllegal ? '✗' : '?'}',
             vc: verdictColor,
           ),
-          _row(t.es ? 'Cebo ideal' : 'Isco ideal', species.isco),
-          _row('Técnica', species.tecnica),
+          _row(t.es ? 'Cebo ideal' : 'Isco ideal', species.iscoDisplay),
+          _row('Técnica', species.tecnicaDisplay),
           if (species.vedaAtiva) ...[
             const SizedBox(height: 8),
             Container(
@@ -646,8 +647,8 @@ class _VisionScreenState extends State<VisionScreen>
                   Expanded(
                     child: Text(
                       t.es
-                          ? 'Especie con veda o restricciones en parte del año — confirma ${species.epoca}.'
-                          : 'Espécie com veda ou restrições em parte do ano — confirma ${species.epoca}.',
+                          ? 'Especie con veda o restricciones en parte del año — confirma ${species.vedaFor(es: true)}.'
+                          : 'Espécie com veda ou restrições em parte do ano — confirma ${species.vedaFor(es: false)}.',
                       style: ibm(11, c: Colors.orange),
                     ),
                   ),
@@ -690,8 +691,8 @@ class _VisionScreenState extends State<VisionScreen>
                 onPressed: () => _saveToLogbook(
                   context,
                   scan,
-                  species.nome,
-                  species.isco,
+                  displayNome,
+                  species.iscoDisplay,
                   compliance.isLegal,
                   compliance.isIllegal,
                 ),

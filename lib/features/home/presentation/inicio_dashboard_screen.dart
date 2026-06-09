@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/l10n/aqx_l10n.dart';
+import '../../../core/location/gps_access.dart';
 import '../../../core/supabase_bootstrap.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
@@ -41,31 +42,60 @@ class InicioDashboardScreen extends StatefulWidget {
 class _InicioDashboardScreenState extends State<InicioDashboardScreen> {
   late final HomeRepository _repo = widget.repository ?? HomeRepositoryImpl();
 
-  bool _loading = true;
+  bool _loading = false;
   String? _error;
   HomeDashboardData? _data;
   StreamSubscription<AuthState>? _authSub;
+  Timer? _authReloadDebounce;
+  bool _showGpsBanner = false;
 
   @override
   void initState() {
     super.initState();
-    _load();
+    _data = HomeRepositoryImpl.instantFallback();
+    unawaited(_load(silent: true));
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      unawaited(_checkGpsBanner());
+    });
     _authSub = Supabase.instance.client.auth.onAuthStateChange.listen((_) {
-      if (mounted) _load();
+      _authReloadDebounce?.cancel();
+      _authReloadDebounce = Timer(const Duration(milliseconds: 800), () {
+        if (mounted) unawaited(_load(silent: true));
+      });
     });
   }
 
   @override
   void dispose() {
+    _authReloadDebounce?.cancel();
     _authSub?.cancel();
     super.dispose();
   }
 
-  Future<void> _load() async {
-    setState(() {
-      _loading = true;
-      _error = null;
-    });
+  Future<void> _checkGpsBanner() async {
+    final status = await GpsAccess.check();
+    if (!mounted || status == GpsAccessStatus.granted) return;
+    setState(() => _showGpsBanner = true);
+  }
+
+  Future<void> _enableGpsFromBanner() async {
+    final next = await GpsAccess.request();
+    if (!mounted) return;
+    if (next == GpsAccessStatus.granted) {
+      setState(() => _showGpsBanner = false);
+      unawaited(_load(silent: true));
+      return;
+    }
+    await GpsAccess.openSystemSettings(next);
+  }
+
+  Future<void> _load({bool silent = false}) async {
+    if (!silent) {
+      setState(() {
+        _loading = _data == null;
+        _error = null;
+      });
+    }
     try {
       final d = await _repo.loadDashboard();
       if (!mounted) return;
@@ -73,11 +103,12 @@ class _InicioDashboardScreenState extends State<InicioDashboardScreen> {
       setState(() {
         _data = d.copyWithUser(displayName);
         _loading = false;
+        _error = null;
       });
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _error = e.toString();
+        if (_data == null) _error = e.toString();
         _loading = false;
       });
     }
@@ -148,13 +179,22 @@ class _InicioDashboardScreenState extends State<InicioDashboardScreen> {
       body: RefreshIndicator(
         color: AppColors.accent,
         backgroundColor: const Color(0xFF071428),
-        onRefresh: _load,
+        onRefresh: () => _load(silent: true),
         child: SingleChildScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.fromLTRB(AppSpacing.md, AppSpacing.xs, AppSpacing.md, AppSpacing.lg),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            if (_showGpsBanner) ...[
+              _GpsInlineBanner(
+                t: t,
+                onEnable: _enableGpsFromBanner,
+                onDismiss: () => setState(() => _showGpsBanner = false),
+                onSearchPlace: widget.onVerOracle,
+              ),
+              const SizedBox(height: AppSpacing.sm),
+            ],
             GreetingHeader(
               greetingLine: t.homeGreetingLine(hour),
               tagline: t.homeTagline,
@@ -268,4 +308,94 @@ extension on HomeDashboardData {
         communityActivities: communityActivities,
         userDisplayName: name,
       );
+}
+
+/// Banner inline — nunca modal (modal bloqueava toques no MIUI).
+class _GpsInlineBanner extends StatelessWidget {
+  const _GpsInlineBanner({
+    required this.t,
+    required this.onEnable,
+    required this.onDismiss,
+    required this.onSearchPlace,
+  });
+
+  final AqxL10n t;
+  final VoidCallback onEnable;
+  final VoidCallback onDismiss;
+  final VoidCallback onSearchPlace;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: const Color(0xFF1A1408),
+      borderRadius: BorderRadius.circular(12),
+      child: InkWell(
+        onTap: onEnable,
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(12, 10, 8, 10),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: AppColors.amber.withValues(alpha: 0.45)),
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Icon(Icons.location_off_rounded, color: AppColors.amber, size: 20),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      t.locationPromptTitle,
+                      style: AppTextStyles.ibmSans(13, fw: FontWeight.w700, color: AppColors.amber),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      t.gpsDenied,
+                      style: AppTextStyles.ibmSans(12, color: AppColors.textSecondary),
+                    ),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 4,
+                      children: [
+                        TextButton(
+                          onPressed: onEnable,
+                          style: TextButton.styleFrom(
+                            foregroundColor: AppColors.accent,
+                            padding: EdgeInsets.zero,
+                            minimumSize: Size.zero,
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          ),
+                          child: Text(t.enableLocation, style: AppTextStyles.ibmSans(12, fw: FontWeight.w600)),
+                        ),
+                        TextButton(
+                          onPressed: onSearchPlace,
+                          style: TextButton.styleFrom(
+                            foregroundColor: AppColors.textSecondary,
+                            padding: EdgeInsets.zero,
+                            minimumSize: Size.zero,
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          ),
+                          child: Text(t.locationPromptChoosePlace, style: AppTextStyles.ibmSans(12)),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.close_rounded, size: 18, color: AppColors.textSecondary),
+                onPressed: onDismiss,
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }

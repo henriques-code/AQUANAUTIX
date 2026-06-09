@@ -525,3 +525,195 @@ class AqxNeonCompactButton extends StatelessWidget {
     );
   }
 }
+
+/// Botão 3D bevel — accordion «Meteorologia completa» (ABRIR / FECHAR).
+class AqxMeteoRevealButton extends StatefulWidget {
+  const AqxMeteoRevealButton({
+    super.key,
+    required this.expanded,
+    required this.onTap,
+    this.openLabel = 'ABRIR',
+    this.closeLabel = 'FECHAR',
+  });
+
+  final bool expanded;
+  final VoidCallback onTap;
+  final String openLabel;
+  final String closeLabel;
+
+  @override
+  State<AqxMeteoRevealButton> createState() => _AqxMeteoRevealButtonState();
+}
+
+class _AqxMeteoRevealButtonState extends State<AqxMeteoRevealButton>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _haloCtrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _haloCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 2200),
+    );
+    if (!widget.expanded) _haloCtrl.repeat(reverse: true);
+  }
+
+  @override
+  void didUpdateWidget(covariant AqxMeteoRevealButton oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.expanded) {
+      _haloCtrl.stop();
+      _haloCtrl.value = 0;
+    } else if (!_haloCtrl.isAnimating) {
+      _haloCtrl.repeat(reverse: true);
+    }
+  }
+
+  @override
+  void dispose() {
+    _haloCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final expanded = widget.expanded;
+    final label = expanded ? widget.closeLabel : widget.openLabel;
+    final faceTop = expanded
+        ? Color.lerp(kAmber, Colors.white, 0.32)!
+        : Color.lerp(kCyan, Colors.white, 0.3)!;
+    final faceMid = expanded ? kAmber : kCyan;
+    final faceBot = expanded
+        ? const Color(0xFFB8922A)
+        : const Color(0xFF00A0AC);
+    final baseColor =
+        expanded ? const Color(0xFF3D2E08) : const Color(0xFF003840);
+    final glowColor = expanded ? kAmber : kCyan;
+
+    return AnimatedBuilder(
+      animation: _haloCtrl,
+      builder: (context, child) {
+        if (expanded) return child!;
+        final halo = 0.12 + 0.28 * _haloCtrl.value;
+        return DecoratedBox(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(18),
+            boxShadow: [
+              BoxShadow(
+                color: glowColor.withValues(alpha: halo),
+                blurRadius: 20,
+                spreadRadius: 0.5,
+              ),
+            ],
+          ),
+          child: child,
+        );
+      },
+      child: _AqxPressableShell(
+        onTap: widget.onTap,
+        primary: !expanded,
+        builder: (pressed) {
+          final depth = pressed ? 1.5 : 4.0;
+          return SizedBox(
+            height: 50,
+            child: Stack(
+              clipBehavior: Clip.none,
+              alignment: Alignment.topCenter,
+              children: [
+                Positioned(
+                  left: 0,
+                  right: 0,
+                  top: depth,
+                  bottom: 0,
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(16),
+                      color: baseColor,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.55),
+                          blurRadius: 6,
+                          offset: const Offset(0, 3),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                Positioned(
+                  left: 0,
+                  right: 0,
+                  top: 0,
+                  bottom: depth,
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(16),
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [faceTop, faceMid, faceBot],
+                        stops: const [0.0, 0.45, 1.0],
+                      ),
+                      border: Border(
+                        top: BorderSide(
+                          color: Colors.white.withValues(alpha: 0.58),
+                          width: 1.4,
+                        ),
+                        bottom: BorderSide(
+                          color: Colors.black.withValues(alpha: 0.22),
+                          width: 1,
+                        ),
+                        left: BorderSide(
+                          color: Colors.white.withValues(alpha: 0.18),
+                          width: 0.6,
+                        ),
+                        right: BorderSide(
+                          color: Colors.black.withValues(alpha: 0.12),
+                          width: 0.6,
+                        ),
+                      ),
+                      boxShadow: _neonShadows(pressed: pressed, selected: !expanded),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            expanded
+                                ? Icons.compress_rounded
+                                : Icons.auto_awesome_rounded,
+                            size: 15,
+                            color: Colors.black.withValues(alpha: 0.82),
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            label,
+                            style: mono(
+                              10,
+                              c: Colors.black.withValues(alpha: 0.88),
+                              ls: 0.85,
+                            ),
+                          ),
+                          const SizedBox(width: 2),
+                          Icon(
+                            expanded
+                                ? Icons.keyboard_arrow_up_rounded
+                                : Icons.keyboard_arrow_down_rounded,
+                            size: 17,
+                            color: Colors.black.withValues(alpha: 0.75),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+}

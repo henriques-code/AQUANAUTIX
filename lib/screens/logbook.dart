@@ -125,8 +125,11 @@ class _LogbookScreenState extends State<LogbookScreen>
     _applyPendingLogTab();
     unawaited(_loadCapturas());
     if (isSupabaseConfigured) {
-      final ctx = FishingContextStore.instance.value.value;
-      unawaited(CommunityStore.instance.loadFeed(country: ctx.country));
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        final ctx = FishingContextStore.instance.value.value;
+        unawaited(CommunityStore.instance.loadFeed(country: ctx.country));
+      });
     }
   }
 

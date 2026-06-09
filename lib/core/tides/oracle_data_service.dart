@@ -187,11 +187,9 @@ class OracleDataService {
   }
 
   /// Posição actual obrigatória — sem GPS não há índice fiável para a zona de pesca.
+  /// Não pede permissão aqui (isso é responsabilidade da UI) — evita bloquear o fetch.
   Future<({double lat, double lon})> _requireGpsFix(AqxL10n t) async {
-    var status = await GpsAccess.check();
-    if (status == GpsAccessStatus.denied) {
-      status = await GpsAccess.request();
-    }
+    final status = await GpsAccess.check();
     switch (status) {
       case GpsAccessStatus.denied:
         throw OracleGpsRequiredException(t.gpsDenied);
@@ -205,6 +203,10 @@ class OracleDataService {
 
     final fix = await GpsAccess.tryGetFix();
     if (fix != null) return fix;
+
+    final stale = GpsAccess.cachedFixStale ?? _lastCoords;
+    if (stale != null) return stale;
+
     throw OracleGpsRequiredException(t.gpsFixFailed);
   }
 

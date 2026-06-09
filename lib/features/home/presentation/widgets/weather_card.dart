@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 
 import '../../../../core/l10n/aqx_l10n.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -180,10 +179,7 @@ class WeatherCard extends StatelessWidget {
           ),
         ],
       ),
-    )
-        .animate()
-        .fadeIn(duration: 600.ms, curve: Curves.easeOut)
-        .slideY(begin: 0.04, end: 0, duration: 500.ms, curve: Curves.easeOutCubic);
+    );
   }
 
   /// Divisor vertical entre colunas de métricas.

@@ -39,7 +39,9 @@ class CommunityStore {
 
   Future<void> loadFeed({String? country}) async {
     if (!isSupabaseConfigured) return;
-    value.value = value.value.copyWith(loading: true);
+    // Evita notifyListeners() durante build de outros tabs.
+    await Future<void>.delayed(Duration.zero);
+    value.value = value.value.copyWith(loading: true, error: null);
     try {
       final posts = await _repo.fetchFeed(country: country);
       value.value = CommunityState(posts: posts);

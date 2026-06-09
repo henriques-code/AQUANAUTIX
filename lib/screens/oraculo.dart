@@ -3,7 +3,6 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import '_shared.dart';
 import 'oracle_live_widgets.dart';
 import '../core/l10n/aqx_l10n.dart';
@@ -129,6 +128,7 @@ class _OraculoScreenState extends State<OraculoScreen>
   final _scrollCtrl = ScrollController();
   final _weatherSectionKey = GlobalKey();
   final _weatherGridKey = GlobalKey<OracleWeatherDetailsGridState>();
+  bool _gpsRecheckInFlight = false;
 
   @override
   void initState() {
@@ -136,6 +136,13 @@ class _OraculoScreenState extends State<OraculoScreen>
     WidgetsBinding.instance.addObserver(this);
     final ctx = FishingContextStore.instance.value.value;
     _rioMode = ctx.region == 'ABRANTES' || ctx.species == 'BARBO';
+    _ctrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 260));
+    _fade = CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut);
+    _ctrl.value = 1.0;
+    _fishPulse = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 2200),
+    )..repeat();
     _ctxListener = () {
       if (!mounted) return;
       final c = FishingContextStore.instance.value.value;
@@ -164,7 +171,9 @@ class _OraculoScreenState extends State<OraculoScreen>
         _placeSearchListener();
       });
     }
-    if (HomeTabIndex.notifier.value == HomeTabIndex.oracleTabIndex) _trackNorthStar();
+    if (HomeTabIndex.notifier.value == HomeTabIndex.oracleTabIndex) {
+      _trackNorthStar();
+    }
     unawaited(
       AnalyticsService.instance.track(
         AnalyticsEvents.missionStarted,
@@ -177,25 +186,31 @@ class _OraculoScreenState extends State<OraculoScreen>
         },
       ),
     );
-    _ctrl = AnimationController(vsync: this, duration: const Duration(milliseconds: 260));
-    _fade = CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut);
-    _ctrl.value = 1.0;
-    _fishPulse = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 2200),
-    )..repeat();
-    unawaited(_initLocationAndLoad());
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted || !isSupabaseConfigured) return;
-      unawaited(
-        CommunityStore.instance.loadFeed(country: ctx.country),
-      );
+      if (!mounted) return;
+      unawaited(_initLocationAndLoad());
+      if (isSupabaseConfigured) {
+        unawaited(CommunityStore.instance.loadFeed(country: ctx.country));
+      }
     });
   }
 
+  /// Planeamento regional quando não há GPS — evita fetch bloqueado.
+  OsmPlace? _effectivePlanningPlace(FishingContext ctx) {
+    if (_planningPlace != null) return _planningPlace;
+    if (GpsAccess.cachedFix != null || GpsAccess.cachedFixStale != null) {
+      return null;
+    }
+    return _regionalPlace(ctx);
+  }
+
   Future<void> _initLocationAndLoad() async {
-    await GpsAccess.request();
     if (!mounted) return;
+    if (GpsAccess.cachedFix == null &&
+        GpsAccess.cachedFixStale == null &&
+        _planningPlace == null) {
+      unawaited(_warmStartRegional());
+    }
     unawaited(_loadCosta());
     unawaited(_loadRio());
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -208,31 +223,37 @@ class _OraculoScreenState extends State<OraculoScreen>
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
-      unawaited(_recheckGpsIfNeeded(force: true));
+      unawaited(_recheckGpsIfNeeded());
     }
   }
 
-  /// Re-tenta GPS ao voltar das definições ou ao abrir o tab Oráculo.
+  /// Re-tenta GPS ao voltar das definições — só se havia erro GPS.
   Future<void> _recheckGpsIfNeeded({bool force = false}) async {
-    if (!mounted || _planningPlace != null) return;
+    if (!mounted || _planningPlace != null || _gpsRecheckInFlight) return;
     if (!force && !_costaGpsError && !_rioGpsError) return;
 
-    final status = await GpsAccess.check();
-    if (status != GpsAccessStatus.granted) return;
+    _gpsRecheckInFlight = true;
+    try {
+      final status = await GpsAccess.check();
+      if (status != GpsAccessStatus.granted || !mounted) return;
 
-    final fix = await GpsAccess.tryGetFix();
-    if (fix == null || !mounted) return;
+      final fix = await GpsAccess.tryGetFixQuick();
+      if (fix == null || !mounted) return;
 
-    OracleDataService.instance.invalidateCache();
-    setState(() {
-      _planningPlace = null;
-      _costaGpsError = false;
-      _rioGpsError = false;
-      _costaError = null;
-      _rioError = null;
-    });
-    unawaited(_loadCosta());
-    unawaited(_loadRio());
+      OracleDataService.instance.invalidateCache();
+      if (!mounted) return;
+      setState(() {
+        _planningPlace = null;
+        _costaGpsError = false;
+        _rioGpsError = false;
+        _costaError = null;
+        _rioError = null;
+      });
+      unawaited(_loadCosta());
+      unawaited(_loadRio());
+    } finally {
+      _gpsRecheckInFlight = false;
+    }
   }
 
   void _trackNorthStar() {
@@ -340,6 +361,14 @@ class _OraculoScreenState extends State<OraculoScreen>
         dias: const [],
         janelaTexto: '',
       );
+
+  Future<void> _warmStartRegional() async {
+    if (!mounted || _planningPlace != null) return;
+    await Future.wait([
+      if (_costaBundle == null) _loadRegionalFallback(isRio: false),
+      if (_rioBundle == null) _loadRegionalFallback(isRio: true),
+    ]);
+  }
 
   Future<void> _loadRegionalFallback({required bool isRio}) async {
     if (_planningPlace != null || !mounted) return;
@@ -674,7 +703,9 @@ class _OraculoScreenState extends State<OraculoScreen>
   Widget build(BuildContext context) {
     final t = AqxL10n(Localizations.localeOf(context).languageCode);
     final d = _rioMode ? _buildRioData(t) : _buildCostaData(t);
-    return RefreshIndicator(
+    return Scaffold(
+      backgroundColor: kBg,
+      body: RefreshIndicator(
       color: kCyan,
       backgroundColor: kCard,
       onRefresh: _refreshPage,
@@ -786,11 +817,7 @@ class _OraculoScreenState extends State<OraculoScreen>
             rightSelected: _rioMode,
             onLeft: () => _toggle(false),
             onRight: () => _toggle(true),
-          ).animate().fadeIn(delay: 90.ms, duration: 380.ms).slideY(
-                begin: 0.05,
-                duration: 380.ms,
-                curve: Curves.easeOutCubic,
-              ),
+          ),
 
           const SizedBox(height: 8),
 
@@ -880,12 +907,7 @@ class _OraculoScreenState extends State<OraculoScreen>
                 children: [
                   for (var i = 0; i < d.dias.length; i++) ...[
                     if (i > 0) const SizedBox(width: 5),
-                    _diaCard(d.dias[i], i == 0)
-                        .animate(key: ValueKey('dia_${d.dias[i].d}_$i'))
-                        .fadeIn(
-                          delay: Duration(milliseconds: 200 + i * 45),
-                          duration: 350.ms,
-                        ),
+                    _diaCard(d.dias[i], i == 0),
                   ],
                 ],
               ),
@@ -904,10 +926,12 @@ class _OraculoScreenState extends State<OraculoScreen>
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(color: kAmber.withValues(alpha: 0.25)),
                 ),
-                child: IntrinsicHeight(
-                  child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
                     Container(
                       width: 4,
+                      height: 52,
                       decoration: const BoxDecoration(
                         color: kAmber,
                         borderRadius: BorderRadius.only(
@@ -942,7 +966,7 @@ class _OraculoScreenState extends State<OraculoScreen>
                         ),
                       ),
                     ),
-                  ]),
+                  ],
                 ),
               ),
             ),
@@ -1149,6 +1173,7 @@ class _OraculoScreenState extends State<OraculoScreen>
         ],
       ),
       ),
+      ),
     );
   }
 
@@ -1172,7 +1197,7 @@ class _OraculoScreenState extends State<OraculoScreen>
       await GpsAccess.openSystemSettings(status);
       return;
     }
-    final fix = await GpsAccess.tryGetFix();
+    final fix = await GpsAccess.tryGetFix(timeout: const Duration(seconds: 15));
     if (fix == null) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -1410,14 +1435,16 @@ class _OraculoScreenState extends State<OraculoScreen>
   Future<void> _loadCosta() async {
     if (!mounted) return;
     setState(() {
-      _costaLoad = _LoadState.loading;
-      _costaGpsError = false;
+      if (_costaBundle == null) {
+        _costaLoad = _LoadState.loading;
+        _costaGpsError = false;
+      }
     });
     try {
       final ctx = FishingContextStore.instance.value.value;
       final bundle = await OracleDataService.instance.fetch(
         ctx: ctx,
-        planningPlace: _planningPlace,
+        planningPlace: _effectivePlanningPlace(ctx),
       );
       if (!mounted) return;
       setState(() {
@@ -1432,7 +1459,7 @@ class _OraculoScreenState extends State<OraculoScreen>
         setState(() {
           _costaError = e.message;
           _costaGpsError = true;
-          _costaLoad = _LoadState.loading;
+          _costaLoad = _LoadState.error;
         });
         await _loadRegionalFallback(isRio: false);
         return;
@@ -1610,14 +1637,16 @@ class _OraculoScreenState extends State<OraculoScreen>
   Future<void> _loadRio() async {
     if (!mounted) return;
     setState(() {
-      _rioLoad = _LoadState.loading;
-      _rioGpsError = false;
+      if (_rioBundle == null) {
+        _rioLoad = _LoadState.loading;
+        _rioGpsError = false;
+      }
     });
     try {
       final ctx = FishingContextStore.instance.value.value;
       final bundle = await OracleDataService.instance.fetchRiver(
         ctx: ctx,
-        planningPlace: _planningPlace,
+        planningPlace: _effectivePlanningPlace(ctx),
       );
       if (!mounted) return;
       setState(() {
@@ -1632,7 +1661,7 @@ class _OraculoScreenState extends State<OraculoScreen>
         setState(() {
           _rioError = e.message;
           _rioGpsError = true;
-          _rioLoad = _LoadState.loading;
+          _rioLoad = _LoadState.error;
         });
         await _loadRegionalFallback(isRio: true);
         return;
@@ -1836,8 +1865,9 @@ class _OraculoScreenState extends State<OraculoScreen>
   }
 
   Widget _scoreStatePlaceholder({required bool isRio, required AqxL10n t}) {
-    final loading =
-        isRio ? _rioLoad == _LoadState.loading : _costaLoad == _LoadState.loading;
+    final gpsErr = isRio ? _rioGpsError : _costaGpsError;
+    final loading = (isRio ? _rioLoad : _costaLoad) == _LoadState.loading &&
+        !gpsErr;
     if (loading) {
       return Container(
         height: 96,
@@ -1852,7 +1882,6 @@ class _OraculoScreenState extends State<OraculoScreen>
       );
     }
     final err = isRio ? _rioError : _costaError;
-    final gpsErr = isRio ? _rioGpsError : _costaGpsError;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -2161,16 +2190,7 @@ class _OraculoScreenState extends State<OraculoScreen>
           ],
         ),
       );
-    return inner
-        .animate(key: ValueKey('card_${d.score}_$_rioMode'))
-        .fadeIn(duration: 480.ms, curve: Curves.easeOutCubic)
-        .slideY(begin: 0.06, duration: 480.ms, curve: Curves.easeOutCubic)
-        .then(delay: 700.ms)
-        .shimmer(
-          duration: 2.seconds,
-          color: kCyan.withValues(alpha: 0.07),
-          angle: 0.5,
-        );
+    return inner;
   }
 
   Widget _iscoRow(String k, String v) => Padding(
