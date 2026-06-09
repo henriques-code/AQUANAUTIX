@@ -13,7 +13,6 @@ class OracleDecisionCard extends StatelessWidget {
     required this.reasons,
     required this.onRegisterCatch,
     required this.onViewMap,
-    this.speciesTarget = '',
     this.registerLabel = 'REGISTAR CAPTURA',
     this.mapLabel = 'VER NO MAPA',
     this.title = 'DECISÃO DO ORÁCULO',
@@ -26,7 +25,6 @@ class OracleDecisionCard extends StatelessWidget {
   final List<String> reasons;
   final VoidCallback onRegisterCatch;
   final VoidCallback onViewMap;
-  final String speciesTarget;
   final String registerLabel;
   final String mapLabel;
   final String title;
@@ -63,19 +61,6 @@ class OracleDecisionCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(title, style: mono(10, c: kCyan, ls: 1.1)),
-          if (speciesTarget.isNotEmpty) ...[
-            const SizedBox(height: 4),
-            Row(
-              children: [
-                Icon(Icons.set_meal_outlined, size: 14, color: kCyan.withValues(alpha: 0.9)),
-                const SizedBox(width: 5),
-                Text(
-                  'Alvo: $speciesTarget',
-                  style: ibm(12, c: kCyan, fw: FontWeight.w600),
-                ),
-              ],
-            ),
-          ],
           const SizedBox(height: 10),
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,

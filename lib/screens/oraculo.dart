@@ -424,7 +424,7 @@ class _OraculoScreenState extends State<OraculoScreen>
     );
   }
 
-  Widget _speciesChipRow() {
+  Widget _rigSpeciesChipRow() {
     return ValueListenableBuilder<FishingContext>(
       valueListenable: FishingContextStore.instance.value,
       builder: (context, ctx, _) {
@@ -440,8 +440,8 @@ class _OraculoScreenState extends State<OraculoScreen>
                   padding: const EdgeInsets.only(right: 8),
                   child: AqxGlassChip(
                     label: _speciesUiLabel(code),
-                    icon: Icons.set_meal_outlined,
                     selected: ctx.species == code,
+                    compact: true,
                     onTap: () {
                       FishingContextStore.instance.update(species: code);
                     },
@@ -707,10 +707,6 @@ class _OraculoScreenState extends State<OraculoScreen>
           ]),
           const SizedBox(height: 10),
 
-          // ── Espécie alvo (chips) ───────────────────────
-          FadeTransition(opacity: _fade, child: _speciesChipRow()),
-          const SizedBox(height: 8),
-
           // ── Toggle COSTA / RIO ─────────────────────────
           AqxGlassSegmentToggle(
             leftIcon: Icons.waves_rounded,
@@ -741,15 +737,11 @@ class _OraculoScreenState extends State<OraculoScreen>
             opacity: _fade,
             child: (_rioMode ? !_hasRioData : !_hasCostaData)
                 ? _scoreStatePlaceholder(isRio: _rioMode, t: t)
-                : ValueListenableBuilder<FishingContext>(
-                    valueListenable: FishingContextStore.instance.value,
-                    builder: (context, fishingCtx, _) {
-                      return OracleDecisionCard(
+                : OracleDecisionCard(
                         score: d.score,
                         statusLabel: d.statusLabel,
                         windowHours: d.horario,
                         reasons: _decisionReasons(d, _weatherDetails),
-                        speciesTarget: _speciesUiLabel(fishingCtx.species),
                         registerLabel:
                             t.es ? 'REGISTRAR CAPTURA' : 'REGISTAR CAPTURA',
                         mapLabel: t.es ? 'VER EN MAPA' : 'VER NO MAPA',
@@ -760,9 +752,7 @@ class _OraculoScreenState extends State<OraculoScreen>
                             t.es ? 'Mejor ventana:' : 'Melhor janela:',
                         onRegisterCatch: _openLogNovaCaptura,
                         onViewMap: _openMapTab,
-                      );
-                    },
-                  ),
+                      ),
           ),
 
           const SizedBox(height: 8),
@@ -994,21 +984,31 @@ class _OraculoScreenState extends State<OraculoScreen>
                   ValueListenableBuilder<FishingContext>(
                     valueListenable: FishingContextStore.instance.value,
                     builder: (context, fishingCtx, _) {
-                      final active = _activeSpeciesCodes(
+                      final zoneCodes = _activeSpeciesCodes(
                         isRio: _rioMode,
                         place: d.local,
                         score: d.score,
-                        selectedSpecies: fishingCtx.species,
+                        selectedSpecies: _rioMode ? 'BARBO' : 'ROBALO',
                       );
-                      final primaryCode = active.first;
-                      final primaryPlan =
-                          _planForSpecies(primaryCode, isRio: _rioMode, t: t);
-                      final activeFishLabel = active
+                      final zoneFishLabel = zoneCodes
                           .take(2)
                           .map(_speciesUiLabel)
                           .join(' + ');
+                      final primaryPlan = _planForSpecies(
+                        fishingCtx.species,
+                        isRio: _rioMode,
+                        t: t,
+                      );
                       return Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
+                          Text(
+                            t.rigTargetLabel,
+                            style: ibm(12, c: kHint),
+                          ),
+                          const SizedBox(height: 6),
+                          _rigSpeciesChipRow(),
+                          const SizedBox(height: 8),
                           Padding(
                             padding: const EdgeInsets.symmetric(vertical: 4),
                             child: Row(
@@ -1048,7 +1048,7 @@ class _OraculoScreenState extends State<OraculoScreen>
                                 ),
                                 Expanded(
                                   child: Text(
-                                    activeFishLabel,
+                                    zoneFishLabel,
                                     style:
                                         ibm(14, c: kCyan, fw: FontWeight.w700),
                                     maxLines: 1,

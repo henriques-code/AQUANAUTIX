@@ -274,6 +274,8 @@ class AqxL10n {
   String get rigCardTitle =>
       es ? 'ISCO + CAÑA + TÉCNICA' : 'ISCO + CANA + TÉCNICA';
 
+  String get rigTargetLabel => es ? 'Objetivo' : 'Alvo';
+
   String get rigMoreActive => es ? 'Más activas' : 'Mais activas';
 
   /// Etiqueta néon ao lado de «Mais activas» (cartão isco/cana).
