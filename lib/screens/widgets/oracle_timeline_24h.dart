@@ -12,62 +12,180 @@ class OracleTimeline24h extends StatelessWidget {
     required this.hours,
     required this.tideSparkline,
     this.title = 'PRÓXIMAS 12H · SCORE + MARÉ',
+    this.nowLabel = 'agora',
   });
+
+  static const _chartHeight = 118.0;
+  static const _labelTopPad = 72.0;
 
   final List<HourlyCondition> hours;
   final List<double> tideSparkline;
   final String title;
+  final String nowLabel;
 
   @override
   Widget build(BuildContext context) {
     if (hours.isEmpty) return const SizedBox.shrink();
 
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
-      decoration: BoxDecoration(
-        color: kCard,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: kCyan.withValues(alpha: 0.14)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(title, style: mono(10, c: kCyan, ls: 0.9)),
-          const SizedBox(height: 8),
-          SizedBox(
-            height: 88,
-            width: double.infinity,
-            child: CustomPaint(
-              painter: _TimelinePainter(
-                hours: hours,
-                tideSparkline: tideSparkline,
-              ),
-              child: Padding(
-                padding: const EdgeInsets.only(top: 52),
-                child: Row(
-                  children: [
-                    for (var i = 0; i < hours.length; i++)
-                      Expanded(
-                        child: Text(
-                          hours[i].hour.replaceAll(':00', 'h'),
-                          style: mono(
-                            7,
-                            c: hours[i].isBestHour ? kAmber : kHint,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(title, style: mono(11, c: kCyan, ls: 0.9)),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            _LegendSwatch(color: kCyan, label: 'score', isBar: true),
+            const SizedBox(width: 10),
+            _LegendSwatch(
+              color: kCyan.withValues(alpha: 0.45),
+              label: 'maré',
+              isBar: false,
+            ),
+            const SizedBox(width: 10),
+            _LegendDot(label: nowLabel),
+          ],
+        ),
+        const SizedBox(height: 10),
+        SizedBox(
+          height: _chartHeight,
+          width: double.infinity,
+          child: CustomPaint(
+            painter: _TimelinePainter(
+              hours: hours,
+              tideSparkline: tideSparkline,
+            ),
+            child: Padding(
+              padding: const EdgeInsets.only(top: _labelTopPad),
+              child: Row(
+                children: [
+                  for (var i = 0; i < hours.length; i++)
+                    Expanded(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          if (hours[i].isCurrentHour)
+                            Container(
+                              width: 6,
+                              height: 6,
+                              margin: const EdgeInsets.only(bottom: 3),
+                              decoration: const BoxDecoration(
+                                color: kCyan,
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                          Text(
+                            hours[i].hour.replaceAll(':00', 'h'),
+                            style: mono(
+                              9,
+                              c: hours[i].isCurrentHour
+                                  ? kCyan
+                                  : hours[i].isBestHour
+                                      ? kAmber
+                                      : hours[i].isGoldenWindow
+                                          ? kAmber.withValues(alpha: 0.75)
+                                          : kHint,
+                            ),
+                            textAlign: TextAlign.center,
+                            maxLines: 1,
                           ),
-                          textAlign: TextAlign.center,
-                          maxLines: 1,
-                        ),
+                        ],
                       ),
-                  ],
-                ),
+                    ),
+                ],
               ),
             ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
+}
+
+class _LegendSwatch extends StatelessWidget {
+  const _LegendSwatch({
+    required this.color,
+    required this.label,
+    required this.isBar,
+  });
+
+  final Color color;
+  final String label;
+  final bool isBar;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (isBar)
+          Container(
+            width: 8,
+            height: 10,
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.75),
+              borderRadius: BorderRadius.circular(2),
+            ),
+          )
+        else
+          SizedBox(
+            width: 14,
+            height: 10,
+            child: CustomPaint(
+              painter: _LegendLinePainter(color: color),
+            ),
+          ),
+        const SizedBox(width: 4),
+        Text(label, style: mono(8, c: kHint)),
+      ],
+    );
+  }
+}
+
+class _LegendDot extends StatelessWidget {
+  const _LegendDot({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 5,
+          height: 5,
+          decoration: const BoxDecoration(
+            color: kCyan,
+            shape: BoxShape.circle,
+          ),
+        ),
+        const SizedBox(width: 4),
+        Text(label, style: mono(8, c: kHint)),
+      ],
+    );
+  }
+}
+
+class _LegendLinePainter extends CustomPainter {
+  _LegendLinePainter({required this.color});
+
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    canvas.drawLine(
+      Offset(0, size.height / 2),
+      Offset(size.width, size.height / 2),
+      Paint()
+        ..color = color
+        ..strokeWidth = 1.5
+        ..strokeCap = StrokeCap.round,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant _LegendLinePainter old) =>
+      old.color != color;
 }
 
 class _TimelinePainter extends CustomPainter {
@@ -82,8 +200,8 @@ class _TimelinePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final w = size.width;
-    const barTop = 18.0;
-    const barMaxH = 34.0;
+    const barTop = 22.0;
+    const barMaxH = 44.0;
     final n = hours.length;
     if (n == 0) return;
 
@@ -105,7 +223,7 @@ class _TimelinePainter extends CustomPainter {
       Paint()
         ..color = kCyan.withValues(alpha: 0.35)
         ..style = PaintingStyle.stroke
-        ..strokeWidth = 2
+        ..strokeWidth = 2.4
         ..strokeCap = StrokeCap.round,
     );
 
@@ -117,23 +235,26 @@ class _TimelinePainter extends CustomPainter {
       final x = i * slotW + slotW * 0.18;
       final bw = slotW * 0.64;
       final isBest = hours[i].isBestHour;
+      final isGolden = hours[i].isGoldenWindow;
       final color = isBest
           ? kAmber
-          : Color.lerp(kHint, kCyan, score / 100)!;
+          : isGolden
+              ? Color.lerp(kAmber, kCyan, 0.35)!
+              : Color.lerp(kHint, kCyan, score / 100)!;
 
       final rect = RRect.fromRectAndRadius(
         Rect.fromLTWH(x, barTop + barMaxH - barH, bw, barH),
-        const Radius.circular(3),
+        const Radius.circular(4),
       );
       canvas.drawRRect(rect, Paint()..color = color.withValues(alpha: 0.85));
 
-      if (isBest) {
+      if (isBest || isGolden) {
         canvas.drawRRect(
           rect,
           Paint()
-            ..color = kAmber
+            ..color = isBest ? kAmber : kAmber.withValues(alpha: 0.5)
             ..style = PaintingStyle.stroke
-            ..strokeWidth = 1.2,
+            ..strokeWidth = isBest ? 1.2 : 0.8,
         );
       }
 
@@ -141,14 +262,18 @@ class _TimelinePainter extends CustomPainter {
         text: TextSpan(
           text: '$score',
           style: TextStyle(
-            fontSize: 8,
+            fontSize: 10,
             fontWeight: FontWeight.w700,
-            color: isBest ? kAmber : Colors.white70,
+            color: isBest
+                ? kAmber
+                : isGolden
+                    ? kAmber.withValues(alpha: 0.85)
+                    : Colors.white70,
           ),
         ),
         textDirection: TextDirection.ltr,
       )..layout();
-      tp.paint(canvas, Offset(x + bw / 2 - tp.width / 2, barTop - 2));
+      tp.paint(canvas, Offset(x + bw / 2 - tp.width / 2, barTop - 4));
     }
   }
 

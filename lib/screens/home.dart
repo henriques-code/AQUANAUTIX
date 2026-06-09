@@ -22,7 +22,8 @@ class AquanautixHome extends StatefulWidget {
   State<AquanautixHome> createState() => _AquanautixHomeState();
 }
 
-class _AquanautixHomeState extends State<AquanautixHome> {
+class _AquanautixHomeState extends State<AquanautixHome>
+    with WidgetsBindingObserver {
   int _idx = 0;
   bool _locationPromptShown = false;
 
@@ -34,10 +35,40 @@ class _AquanautixHomeState extends State<AquanautixHome> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     HomeTabIndex.notifier.value = _idx;
+    HomeTabIndex.notifier.addListener(_onExternalTabRequest);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       unawaited(_promptLocationIfNeeded());
     });
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    HomeTabIndex.notifier.removeListener(_onExternalTabRequest);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      unawaited(_recheckLocationAfterResume());
+    }
+  }
+
+  Future<void> _recheckLocationAfterResume() async {
+    if (!mounted) return;
+    final status = await GpsAccess.check();
+    if (status == GpsAccessStatus.granted) {
+      _locationPromptShown = true;
+    }
+  }
+
+  void _onExternalTabRequest() {
+    final i = HomeTabIndex.notifier.value;
+    if (!mounted || i == _idx) return;
+    setState(() => _idx = i);
   }
 
   Future<void> _promptLocationIfNeeded() async {

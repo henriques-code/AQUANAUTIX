@@ -119,13 +119,21 @@ class _LogbookScreenState extends State<LogbookScreen>
       ),
     );
     _tabCtrl = TabController(length: 3, vsync: this);
-    _tabCtrl.addListener(() => setState(() => _tabIndex = _tabCtrl.index));
+    _tabCtrl.addListener(_onTabIndexChanged);
     LogbookTabIndex.pendingTab.addListener(_applyPendingLogTab);
+    LogbookTabIndex.pendingAction.addListener(_applyPendingLogTab);
     _applyPendingLogTab();
     unawaited(_loadCapturas());
     if (isSupabaseConfigured) {
       final ctx = FishingContextStore.instance.value.value;
       unawaited(CommunityStore.instance.loadFeed(country: ctx.country));
+    }
+  }
+
+  void _onTabIndexChanged() {
+    if (_tabCtrl.indexIsChanging || !mounted) return;
+    if (_tabIndex != _tabCtrl.index) {
+      setState(() => _tabIndex = _tabCtrl.index);
     }
   }
 
@@ -151,6 +159,8 @@ class _LogbookScreenState extends State<LogbookScreen>
   @override
   void dispose() {
     LogbookTabIndex.pendingTab.removeListener(_applyPendingLogTab);
+    LogbookTabIndex.pendingAction.removeListener(_applyPendingLogTab);
+    _tabCtrl.removeListener(_onTabIndexChanged);
     _tabCtrl.dispose();
     super.dispose();
   }
@@ -1567,127 +1577,36 @@ class _LogbookScreenState extends State<LogbookScreen>
   }
 
   void _showNovaCapturaSheet() {
-    final t = aqxL10nOf(context);
     HapticFeedback.mediumImpact();
-    final esp = TextEditingController(
-      text: FishingContextStore.instance.value.value.species,
-    );
-    final peso = TextEditingController();
-    showModalBottomSheet<void>(
+    final speciesDefault = FishingContextStore.instance.value.value.species;
+    showModalBottomSheet<({String nome, String peso})>(
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
-      builder: (ctx) {
-        return Padding(
-          padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(ctx).bottom),
-          child: Container(
-            padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
-            decoration: const BoxDecoration(
-              color: kCard,
-              borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Center(
-                  child: Container(
-                    width: 36,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: kHint.withValues(alpha: 0.35),
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 14),
-                Text(t.es ? 'NUEVA CAPTURA' : 'NOVA CAPTURA', style: orb(14, c: kCyan, ls: 1.4)),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: esp,
-                  style: ibm(14),
-                  decoration: InputDecoration(
-                    labelText: t.es ? 'Especie' : 'Espécie',
-                    labelStyle: ibm(12, c: kHint),
-                    enabledBorder: OutlineInputBorder(
-                      borderSide: BorderSide(color: kCyan.withValues(alpha: 0.3)),
-                    ),
-                    focusedBorder: const OutlineInputBorder(
-                      borderSide: BorderSide(color: kCyan),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 10),
-                TextField(
-                  controller: peso,
-                  style: ibm(14),
-                  keyboardType: TextInputType.text,
-                  decoration: InputDecoration(
-                    labelText: t.es ? 'Peso (ej: 2.4kg)' : 'Peso (ex: 2.4kg)',
-                    labelStyle: ibm(12, c: kHint),
-                    enabledBorder: OutlineInputBorder(
-                      borderSide: BorderSide(color: kCyan.withValues(alpha: 0.3)),
-                    ),
-                    focusedBorder: const OutlineInputBorder(
-                      borderSide: BorderSide(color: kCyan),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                FilledButton(
-                  style: FilledButton.styleFrom(
-                    backgroundColor: kCyan,
-                    foregroundColor: Colors.black,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                  ),
-                  onPressed: () async {
-                    final nome = esp.text.trim();
-                    final p = peso.text.trim();
-                    if (nome.isEmpty || p.isEmpty) {
-                      ScaffoldMessenger.of(ctx).showSnackBar(
-                        SnackBar(
-                          content: Text(t.es ? 'Rellena especie y peso.' : 'Preenche espécie e peso.', style: ibm(14)),
-                          backgroundColor: kCard,
-                        ),
-                      );
-                      return;
-                    }
-                    final nova = _Captura(
-                      emoji: '🎣',
-                      nome: nome,
-                      peso: p,
-                      tag: 'NOVO',
-                      tagColor: kGreen,
-                      details: 'Registo manual · hoje',
-                      isco: '—',
-                      temFoto: false,
-                    );
-                    if (mounted) {
-                      setState(() => _capturas.insert(0, nova));
-                      // Remove demo data se ainda estava presente
-                      if (_capturas.any((c) => c.nome == 'Robalo Europeu 👑') &&
-                          _capturas.length > _demoCapturas.length) {
-                        setState(() => _capturas.removeWhere(
-                            (c) => _demoCapturas.any((d) => d.nome == c.nome)));
-                      }
-                    }
-                    await _saveCapturas();
-                    if (ctx.mounted) Navigator.pop(ctx);
-                    _trackMissionCompletedFromLogbook(action: 'nova_captura_manual');
-                  },
-                  child: Text(
-                    t.es ? 'AÑADIR AL DIARIO' : 'ADICIONAR AO LOGBOOK',
-                    style: mono(11).copyWith(fontWeight: FontWeight.w700, color: Colors.black),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    ).whenComplete(() {
-      esp.dispose();
-      peso.dispose();
+      builder: (ctx) => _NovaCapturaSheet(speciesDefault: speciesDefault),
+    ).then((result) async {
+      if (result == null || !mounted) return;
+      final nova = _Captura(
+        emoji: '🎣',
+        nome: result.nome,
+        peso: result.peso,
+        tag: 'NOVO',
+        tagColor: kGreen,
+        details: 'Registo manual · hoje',
+        isco: '—',
+        temFoto: false,
+      );
+      setState(() {
+        _capturas.insert(0, nova);
+        if (_capturas.any((c) => c.nome == 'Robalo Europeu 👑') &&
+            _capturas.length > _demoCapturas.length) {
+          _capturas.removeWhere(
+            (c) => _demoCapturas.any((d) => d.nome == c.nome),
+          );
+        }
+      });
+      await _saveCapturas();
+      _trackMissionCompletedFromLogbook(action: 'nova_captura_manual');
     });
   }
 
@@ -1703,6 +1622,140 @@ class _LogbookScreenState extends State<LogbookScreen>
           'species': ctx.species,
           'action': action,
         },
+      ),
+    );
+  }
+}
+
+/// Sheet «Nova captura» — controllers vivem no State (evita crash ao fechar).
+class _NovaCapturaSheet extends StatefulWidget {
+  const _NovaCapturaSheet({required this.speciesDefault});
+
+  final String speciesDefault;
+
+  @override
+  State<_NovaCapturaSheet> createState() => _NovaCapturaSheetState();
+}
+
+class _NovaCapturaSheetState extends State<_NovaCapturaSheet> {
+  late final TextEditingController _esp;
+  late final TextEditingController _peso;
+
+  @override
+  void initState() {
+    super.initState();
+    _esp = TextEditingController(text: widget.speciesDefault);
+    _peso = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    _esp.dispose();
+    _peso.dispose();
+    super.dispose();
+  }
+
+  void _submit() {
+    final t = aqxL10nOf(context);
+    final nome = _esp.text.trim();
+    final p = _peso.text.trim();
+    if (nome.isEmpty || p.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            t.es ? 'Rellena especie y peso.' : 'Preenche espécie e peso.',
+            style: ibm(14),
+          ),
+          backgroundColor: kCard,
+        ),
+      );
+      return;
+    }
+    Navigator.pop(context, (nome: nome, peso: p));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final t = aqxL10nOf(context);
+    return Padding(
+      padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+        decoration: const BoxDecoration(
+          color: kCard,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Center(
+              child: Container(
+                width: 36,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: kHint.withValues(alpha: 0.35),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            const SizedBox(height: 14),
+            Text(
+              t.es ? 'NUEVA CAPTURA' : 'NOVA CAPTURA',
+              style: orb(14, c: kCyan, ls: 1.4),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _esp,
+              style: ibm(14),
+              textInputAction: TextInputAction.next,
+              decoration: InputDecoration(
+                labelText: t.es ? 'Especie' : 'Espécie',
+                labelStyle: ibm(12, c: kHint),
+                enabledBorder: OutlineInputBorder(
+                  borderSide: BorderSide(color: kCyan.withValues(alpha: 0.3)),
+                ),
+                focusedBorder: const OutlineInputBorder(
+                  borderSide: BorderSide(color: kCyan),
+                ),
+              ),
+            ),
+            const SizedBox(height: 10),
+            TextField(
+              controller: _peso,
+              style: ibm(14),
+              keyboardType: TextInputType.text,
+              textInputAction: TextInputAction.done,
+              onSubmitted: (_) => _submit(),
+              decoration: InputDecoration(
+                labelText: t.es ? 'Peso (ej: 2.4kg)' : 'Peso (ex: 2.4kg)',
+                labelStyle: ibm(12, c: kHint),
+                enabledBorder: OutlineInputBorder(
+                  borderSide: BorderSide(color: kCyan.withValues(alpha: 0.3)),
+                ),
+                focusedBorder: const OutlineInputBorder(
+                  borderSide: BorderSide(color: kCyan),
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            FilledButton(
+              style: FilledButton.styleFrom(
+                backgroundColor: kCyan,
+                foregroundColor: Colors.black,
+                padding: const EdgeInsets.symmetric(vertical: 14),
+              ),
+              onPressed: _submit,
+              child: Text(
+                t.es ? 'AÑADIR AL DIARIO' : 'ADICIONAR AO LOGBOOK',
+                style: mono(11).copyWith(
+                  fontWeight: FontWeight.w700,
+                  color: Colors.black,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

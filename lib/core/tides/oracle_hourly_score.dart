@@ -86,3 +86,52 @@ List<HourlyCondition> fallbackOracleHourlyTimeline(
       ),
   ];
 }
+
+/// Parse «07:00 -> 09:30» → (7, 9) inclusive.
+(int?, int?) parseOracleWindowHours(String? window) {
+  if (window == null || window.trim().isEmpty || window == '—') {
+    return (null, null);
+  }
+  final re = RegExp(r'(\d{1,2}):\d{2}');
+  final matches = re.allMatches(window).toList();
+  if (matches.isEmpty) return (null, null);
+  final start = int.tryParse(matches.first.group(1)!);
+  final end =
+      matches.length > 1 ? int.tryParse(matches[1].group(1)!) : start;
+  return (start, end);
+}
+
+int _hourLabelToInt(String label) {
+  final h = label.split(':').first.replaceAll('h', '');
+  return int.tryParse(h) ?? -1;
+}
+
+bool _hourInWindow(int hour, int start, int end) {
+  if (hour < 0) return false;
+  if (start <= end) return hour >= start && hour <= end;
+  return hour >= start || hour <= end;
+}
+
+/// Marca hora actual e janela de ouro sobre a timeline já calculada.
+List<HourlyCondition> applyTimelineHighlights(
+  List<HourlyCondition> hours, {
+  required DateTime now,
+  String? goldenWindowHours,
+}) {
+  if (hours.isEmpty) return hours;
+  final (startH, endH) = parseOracleWindowHours(goldenWindowHours);
+  final currentH = now.hour;
+
+  return [
+    for (final h in hours)
+      HourlyCondition(
+        hour: h.hour,
+        oracleScore: h.oracleScore,
+        isBestHour: h.isBestHour,
+        isCurrentHour: _hourLabelToInt(h.hour) == currentH,
+        isGoldenWindow: startH != null &&
+            endH != null &&
+            _hourInWindow(_hourLabelToInt(h.hour), startH, endH),
+      ),
+  ];
+}

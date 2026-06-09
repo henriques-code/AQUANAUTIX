@@ -27,9 +27,9 @@ import '../core/tides/oracle_hourly_score.dart';
 import '../features/home/domain/entities/hourly_condition.dart';
 import 'widgets/aqx_pressable.dart';
 import 'widgets/oracle_community_strip.dart';
+import 'widgets/oracle_conditions_fold.dart';
 import 'widgets/oracle_decision_card.dart';
 import 'widgets/oracle_fishing_metrics_grid.dart';
-import 'widgets/oracle_timeline_24h.dart';
 import 'widgets/oracle_weather_details_grid.dart';
 import 'widgets/location_access_sheet.dart';
 
@@ -104,7 +104,7 @@ class OraculoScreen extends StatefulWidget {
 }
 
 class _OraculoScreenState extends State<OraculoScreen>
-    with TickerProviderStateMixin {
+    with TickerProviderStateMixin, WidgetsBindingObserver {
   bool _rioMode = false;
   late final AnimationController _ctrl;
   late final Animation<double> _fade;
@@ -126,10 +126,14 @@ class _OraculoScreenState extends State<OraculoScreen>
   bool _weatherDetailsFailed = false;
   List<HourlyCondition> _hourlyTimeline = const [];
   final _meteoRepo = OpenMeteoTidesRepository();
+  final _scrollCtrl = ScrollController();
+  final _weatherSectionKey = GlobalKey();
+  final _weatherGridKey = GlobalKey<OracleWeatherDetailsGridState>();
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     final ctx = FishingContextStore.instance.value.value;
     _rioMode = ctx.region == 'ABRANTES' || ctx.species == 'BARBO';
     _ctxListener = () {
@@ -141,7 +145,10 @@ class _OraculoScreenState extends State<OraculoScreen>
     FishingContextStore.instance.value.addListener(_ctxListener);
     _homeTabListener = () {
       if (!mounted) return;
-      if (HomeTabIndex.notifier.value == HomeTabIndex.oracleTabIndex) _trackNorthStar();
+      if (HomeTabIndex.notifier.value == HomeTabIndex.oracleTabIndex) {
+        _trackNorthStar();
+        unawaited(_recheckGpsIfNeeded());
+      }
     };
     HomeTabIndex.notifier.addListener(_homeTabListener);
     _placeSearchListener = () {
@@ -198,6 +205,36 @@ class _OraculoScreenState extends State<OraculoScreen>
     });
   }
 
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      unawaited(_recheckGpsIfNeeded(force: true));
+    }
+  }
+
+  /// Re-tenta GPS ao voltar das definições ou ao abrir o tab Oráculo.
+  Future<void> _recheckGpsIfNeeded({bool force = false}) async {
+    if (!mounted || _planningPlace != null) return;
+    if (!force && !_costaGpsError && !_rioGpsError) return;
+
+    final status = await GpsAccess.check();
+    if (status != GpsAccessStatus.granted) return;
+
+    final fix = await GpsAccess.tryGetFix();
+    if (fix == null || !mounted) return;
+
+    OracleDataService.instance.invalidateCache();
+    setState(() {
+      _planningPlace = null;
+      _costaGpsError = false;
+      _rioGpsError = false;
+      _costaError = null;
+      _rioError = null;
+    });
+    unawaited(_loadCosta());
+    unawaited(_loadRio());
+  }
+
   void _trackNorthStar() {
     unawaited(
       AnalyticsService.instance.track(
@@ -214,11 +251,13 @@ class _OraculoScreenState extends State<OraculoScreen>
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     HomeTabIndex.notifier.removeListener(_homeTabListener);
     HomeTabIndex.pendingOraclePlaceSearch.removeListener(_placeSearchListener);
     FishingContextStore.instance.value.removeListener(_ctxListener);
     _fishPulse.dispose();
     _ctrl.dispose();
+    _scrollCtrl.dispose();
     super.dispose();
   }
 
@@ -374,10 +413,26 @@ class _OraculoScreenState extends State<OraculoScreen>
     LogbookTabIndex.pendingTab.value = LogbookTabIndex.minhasTab;
     LogbookTabIndex.pendingAction.value = 'nova_captura';
     HomeTabIndex.notifier.value = HomeTabIndex.logTabIndex;
+    unawaited(
+      AnalyticsService.instance.track(
+        AnalyticsEvents.tabChange,
+        params: {'tab': 'LOG', 'source': 'oraculo_registar_captura'},
+      ),
+    );
   }
 
   void _openMapTab() {
+    final coords = OracleDataService.instance.lastCoords;
+    if (coords != null) {
+      HomeTabIndex.pendingMapFocus.value = (lat: coords.lat, lon: coords.lon);
+    }
     HomeTabIndex.notifier.value = HomeTabIndex.mapTabIndex;
+    unawaited(
+      AnalyticsService.instance.track(
+        AnalyticsEvents.tabChange,
+        params: {'tab': 'MAPA', 'source': 'oraculo_ver_mapa'},
+      ),
+    );
   }
 
   void _openCommunityTab() {
@@ -389,6 +444,21 @@ class _OraculoScreenState extends State<OraculoScreen>
     LogbookTabIndex.pendingTab.value = LogbookTabIndex.comunidadeTab;
     LogbookTabIndex.pendingAction.value = 'novo_post';
     HomeTabIndex.notifier.value = HomeTabIndex.logTabIndex;
+  }
+
+  void _onFishingMetricTap(OracleFishingMetricKind kind) {
+    _weatherGridKey.currentState?.expandAccordion();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final ctx = _weatherSectionKey.currentContext;
+      if (ctx != null && mounted) {
+        Scrollable.ensureVisible(
+          ctx,
+          duration: const Duration(milliseconds: 350),
+          curve: Curves.easeOut,
+          alignment: 0.05,
+        );
+      }
+    });
   }
 
   List<OracleFishingMetric> _buildFishingMetrics(_ModoData d) {
@@ -415,7 +485,6 @@ class _OraculoScreenState extends State<OraculoScreen>
           ? '${b!.tideHeightM!.toStringAsFixed(2)} m'
           : (d.cards.isNotEmpty ? d.cards[0].value : '—'),
       tideSub: b?.tideTrendPt ?? '',
-      tideSparkline: w?.tideSparkline ?? const [],
       weather: w,
       tempWaterValue: b?.tempC != null
           ? '${b!.tempC!.toStringAsFixed(1)} °C'
@@ -610,6 +679,7 @@ class _OraculoScreenState extends State<OraculoScreen>
       backgroundColor: kCard,
       onRefresh: _refreshPage,
       child: SingleChildScrollView(
+        controller: _scrollCtrl,
         physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 14),
         child: Column(
@@ -757,23 +827,22 @@ class _OraculoScreenState extends State<OraculoScreen>
 
           const SizedBox(height: 8),
 
-          // ── 6 métricas pesca (fold) ────────────────────
+          // ── Condições agora + 12h (fold unificado) ─────
           FadeTransition(
             opacity: _fade,
-            child: OracleFishingMetricsGrid(metrics: _buildFishingMetrics(d)),
-          ),
-
-          const SizedBox(height: 8),
-
-          // ── Timeline 12h score + maré ──────────────────
-          FadeTransition(
-            opacity: _fade,
-            child: OracleTimeline24h(
-              hours: _hourlyTimeline,
+            child: OracleConditionsFold(
+              metrics: _buildFishingMetrics(d),
+              hours: applyTimelineHighlights(
+                _hourlyTimeline,
+                now: DateTime.now(),
+                goldenWindowHours: d.horario,
+              ),
               tideSparkline: _weatherDetails?.tideSparkline ?? const [],
-              title: t.es
+              timelineTitle: t.es
                   ? 'PRÓXIMAS 12H · SCORE + MAREA'
                   : 'PRÓXIMAS 12H · SCORE + MARÉ',
+              nowLabel: t.es ? 'ahora' : 'agora',
+              onMetricTap: _onFishingMetricTap,
             ),
           ),
 
@@ -782,16 +851,20 @@ class _OraculoScreenState extends State<OraculoScreen>
           // ── Meteorologia completa (accordion) ────────
           FadeTransition(
             opacity: _fade,
-            child: OracleWeatherDetailsGrid(
-              data: _weatherDetails,
-              loading: _weatherDetailsLoading,
-              loadFailed: _weatherDetailsFailed,
-              collapsible: true,
-              initiallyExpanded: false,
-              onRetry: () => unawaited(_loadWeatherDetails(
-                costaBundle: _costaBundle,
-                force: true,
-              )),
+            child: KeyedSubtree(
+              key: _weatherSectionKey,
+              child: OracleWeatherDetailsGrid(
+                key: _weatherGridKey,
+                data: _weatherDetails,
+                loading: _weatherDetailsLoading,
+                loadFailed: _weatherDetailsFailed,
+                collapsible: true,
+                initiallyExpanded: false,
+                onRetry: () => unawaited(_loadWeatherDetails(
+                  costaBundle: _costaBundle,
+                  force: true,
+                )),
+              ),
             ),
           ),
 
@@ -1095,20 +1168,34 @@ class _OraculoScreenState extends State<OraculoScreen>
   Future<void> _enableLocation(AqxL10n t) async {
     HapticFeedback.selectionClick();
     var status = await GpsAccess.request();
-    if (status == GpsAccessStatus.granted) {
-      OracleDataService.instance.invalidateCache();
-      setState(() {
-        _planningPlace = null;
-        _costaGpsError = false;
-        _rioGpsError = false;
-        _costaBundle = null;
-        _rioBundle = null;
-      });
-      unawaited(_loadCosta());
-      unawaited(_loadRio());
+    if (status != GpsAccessStatus.granted) {
+      await GpsAccess.openSystemSettings(status);
       return;
     }
-    await GpsAccess.openSystemSettings(status);
+    final fix = await GpsAccess.tryGetFix();
+    if (fix == null) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(t.gpsFixFailed, style: ibm(14)),
+          backgroundColor: kCard,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+    OracleDataService.instance.invalidateCache();
+    setState(() {
+      _planningPlace = null;
+      _costaGpsError = false;
+      _rioGpsError = false;
+      _costaError = null;
+      _rioError = null;
+      _costaBundle = null;
+      _rioBundle = null;
+    });
+    unawaited(_loadCosta());
+    unawaited(_loadRio());
   }
 
   void _showLocationSheet(AqxL10n t) {

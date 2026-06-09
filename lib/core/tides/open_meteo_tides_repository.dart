@@ -261,7 +261,7 @@ class OpenMeteoTidesRepository {
           'cloud_cover,precipitation,uv_index,surface_pressure',
       'hourly':
           'temperature_2m,surface_pressure,cloud_cover,precipitation,'
-          'relative_humidity_2m,visibility',
+          'relative_humidity_2m,visibility,wind_speed_10m',
       'daily': 'sunrise,sunset,uv_index_max',
       'past_days': '1',
       'forecast_days': '2',
@@ -272,7 +272,7 @@ class OpenMeteoTidesRepository {
       'longitude': longitude.toString(),
       'timezone': timezone,
       'current': 'wave_height,ocean_current_velocity,ocean_current_direction',
-      'hourly': 'sea_level_height_msl,ocean_current_velocity',
+      'hourly': 'sea_level_height_msl,ocean_current_velocity,wave_height,wave_period',
       'forecast_days': '1',
     });
     final aqUri = Uri.https('air-quality-api.open-meteo.com', '/v1/air-quality', {
@@ -303,6 +303,8 @@ class OpenMeteoTidesRepository {
       int? oceanCurrentDirDeg;
       List<double> tideSpark = const [];
       List<double> currentSpark = const [];
+      List<double> waveSpark = const [];
+      double? wavePeriodS;
       double? computedTideRange = tideRangeM;
 
       if (mRes.statusCode == 200) {
@@ -327,6 +329,11 @@ class OpenMeteoTidesRepository {
 
         tideSpark = sparkFrom(mh?['sea_level_height_msl'], take: 14);
         currentSpark = sparkFrom(mh?['ocean_current_velocity'], take: 10);
+        waveSpark = sparkFrom(mh?['wave_height'], take: 10);
+        final wp = mh?['wave_period'] as List<dynamic>?;
+        if (wp != null && wp.isNotEmpty) {
+          wavePeriodS = (wp.last as num?)?.toDouble();
+        }
 
         if (tideSpark.length >= 2) {
           final minH = tideSpark.reduce((a, b) => a < b ? a : b);
@@ -433,6 +440,9 @@ class OpenMeteoTidesRepository {
           tideTrendPt,
           tideSpark,
         ),
+        windSparkline: spark(wh?['wind_speed_10m']),
+        waveSparkline: waveSpark,
+        wavePeriodS: wavePeriodS,
         oceanCurrentMs: oceanCurrentMs,
         oceanCurrentDirDeg: oceanCurrentDirDeg,
         currentSparkline: currentSpark,

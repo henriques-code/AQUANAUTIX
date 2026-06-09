@@ -17,4 +17,8 @@ class HomeTabIndex {
   /// Abre pesquisa de local no Oráculo (modo planeamento).
   static final ValueNotifier<bool> pendingOraclePlaceSearch =
       ValueNotifier<bool>(false);
+
+  /// Centrar mapa nas coords do Oráculo (VER NO MAPA).
+  static final ValueNotifier<({double lat, double lon})?> pendingMapFocus =
+      ValueNotifier<({double lat, double lon})?>(null);
 }

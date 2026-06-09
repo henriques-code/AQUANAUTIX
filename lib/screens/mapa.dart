@@ -22,6 +22,7 @@ import '../core/services/app_insights_service.dart';
 import '../core/l10n/aqx_l10n.dart';
 import '../core/state/fishing_context_store.dart';
 import '../core/state/fishing_mode_store.dart';
+import '../core/state/home_tab_index.dart';
 import '../core/tides/oracle_data_service.dart';
 import '../core/catch_photos/catch_photo_model.dart';
 import '../core/catch_photos/catch_photo_repository.dart';
@@ -102,8 +103,21 @@ class _MapaScreenState extends State<MapaScreen> {
     unawaited(_loadSeamarksPrefs());
     _catchStore = CatchPhotosStore();
     _catchStore.addListener(_onCatchStoreChanged);
+    HomeTabIndex.pendingMapFocus.addListener(_applyPendingMapFocus);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) unawaited(_loadCatchPhotos());
+    });
+  }
+
+  void _applyPendingMapFocus() {
+    final target = HomeTabIndex.pendingMapFocus.value;
+    if (target == null || !mounted) return;
+    HomeTabIndex.pendingMapFocus.value = null;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      try {
+        _mapController.move(LatLng(target.lat, target.lon), 13.0);
+      } catch (_) {}
     });
   }
 
@@ -135,6 +149,7 @@ class _MapaScreenState extends State<MapaScreen> {
   @override
   void dispose() {
     FishingModeStore.instance.isRio.removeListener(_onFishingModeChanged);
+    HomeTabIndex.pendingMapFocus.removeListener(_applyPendingMapFocus);
     _catchStore.removeListener(_onCatchStoreChanged);
     _catchStore.dispose();
     _mapController.dispose();

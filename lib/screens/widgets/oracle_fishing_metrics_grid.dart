@@ -1,9 +1,22 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../_shared.dart';
 import '../../core/tides/weather_details_snapshot.dart';
+
+enum OracleFishingMetricKind {
+  tide,
+  wind,
+  waves,
+  tempWater,
+  current,
+  pressure,
+  caudal,
+  nivel,
+  visibility,
+}
 
 class OracleFishingMetric {
   const OracleFishingMetric({
@@ -11,21 +24,30 @@ class OracleFishingMetric {
     required this.value,
     this.sub = '',
     this.sparkline = const [],
-    this.highlight = false,
+    this.showSparkline = true,
+    this.alert = false,
+    this.kind,
   });
 
   final String label;
   final String value;
   final String sub;
   final List<double> sparkline;
-  final bool highlight;
+  final bool showSparkline;
+  final bool alert;
+  final OracleFishingMetricKind? kind;
 }
 
 /// Grelha 2×3 — métricas críticas para pesca (fold do Oráculo).
 class OracleFishingMetricsGrid extends StatelessWidget {
-  const OracleFishingMetricsGrid({super.key, required this.metrics});
+  const OracleFishingMetricsGrid({
+    super.key,
+    required this.metrics,
+    this.onMetricTap,
+  });
 
   final List<OracleFishingMetric> metrics;
+  final ValueChanged<OracleFishingMetricKind>? onMetricTap;
 
   @override
   Widget build(BuildContext context) {
@@ -38,29 +60,40 @@ class OracleFishingMetricsGrid extends StatelessWidget {
         crossAxisCount: 3,
         mainAxisSpacing: 8,
         crossAxisSpacing: 8,
-        childAspectRatio: 0.92,
+        childAspectRatio: 0.88,
       ),
       itemCount: metrics.length,
-      itemBuilder: (context, i) => _MetricTile(metric: metrics[i]),
+      itemBuilder: (context, i) => _MetricTile(
+        metric: metrics[i],
+        onTap: metrics[i].kind != null && onMetricTap != null
+            ? () {
+                HapticFeedback.selectionClick();
+                onMetricTap!(metrics[i].kind!);
+              }
+            : null,
+      ),
     );
   }
 }
 
 class _MetricTile extends StatelessWidget {
-  const _MetricTile({required this.metric});
+  const _MetricTile({required this.metric, this.onTap});
 
   final OracleFishingMetric metric;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
-    final borderColor = metric.highlight
-        ? kCyan.withValues(alpha: 0.45)
+    final borderColor = metric.alert
+        ? kAmber.withValues(alpha: 0.55)
         : kCyan.withValues(alpha: 0.12);
 
-    return Container(
+    final child = Container(
       padding: const EdgeInsets.fromLTRB(8, 8, 8, 6),
       decoration: BoxDecoration(
-        color: kCard,
+        color: metric.alert
+            ? kAmber.withValues(alpha: 0.06)
+            : kCard,
         borderRadius: BorderRadius.circular(10),
         border: Border.all(color: borderColor),
       ),
@@ -78,22 +111,38 @@ class _MetricTile extends StatelessWidget {
           if (metric.sub.isNotEmpty)
             Text(
               metric.sub,
-              style: ibm(9, c: kCyan.withValues(alpha: 0.85)),
+              style: ibm(
+                9,
+                c: metric.alert
+                    ? kAmber.withValues(alpha: 0.95)
+                    : kCyan.withValues(alpha: 0.85),
+              ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
           const Spacer(),
-          SizedBox(
-            height: 22,
-            width: double.infinity,
-            child: CustomPaint(
-              painter: _MiniSparklinePainter(
-                values: metric.sparkline,
-                color: metric.highlight ? kCyan : const Color(0xFF5B9BD5),
+          if (metric.showSparkline && metric.sparkline.length >= 2)
+            SizedBox(
+              height: 22,
+              width: double.infinity,
+              child: CustomPaint(
+                painter: _MiniSparklinePainter(
+                  values: metric.sparkline,
+                  color: metric.alert ? kAmber : const Color(0xFF5B9BD5),
+                ),
               ),
             ),
-          ),
         ],
+      ),
+    );
+
+    if (onTap == null) return child;
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(10),
+        child: child,
       ),
     );
   }
@@ -107,16 +156,7 @@ class _MiniSparklinePainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    if (values.length < 2) {
-      canvas.drawLine(
-        Offset(0, size.height * 0.6),
-        Offset(size.width, size.height * 0.6),
-        Paint()
-          ..color = color.withValues(alpha: 0.35)
-          ..strokeWidth = 1.2,
-      );
-      return;
-    }
+    if (values.length < 2) return;
 
     final minV = values.reduce(math.min);
     final maxV = values.reduce(math.max);
@@ -153,19 +193,20 @@ class _MiniSparklinePainter extends CustomPainter {
 List<OracleFishingMetric> buildCostaFishingMetrics({
   required String tideValue,
   required String tideSub,
-  required List<double> tideSparkline,
   required WeatherDetailsSnapshot? weather,
   required String tempWaterValue,
   required String tempWaterSub,
 }) {
   final w = weather;
-  final windVal = w?.windSpeedKmh != null
-      ? '${w!.windSpeedKmh!.round()} km/h'
-      : '—';
+  final windKmh = w?.windSpeedKmh;
+  final windVal =
+      windKmh != null ? '${windKmh.round()} km/h' : '—';
   final windSub = WeatherDetailsSnapshot.windCardinalPt(w?.windDirDeg);
-  final waveVal = w?.waveHeightM != null
-      ? '${w!.waveHeightM!.toStringAsFixed(1)} m'
-      : '—';
+  final waveM = w?.waveHeightM;
+  final waveVal = waveM != null ? '${waveM.toStringAsFixed(1)} m' : '—';
+  final waveSub = w?.wavePeriodS != null
+      ? '${w!.wavePeriodS!.round()} s'
+      : '';
   final presVal =
       w?.pressureHpa != null ? '${w!.pressureHpa!.round()} hPa' : '—';
   final currentKmh = WeatherDetailsSnapshot.currentKmh(w?.oceanCurrentMs);
@@ -180,33 +221,39 @@ List<OracleFishingMetric> buildCostaFishingMetrics({
       label: 'MARÉ',
       value: tideValue,
       sub: tideSub,
-      sparkline: tideSparkline,
+      showSparkline: false,
+      kind: OracleFishingMetricKind.tide,
     ),
     OracleFishingMetric(
       label: 'VENTO',
       value: windVal,
       sub: windSub,
-      sparkline: w?.tempSparkline ?? const [],
+      sparkline: w?.windSparkline ?? const [],
+      alert: windKmh != null && windKmh >= 25,
+      kind: OracleFishingMetricKind.wind,
     ),
     OracleFishingMetric(
       label: 'ONDAS',
       value: waveVal,
-      sub: '',
-      sparkline: w?.tideSparkline ?? const [],
+      sub: waveSub,
+      sparkline: w?.waveSparkline ?? const [],
+      alert: waveM != null && waveM >= 2.0,
+      kind: OracleFishingMetricKind.waves,
     ),
     OracleFishingMetric(
       label: 'TEMP. ÁGUA',
       value: tempWaterValue,
       sub: tempWaterSub,
       sparkline: w?.tempSparkline ?? const [],
-      highlight: true,
+      kind: OracleFishingMetricKind.tempWater,
     ),
     OracleFishingMetric(
       label: 'CORRENTE',
       value: currentVal,
       sub: currentSub,
       sparkline: w?.currentSparkline ?? const [],
-      highlight: true,
+      alert: currentKmh != null && currentKmh >= 15,
+      kind: OracleFishingMetricKind.current,
     ),
     OracleFishingMetric(
       label: 'PRESSÃO',
@@ -215,6 +262,7 @@ List<OracleFishingMetric> buildCostaFishingMetrics({
           ? WeatherDetailsSnapshot.pressureTrendLabel(w.pressureSparkline)
           : '',
       sparkline: w?.pressureSparkline ?? const [],
+      kind: OracleFishingMetricKind.pressure,
     ),
   ];
 }
@@ -232,28 +280,43 @@ List<OracleFishingMetric> buildRioFishingMetrics({
   final w = weather;
   final presVal =
       w?.pressureHpa != null ? '${w!.pressureHpa!.round()} hPa' : '—';
-  final windVal = w?.windSpeedKmh != null
-      ? '${w!.windSpeedKmh!.round()} km/h'
-      : '—';
+  final windKmh = w?.windSpeedKmh;
+  final windVal =
+      windKmh != null ? '${windKmh.round()} km/h' : '—';
 
   return [
-    OracleFishingMetric(label: 'CAUDAL', value: caudalValue, sub: caudalSub),
-    OracleFishingMetric(label: 'NÍVEL', value: nivelValue, sub: nivelSub),
+    OracleFishingMetric(
+      label: 'CAUDAL',
+      value: caudalValue,
+      sub: caudalSub,
+      kind: OracleFishingMetricKind.caudal,
+    ),
+    OracleFishingMetric(
+      label: 'NÍVEL',
+      value: nivelValue,
+      sub: nivelSub,
+      kind: OracleFishingMetricKind.nivel,
+    ),
     OracleFishingMetric(
       label: 'TEMP. ÁGUA',
       value: tempValue,
       sub: tempSub,
-      highlight: true,
+      sparkline: w?.tempSparkline ?? const [],
+      kind: OracleFishingMetricKind.tempWater,
     ),
     OracleFishingMetric(
       label: 'VENTO',
       value: windVal,
       sub: WeatherDetailsSnapshot.windCardinalPt(w?.windDirDeg),
+      sparkline: w?.windSparkline ?? const [],
+      alert: windKmh != null && windKmh >= 25,
+      kind: OracleFishingMetricKind.wind,
     ),
     OracleFishingMetric(
       label: 'VISIB.',
       value: visibValue,
       sub: '',
+      kind: OracleFishingMetricKind.visibility,
     ),
     OracleFishingMetric(
       label: 'PRESSÃO',
@@ -262,6 +325,7 @@ List<OracleFishingMetric> buildRioFishingMetrics({
           ? WeatherDetailsSnapshot.pressureTrendLabel(w.pressureSparkline)
           : '',
       sparkline: w?.pressureSparkline ?? const [],
+      kind: OracleFishingMetricKind.pressure,
     ),
   ];
 }

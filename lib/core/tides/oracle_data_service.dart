@@ -1,7 +1,6 @@
 import 'dart:math' as math;
 
-import 'package:geolocator/geolocator.dart';
-
+import '../location/gps_access.dart';
 import '../l10n/aqx_l10n.dart';
 import '../state/app_locale_store.dart';
 import '../state/fishing_context_store.dart';
@@ -189,31 +188,24 @@ class OracleDataService {
 
   /// Posição actual obrigatória — sem GPS não há índice fiável para a zona de pesca.
   Future<({double lat, double lon})> _requireGpsFix(AqxL10n t) async {
-    var perm = await Geolocator.checkPermission();
-    if (perm == LocationPermission.denied) {
-      perm = await Geolocator.requestPermission();
+    var status = await GpsAccess.check();
+    if (status == GpsAccessStatus.denied) {
+      status = await GpsAccess.request();
     }
-    if (perm == LocationPermission.denied) {
-      throw OracleGpsRequiredException(t.gpsDenied);
+    switch (status) {
+      case GpsAccessStatus.denied:
+        throw OracleGpsRequiredException(t.gpsDenied);
+      case GpsAccessStatus.deniedForever:
+        throw OracleGpsRequiredException(t.gpsBlocked);
+      case GpsAccessStatus.serviceOff:
+        throw OracleGpsRequiredException(t.gpsServiceOff);
+      case GpsAccessStatus.granted:
+        break;
     }
-    if (perm == LocationPermission.deniedForever) {
-      throw OracleGpsRequiredException(t.gpsBlocked);
-    }
-    final svcEnabled = await Geolocator.isLocationServiceEnabled();
-    if (!svcEnabled) {
-      throw OracleGpsRequiredException(t.gpsServiceOff);
-    }
-    try {
-      final pos = await Geolocator.getCurrentPosition(
-        locationSettings: const LocationSettings(
-          accuracy: LocationAccuracy.medium,
-          timeLimit: Duration(seconds: 18),
-        ),
-      );
-      return (lat: pos.latitude, lon: pos.longitude);
-    } catch (_) {
-      throw OracleGpsRequiredException(t.gpsFixFailed);
-    }
+
+    final fix = await GpsAccess.tryGetFix();
+    if (fix != null) return fix;
+    throw OracleGpsRequiredException(t.gpsFixFailed);
   }
 
   /// Fetch COSTA — GPS em modo ao vivo; [planningPlace] em modo planeamento (sem GPS).

@@ -25,20 +25,25 @@ class OracleWeatherDetailsGrid extends StatefulWidget {
   final bool collapsible;
   final bool initiallyExpanded;
 
-  @override
-  State<OracleWeatherDetailsGrid> createState() =>
-      _OracleWeatherDetailsGridState();
-
   static const cardBg = Color(0xFFFFFFFF);
   static const titleColor = Color(0xFF2C3E50);
   static const bodyColor = Color(0xFF7A8B99);
   static const valueColor = Color(0xFF1A1A1A);
   static const chartBlue = Color(0xFF5B9BD5);
   static const chartLine = Color(0xFF4FC3F7);
+
+  @override
+  State<OracleWeatherDetailsGrid> createState() =>
+      OracleWeatherDetailsGridState();
 }
 
-class _OracleWeatherDetailsGridState extends State<OracleWeatherDetailsGrid> {
+class OracleWeatherDetailsGridState extends State<OracleWeatherDetailsGrid> {
   late bool _expanded;
+
+  void expandAccordion() {
+    if (!mounted) return;
+    if (!_expanded) setState(() => _expanded = true);
+  }
 
   @override
   void initState() {

@@ -29,6 +29,9 @@ class WeatherDetailsSnapshot {
     this.tideRangeM,
     this.tideSparkline = const [],
     this.tidePhasePt = '',
+    this.windSparkline = const [],
+    this.waveSparkline = const [],
+    this.wavePeriodS,
     this.oceanCurrentMs,
     this.oceanCurrentDirDeg,
     this.currentSparkline = const [],
@@ -63,6 +66,9 @@ class WeatherDetailsSnapshot {
   final double? tideRangeM;
   final List<double> tideSparkline;
   final String tidePhasePt;
+  final List<double> windSparkline;
+  final List<double> waveSparkline;
+  final double? wavePeriodS;
   final double? oceanCurrentMs;
   final int? oceanCurrentDirDeg;
   final List<double> currentSparkline;
