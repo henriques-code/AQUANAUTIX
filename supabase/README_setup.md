@@ -19,7 +19,9 @@ supabase/
 │   ├── 20260503_community.sql
 │   ├── 20260512000000_catch_photos.sql
 │   ├── 20260512000001_catch_photos_lat_lng.sql
-│   └── 20260609000000_analytics_events.sql
+│   ├── 20260609000000_analytics_events.sql
+│   ├── 20260610000000_security_hardening.sql
+│   └── 20260611000000_storage_cleanup_profiles_social.sql
 └── scripts/
     └── check_bucket.sql     ← verificar bucket catch-photos
 ```
@@ -42,6 +44,8 @@ supabase/
 | `20260512000000_catch_photos.sql` | `catch_photos` + PostGIS `location` + RLS | `CatchPhotoRepository`, `mapa.dart` |
 | `20260512000001_catch_photos_lat_lng.sql` | colunas `lat`/`lng` + trigger `set_catch_location` | insert via lat/lng (PostgREST) |
 | `20260609000000_analytics_events.sql` | funil / paywall / North Star | `AnalyticsService` |
+| `20260610000000_security_hardening.sql` | RLS catch_photos, tier, storage, analytics | mapa, comunidade, analytics |
+| `20260611000000_storage_cleanup_profiles_social.sql` | remove storage legado; perfis legíveis no feed | `CommunityRepository`, mapa |
 
 **Storage buckets (criar no dashboard se não existirem):**
 
