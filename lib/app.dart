@@ -59,6 +59,7 @@ class _AquanautixAppState extends State<AquanautixApp> {
           supportedLocales: const [
             Locale('pt'),
             Locale('es'),
+            Locale('en'),
           ],
           localizationsDelegates: const [
             GlobalMaterialLocalizations.delegate,

@@ -1,10 +1,239 @@
 import 'package:flutter/widgets.dart';
 
-/// Textos PT/ES para pipeline do Oráculo e UI principal (GPS ibérico).
+/// Textos PT/ES/EN — EN completo no login; resto da app PT/ES (EN cai em PT).
 class AqxL10n {
   AqxL10n(this.lang);
   final String lang;
   bool get es => lang == 'es';
+  bool get en => lang == 'en';
+
+  String _l({required String pt, required String es, required String en}) {
+    if (lang == 'es') return es;
+    if (lang == 'en') return en;
+    return pt;
+  }
+
+  // ── Login ───────────────────────────────────────────────
+  String get loginEliteTagline => _l(
+        pt: 'INSTRUMENTO DE PESCA DE ELITE',
+        es: 'INSTRUMENTO DE PESCA DE ÉLITE',
+        en: 'ELITE FISHING INSTRUMENT',
+      );
+
+  String get loginWelcome => _l(
+        pt: 'BEM-VINDO',
+        es: 'BIENVENIDO',
+        en: 'WELCOME',
+      );
+
+  String get loginSubtitle => _l(
+        pt: 'Entra para aceder aos melhores spots de pesca da Ibéria',
+        es: 'Entra para acceder a los mejores spots de pesca de Iberia',
+        en: 'Sign in to access the best fishing spots in Iberia',
+      );
+
+  String get loginContinueGoogle => _l(
+        pt: 'CONTINUAR COM GOOGLE',
+        es: 'CONTINUAR CON GOOGLE',
+        en: 'CONTINUE WITH GOOGLE',
+      );
+
+  String get loginContinueApple => _l(
+        pt: 'CONTINUAR COM APPLE',
+        es: 'CONTINUAR CON APPLE',
+        en: 'CONTINUE WITH APPLE',
+      );
+
+  String get loginOr => _l(pt: 'OU', es: 'O', en: 'OR');
+
+  String get loginEmailLabel => _l(pt: 'EMAIL', es: 'EMAIL', en: 'EMAIL');
+
+  String get loginPasswordLabel =>
+      _l(pt: 'PASSWORD', es: 'CONTRASEÑA', en: 'PASSWORD');
+
+  String get loginEmailHint => _l(
+        pt: 'teu.email@aquanautix.com',
+        es: 'tu.email@aquanautix.com',
+        en: 'your.email@aquanautix.com',
+      );
+
+  String get loginRememberSession => _l(
+        pt: 'Lembrar sessão',
+        es: 'Recordar sesión',
+        en: 'Remember session',
+      );
+
+  String get loginSignIn => _l(
+        pt: 'INICIAR SESSÃO',
+        es: 'INICIAR SESIÓN',
+        en: 'SIGN IN',
+      );
+
+  String get loginNoAccount => _l(
+        pt: 'Sem conta? ',
+        es: '¿Sin cuenta? ',
+        en: 'No account? ',
+      );
+
+  String get loginRegister => _l(pt: 'Registar', es: 'Registrarse', en: 'Register');
+
+  String get loginRecoverPassword => _l(
+        pt: 'Recuperar password',
+        es: 'Recuperar contraseña',
+        en: 'Reset password',
+      );
+
+  String get loginGuest => _l(
+        pt: 'ENTRAR COMO CONVIDADO',
+        es: 'ENTRAR COMO INVITADO',
+        en: 'ENTER AS GUEST',
+      );
+
+  String get loginComingSoon =>
+      _l(pt: 'Em breve', es: 'Próximamente', en: 'Coming soon');
+
+  String get loginSupabaseGuestFallback => _l(
+        pt: 'Supabase não configurado. A entrar em modo convidado.',
+        es: 'Supabase no configurado. Entrando como invitado.',
+        en: 'Supabase not configured. Entering guest mode.',
+      );
+
+  String get loginInvalidEmail => _l(
+        pt: 'Insere um email válido.',
+        es: 'Introduce un email válido.',
+        en: 'Enter a valid email.',
+      );
+
+  String get loginPasswordMinLength => _l(
+        pt: 'A password deve ter pelo menos 6 caracteres.',
+        es: 'La contraseña debe tener al menos 6 caracteres.',
+        en: 'Password must be at least 6 characters.',
+      );
+
+  String get loginEnterEmail => _l(
+        pt: 'Insere o teu email.',
+        es: 'Introduce tu email.',
+        en: 'Enter your email.',
+      );
+
+  String get loginPasswordsMismatch => _l(
+        pt: 'As passwords não coincidem.',
+        es: 'Las contraseñas no coinciden.',
+        en: 'Passwords do not match.',
+      );
+
+  String get loginCreateAccountTitle =>
+      _l(pt: 'CRIAR CONTA', es: 'CREAR CUENTA', en: 'CREATE ACCOUNT');
+
+  String get loginConfirmPassword => _l(
+        pt: 'CONFIRMAR PASSWORD',
+        es: 'CONFIRMAR CONTRASEÑA',
+        en: 'CONFIRM PASSWORD',
+      );
+
+  String get loginAccountCreated => _l(
+        pt: 'Conta criada! Verifica o teu email para confirmar.',
+        es: '¡Cuenta creada! Verifica tu email para confirmar.',
+        en: 'Account created! Check your email to confirm.',
+      );
+
+  String get loginCreateAccountError => _l(
+        pt: 'Erro ao criar conta: ',
+        es: 'Error al crear cuenta: ',
+        en: 'Error creating account: ',
+      );
+
+  String get loginResetTitle => _l(
+        pt: 'RECUPERAR PASSWORD',
+        es: 'RECUPERAR CONTRASEÑA',
+        en: 'RESET PASSWORD',
+      );
+
+  String get loginResetBody => _l(
+        pt: 'Insere o teu email e recebes um link para redefinir a password.',
+        es: 'Introduce tu email y recibirás un enlace para restablecer la contraseña.',
+        en: 'Enter your email and you will receive a link to reset your password.',
+      );
+
+  String get loginResetSent => _l(
+        pt: '✓ Email enviado! Verifica a tua caixa de entrada.',
+        es: '✓ ¡Email enviado! Revisa tu bandeja de entrada.',
+        en: '✓ Email sent! Check your inbox.',
+      );
+
+  String get loginSendLink =>
+      _l(pt: 'ENVIAR LINK', es: 'ENVIAR ENLACE', en: 'SEND LINK');
+
+  String get loginResetEmailError => _l(
+        pt: 'Erro ao enviar email.',
+        es: 'Error al enviar email.',
+        en: 'Error sending email.',
+      );
+
+  String get loginGoogleTokenError => _l(
+        pt: 'Google Sign-In: idToken não disponível.',
+        es: 'Google Sign-In: idToken no disponible.',
+        en: 'Google Sign-In: idToken unavailable.',
+      );
+
+  String get loginGoogleError => _l(
+        pt: 'Erro Google: ',
+        es: 'Error de Google: ',
+        en: 'Google error: ',
+      );
+
+  String get loginAuthErrorTitle => _l(
+        pt: 'Erro de autenticação',
+        es: 'Error de autenticación',
+        en: 'Authentication error',
+      );
+
+  String get loginUnexpectedError => _l(
+        pt: 'Erro inesperado: ',
+        es: 'Error inesperado: ',
+        en: 'Unexpected error: ',
+      );
+
+  String loginAuthErrorMessage(String supabaseMsg) {
+    final msg = supabaseMsg.toLowerCase();
+    if (msg.contains('email not confirmed')) {
+      return _l(
+        pt: 'Email não confirmado. Verifica a tua caixa de entrada.',
+        es: 'Email no confirmado. Revisa tu bandeja de entrada.',
+        en: 'Email not confirmed. Check your inbox.',
+      );
+    }
+    if (msg.contains('invalid login credentials') ||
+        msg.contains('invalid password')) {
+      return _l(
+        pt: 'Email ou password incorrectos.',
+        es: 'Email o contraseña incorrectos.',
+        en: 'Incorrect email or password.',
+      );
+    }
+    if (msg.contains('user not found')) {
+      return _l(
+        pt: 'Conta não encontrada. Faz registo primeiro.',
+        es: 'Cuenta no encontrada. Regístrate primero.',
+        en: 'Account not found. Register first.',
+      );
+    }
+    if (msg.contains('too many requests') || msg.contains('rate limit')) {
+      return _l(
+        pt: 'Demasiadas tentativas. Aguarda alguns minutos.',
+        es: 'Demasiados intentos. Espera unos minutos.',
+        en: 'Too many attempts. Wait a few minutes.',
+      );
+    }
+    if (msg.contains('network') || msg.contains('connection')) {
+      return _l(
+        pt: 'Sem ligação à internet. Verifica a tua rede.',
+        es: 'Sin conexión a internet. Verifica tu red.',
+        en: 'No internet connection. Check your network.',
+      );
+    }
+    return supabaseMsg;
+  }
 
   // ── GPS / erros ─────────────────────────────────────────
   String get gpsDenied => es

@@ -7,6 +7,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:video_player/video_player.dart';
 
 import '_shared.dart';
+import '../core/l10n/aqx_l10n.dart';
+import '../core/state/app_locale_store.dart';
 import '../core/supabase_bootstrap.dart';
 import 'home.dart';
 
@@ -44,8 +46,8 @@ class _LoginModuleScreenState extends State<LoginModuleScreen> {
 
   Future<void> _checkExistingSession() async {
     await Future.delayed(Duration.zero);
-    if (!mounted) return;
-    final session = Supabase.instance.client.auth.currentSession;
+    if (!mounted || !isSupabaseReady) return;
+    final session = supabaseClientOrNull?.auth.currentSession;
     if (session != null) {
       Navigator.pushReplacement(
         context,
@@ -74,8 +76,18 @@ class _LoginModuleScreenState extends State<LoginModuleScreen> {
     super.dispose();
   }
 
+  AqxL10n get _t => AqxL10n(AppLocaleStore.instance.locale.languageCode);
+
   @override
   Widget build(BuildContext context) {
+    return ListenableBuilder(
+      listenable: AppLocaleStore.instance,
+      builder: (context, _) => _buildLogin(context),
+    );
+  }
+
+  Widget _buildLogin(BuildContext context) {
+    final t = _t;
     final v = _video;
     final videoReady = v != null && v.value.isInitialized;
 
@@ -107,6 +119,17 @@ class _LoginModuleScreenState extends State<LoginModuleScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
+                  Row(
+                    children: [
+                      const Spacer(),
+                      _LoginLangPicker(
+                        current: AppLocaleStore.instance.locale.languageCode,
+                        onSelect: (code) =>
+                            unawaited(AppLocaleStore.instance.setLocale(code)),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
                   Text(
                     'AQUANAUTIX',
                     style: GoogleFonts.orbitron(
@@ -119,7 +142,7 @@ class _LoginModuleScreenState extends State<LoginModuleScreen> {
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    'INSTRUMENTO DE PESCA DE ELITE',
+                    t.loginEliteTagline,
                     style: GoogleFonts.shareTechMono(
                       fontSize: 13,
                       color: _hint,
@@ -128,9 +151,9 @@ class _LoginModuleScreenState extends State<LoginModuleScreen> {
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 20),
-                  const Text(
-                    'BEM-VINDO',
-                    style: TextStyle(
+                  Text(
+                    t.loginWelcome,
+                    style: const TextStyle(
                       color: Colors.white,
                       fontSize: 20,
                       fontWeight: FontWeight.w700,
@@ -138,13 +161,13 @@ class _LoginModuleScreenState extends State<LoginModuleScreen> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Entra para aceder aos melhores spots de pesca da Ibéria',
+                    t.loginSubtitle,
                     style: ibm(13, c: Colors.white.withValues(alpha: 0.82)),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 28),
                   _socialButton(
-                    label: 'CONTINUAR COM GOOGLE',
+                    label: t.loginContinueGoogle,
                     icon: const SizedBox(
                       width: 22,
                       height: 22,
@@ -154,13 +177,13 @@ class _LoginModuleScreenState extends State<LoginModuleScreen> {
                   ),
                   const SizedBox(height: 12),
                   _socialButton(
-                    label: 'CONTINUAR COM APPLE',
+                    label: t.loginContinueApple,
                     icon: const SizedBox(
                       width: 22,
                       height: 22,
                       child: CustomPaint(painter: _AppleMarkPainter()),
                     ),
-                    onTap: () => _showSnack('Em breve'),
+                    onTap: () => _showSnack(t.loginComingSoon),
                   ),
                   const SizedBox(height: 22),
                   Row(
@@ -168,7 +191,7 @@ class _LoginModuleScreenState extends State<LoginModuleScreen> {
                       Expanded(child: Divider(color: Colors.white.withValues(alpha: 0.18), height: 1)),
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 14),
-                        child: Text('OU', style: ibm(11, c: _hint, ls: 1.2)),
+                        child: Text(t.loginOr, style: ibm(11, c: _hint, ls: 1.2)),
                       ),
                       Expanded(child: Divider(color: Colors.white.withValues(alpha: 0.18), height: 1)),
                     ],
@@ -177,7 +200,7 @@ class _LoginModuleScreenState extends State<LoginModuleScreen> {
                   Align(
                     alignment: Alignment.centerLeft,
                     child: Text(
-                      'EMAIL',
+                      t.loginEmailLabel,
                       style: GoogleFonts.shareTechMono(
                         fontSize: 14,
                         fontWeight: FontWeight.w700,
@@ -187,7 +210,7 @@ class _LoginModuleScreenState extends State<LoginModuleScreen> {
                   ),
                   const SizedBox(height: 6),
                   _inputField(
-                    hint: 'teu.email@aquanautix.com',
+                    hint: t.loginEmailHint,
                     icon: Icons.mail_outline_rounded,
                     controller: _emailCtrl,
                   ),
@@ -195,7 +218,7 @@ class _LoginModuleScreenState extends State<LoginModuleScreen> {
                   Align(
                     alignment: Alignment.centerLeft,
                     child: Text(
-                      'PASSWORD',
+                      t.loginPasswordLabel,
                       style: GoogleFonts.shareTechMono(
                         fontSize: 14,
                         fontWeight: FontWeight.w700,
@@ -232,7 +255,7 @@ class _LoginModuleScreenState extends State<LoginModuleScreen> {
                             size: 20,
                           ),
                           const SizedBox(width: 8),
-                          Text('Lembrar sessão', style: ibm(12, c: Colors.white.withValues(alpha: 0.75))),
+                          Text(t.loginRememberSession, style: ibm(12, c: Colors.white.withValues(alpha: 0.75))),
                         ],
                       ),
                     ),
@@ -264,7 +287,7 @@ class _LoginModuleScreenState extends State<LoginModuleScreen> {
                                   ),
                                 )
                               : Text(
-                                  'INICIAR SESSÃO',
+                                  t.loginSignIn,
                                   style: GoogleFonts.orbitron(
                                     fontSize: 13,
                                     fontWeight: FontWeight.w800,
@@ -286,9 +309,9 @@ class _LoginModuleScreenState extends State<LoginModuleScreen> {
                             TextSpan(
                               style: ibm(12, c: Colors.white54),
                               children: [
-                                const TextSpan(text: 'Sem conta? '),
+                                TextSpan(text: t.loginNoAccount),
                                 TextSpan(
-                                  text: 'Registar',
+                                  text: t.loginRegister,
                                   style: ibm(12, c: _cyan, fw: FontWeight.w600),
                                 ),
                               ],
@@ -298,7 +321,7 @@ class _LoginModuleScreenState extends State<LoginModuleScreen> {
                       ),
                       GestureDetector(
                         onTap: _loading ? null : _showResetPasswordDialog,
-                        child: Text('Recuperar password', style: ibm(12, c: _cyan, fw: FontWeight.w600)),
+                        child: Text(t.loginRecoverPassword, style: ibm(12, c: _cyan, fw: FontWeight.w600)),
                       ),
                     ],
                   ),
@@ -318,7 +341,7 @@ class _LoginModuleScreenState extends State<LoginModuleScreen> {
                         ),
                         child: Center(
                           child: Text(
-                            'ENTRAR COMO CONVIDADO',
+                            t.loginGuest,
                             style: GoogleFonts.orbitron(
                               fontSize: 11,
                               fontWeight: FontWeight.w700,
@@ -418,7 +441,7 @@ class _LoginModuleScreenState extends State<LoginModuleScreen> {
 
   SupabaseClient? _ensureClient() {
     if (!isSupabaseConfigured) {
-      _showSnack('Supabase não configurado. A entrar em modo convidado.');
+      _showSnack(_t.loginSupabaseGuestFallback);
       return null;
     }
     return supabaseClientOrNull;
@@ -428,10 +451,10 @@ class _LoginModuleScreenState extends State<LoginModuleScreen> {
     final email = _emailCtrl.text.trim();
     final password = _passwordCtrl.text;
     if (email.isEmpty || !email.contains('@')) {
-      return 'Insere um email válido.';
+      return _t.loginInvalidEmail;
     }
     if (requirePassword && password.length < 6) {
-      return 'A password deve ter pelo menos 6 caracteres.';
+      return _t.loginPasswordMinLength;
     }
     return null;
   }
@@ -468,12 +491,12 @@ class _LoginModuleScreenState extends State<LoginModuleScreen> {
     } on AuthException catch (e) {
       debugPrint('[AUTH] AuthException: ${e.message} | statusCode: ${e.statusCode}');
       if (mounted) setState(() => _loading = false);
-      await _showAuthError(_translateAuthError(e.message));
+      await _showAuthError(_t.loginAuthErrorMessage(e.message));
       return;
     } catch (e) {
       debugPrint('[AUTH] Unexpected error: $e');
       if (mounted) setState(() => _loading = false);
-      await _showAuthError('Erro inesperado: $e');
+      await _showAuthError('${_t.loginUnexpectedError}$e');
       return;
     } finally {
       if (mounted) setState(() => _loading = false);
@@ -481,6 +504,7 @@ class _LoginModuleScreenState extends State<LoginModuleScreen> {
   }
 
   void _showRegisterDialog() {
+    final t = _t;
     final emailCtrl = TextEditingController();
     final passCtrl = TextEditingController();
     final confirmCtrl = TextEditingController();
@@ -507,7 +531,7 @@ class _LoginModuleScreenState extends State<LoginModuleScreen> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('CRIAR CONTA',
+                Text(t.loginCreateAccountTitle,
                     style: GoogleFonts.orbitron(fontSize: 16, color: kCyan, letterSpacing: 2)),
                 const SizedBox(height: 20),
                 TextField(
@@ -515,7 +539,7 @@ class _LoginModuleScreenState extends State<LoginModuleScreen> {
                   keyboardType: TextInputType.emailAddress,
                   style: const TextStyle(color: Colors.white),
                   decoration: InputDecoration(
-                    labelText: 'EMAIL',
+                    labelText: t.loginEmailLabel,
                     labelStyle: const TextStyle(color: Colors.white70, fontSize: 11),
                     enabledBorder: OutlineInputBorder(
                       borderSide: BorderSide(color: kCyan.withValues(alpha: 0.4)),
@@ -533,7 +557,7 @@ class _LoginModuleScreenState extends State<LoginModuleScreen> {
                   obscureText: !showPass,
                   style: const TextStyle(color: Colors.white),
                   decoration: InputDecoration(
-                    labelText: 'PASSWORD',
+                    labelText: t.loginPasswordLabel,
                     labelStyle: const TextStyle(color: Colors.white70, fontSize: 11),
                     enabledBorder: OutlineInputBorder(
                       borderSide: BorderSide(color: kCyan.withValues(alpha: 0.4)),
@@ -556,7 +580,7 @@ class _LoginModuleScreenState extends State<LoginModuleScreen> {
                   obscureText: !showConfirm,
                   style: const TextStyle(color: Colors.white),
                   decoration: InputDecoration(
-                    labelText: 'CONFIRMAR PASSWORD',
+                    labelText: t.loginConfirmPassword,
                     labelStyle: const TextStyle(color: Colors.white70, fontSize: 11),
                     enabledBorder: OutlineInputBorder(
                       borderSide: BorderSide(color: kCyan.withValues(alpha: 0.4)),
@@ -585,20 +609,25 @@ class _LoginModuleScreenState extends State<LoginModuleScreen> {
                     ),
                     onPressed: loading ? null : () async {
                       if (emailCtrl.text.trim().isEmpty) {
-                        _showSnack('Insere o teu email.');
+                        _showSnack(t.loginEnterEmail);
                         return;
                       }
                       if (passCtrl.text.length < 6) {
-                        _showSnack('Password deve ter pelo menos 6 caracteres.');
+                        _showSnack(t.loginPasswordMinLength);
                         return;
                       }
                       if (passCtrl.text != confirmCtrl.text) {
-                        _showSnack('As passwords não coincidem.');
+                        _showSnack(t.loginPasswordsMismatch);
                         return;
                       }
                       setModalState(() => loading = true);
                       try {
-                        final response = await Supabase.instance.client.auth.signUp(
+                        final client = supabaseClientOrNull;
+                        if (client == null) {
+                          _showSnack(t.loginSupabaseGuestFallback);
+                          return;
+                        }
+                        final response = await client.auth.signUp(
                           email: emailCtrl.text.trim(),
                           password: passCtrl.text,
                           emailRedirectTo: null,
@@ -606,13 +635,13 @@ class _LoginModuleScreenState extends State<LoginModuleScreen> {
                         debugPrint('[REGISTER] user: ${response.user?.email}');
                         if (!ctx.mounted) return;
                         Navigator.pop(ctx);
-                        _showSnack('Conta criada! Verifica o teu email para confirmar.');
+                        _showSnack(t.loginAccountCreated);
                       } on AuthException catch (e) {
                         debugPrint('[REGISTER] AuthException: ${e.message}');
-                        _showSnack(_translateAuthError(e.message));
+                        _showSnack(t.loginAuthErrorMessage(e.message));
                       } catch (e) {
                         debugPrint('[REGISTER] Error: $e');
-                        _showSnack('Erro ao criar conta: $e');
+                        _showSnack('${t.loginCreateAccountError}$e');
                       } finally {
                         if (ctx.mounted) setModalState(() => loading = false);
                       }
@@ -620,7 +649,7 @@ class _LoginModuleScreenState extends State<LoginModuleScreen> {
                     child: loading
                         ? const SizedBox(height: 18, width: 18,
                             child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black))
-                        : Text('CRIAR CONTA',
+                        : Text(t.loginCreateAccountTitle,
                             style: GoogleFonts.orbitron(fontSize: 12, letterSpacing: 1.5)),
                   ),
                 ),
@@ -633,6 +662,7 @@ class _LoginModuleScreenState extends State<LoginModuleScreen> {
   }
 
   void _showResetPasswordDialog() {
+    final t = _t;
     final emailCtrl = TextEditingController(text: _emailCtrl.text.trim());
 
     showModalBottomSheet(
@@ -656,12 +686,12 @@ class _LoginModuleScreenState extends State<LoginModuleScreen> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('RECUPERAR PASSWORD',
+                Text(t.loginResetTitle,
                     style: GoogleFonts.orbitron(fontSize: 14, color: kCyan, letterSpacing: 1.5)),
                 const SizedBox(height: 8),
-                const Text(
-                  'Insere o teu email e recebes um link para redefinir a password.',
-                  style: TextStyle(color: Colors.white60, fontSize: 12),
+                Text(
+                  t.loginResetBody,
+                  style: const TextStyle(color: Colors.white60, fontSize: 12),
                 ),
                 const SizedBox(height: 20),
                 TextField(
@@ -670,7 +700,7 @@ class _LoginModuleScreenState extends State<LoginModuleScreen> {
                   enabled: !sent,
                   style: const TextStyle(color: Colors.white),
                   decoration: InputDecoration(
-                    labelText: 'EMAIL',
+                    labelText: t.loginEmailLabel,
                     labelStyle: const TextStyle(color: Colors.white70, fontSize: 11),
                     enabledBorder: OutlineInputBorder(
                       borderSide: BorderSide(color: kCyan.withValues(alpha: 0.4)),
@@ -696,9 +726,9 @@ class _LoginModuleScreenState extends State<LoginModuleScreen> {
                       borderRadius: BorderRadius.circular(10),
                       border: Border.all(color: Colors.green.withValues(alpha: 0.4)),
                     ),
-                    child: const Text(
-                      '✓ Email enviado! Verifica a tua caixa de entrada.',
-                      style: TextStyle(color: Colors.greenAccent, fontSize: 12),
+                    child: Text(
+                      t.loginResetSent,
+                      style: const TextStyle(color: Colors.greenAccent, fontSize: 12),
                       textAlign: TextAlign.center,
                     ),
                   )
@@ -715,12 +745,17 @@ class _LoginModuleScreenState extends State<LoginModuleScreen> {
                       onPressed: loading ? null : () async {
                         final email = emailCtrl.text.trim();
                         if (email.isEmpty) {
-                          _showSnack('Insere o teu email.');
+                          _showSnack(t.loginEnterEmail);
                           return;
                         }
                         setModalState(() => loading = true);
                         try {
-                          await Supabase.instance.client.auth.resetPasswordForEmail(
+                          final client = supabaseClientOrNull;
+                          if (client == null) {
+                            _showSnack(t.loginSupabaseGuestFallback);
+                            return;
+                          }
+                          await client.auth.resetPasswordForEmail(
                             email,
                             redirectTo: null,
                           );
@@ -730,13 +765,13 @@ class _LoginModuleScreenState extends State<LoginModuleScreen> {
                         } on AuthException catch (e) {
                           debugPrint('[RESET] AuthException: ${e.message}');
                           if (ctx.mounted) {
-                            _showSnack(_translateAuthError(e.message));
+                            _showSnack(t.loginAuthErrorMessage(e.message));
                             setModalState(() => loading = false);
                           }
                         } catch (e) {
                           debugPrint('[RESET] Error: $e');
                           if (ctx.mounted) {
-                            _showSnack('Erro ao enviar email.');
+                            _showSnack(t.loginResetEmailError);
                             setModalState(() => loading = false);
                           }
                         }
@@ -744,7 +779,7 @@ class _LoginModuleScreenState extends State<LoginModuleScreen> {
                       child: loading
                           ? const SizedBox(height: 18, width: 18,
                               child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black))
-                          : Text('ENVIAR LINK',
+                          : Text(t.loginSendLink,
                               style: GoogleFonts.orbitron(fontSize: 12, letterSpacing: 1.5)),
                     ),
                   ),
@@ -770,10 +805,15 @@ class _LoginModuleScreenState extends State<LoginModuleScreen> {
       if (googleUser == null) return;
       final googleAuth = await googleUser.authentication;
       if (googleAuth.idToken == null) {
-        _showSnack('Google Sign-In: idToken não disponível.');
+        _showSnack(_t.loginGoogleTokenError);
         return;
       }
-      await Supabase.instance.client.auth.signInWithIdToken(
+      final client = supabaseClientOrNull;
+      if (client == null) {
+        _showSnack(_t.loginSupabaseGuestFallback);
+        return;
+      }
+      await client.auth.signInWithIdToken(
         provider: OAuthProvider.google,
         idToken: googleAuth.idToken!,
         accessToken: googleAuth.accessToken,
@@ -785,7 +825,7 @@ class _LoginModuleScreenState extends State<LoginModuleScreen> {
         );
       }
     } catch (e) {
-      _showSnack('Erro Google: $e');
+      _showSnack('${_t.loginGoogleError}$e');
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -798,9 +838,9 @@ class _LoginModuleScreenState extends State<LoginModuleScreen> {
       builder: (ctx) => AlertDialog(
         backgroundColor: const Color(0xFF071428),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text(
-          'Erro de autenticação',
-          style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700),
+        title: Text(
+          _t.loginAuthErrorTitle,
+          style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700),
         ),
         content: Text(msg, style: const TextStyle(color: Color(0xFF8AADBE), fontSize: 14)),
         actions: [
@@ -811,26 +851,6 @@ class _LoginModuleScreenState extends State<LoginModuleScreen> {
         ],
       ),
     );
-  }
-
-  String _translateAuthError(String supabaseMsg) {
-    final msg = supabaseMsg.toLowerCase();
-    if (msg.contains('email not confirmed')) {
-      return 'Email não confirmado. Verifica a tua caixa de entrada.';
-    }
-    if (msg.contains('invalid login credentials') || msg.contains('invalid password')) {
-      return 'Email ou password incorrectos.';
-    }
-    if (msg.contains('user not found')) {
-      return 'Conta não encontrada. Faz registo primeiro.';
-    }
-    if (msg.contains('too many requests') || msg.contains('rate limit')) {
-      return 'Demasiadas tentativas. Aguarda alguns minutos.';
-    }
-    if (msg.contains('network') || msg.contains('connection')) {
-      return 'Sem ligação à internet. Verifica a tua rede.';
-    }
-    return supabaseMsg;
   }
 
   void _showSnack(String msg) {
@@ -851,6 +871,58 @@ class _LoginModuleScreenState extends State<LoginModuleScreen> {
     );
   }
 
+}
+
+class _LoginLangPicker extends StatelessWidget {
+  const _LoginLangPicker({
+    required this.current,
+    required this.onSelect,
+  });
+
+  final String current;
+  final ValueChanged<String> onSelect;
+
+  static const _cyan = Color(0xFF00F5FF);
+  static const _hint = Color(0xFF8AADBE);
+  static const _white06 = Color.fromRGBO(255, 255, 255, 0.06);
+  static const _white12 = Color.fromRGBO(255, 255, 255, 0.12);
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        for (final code in const ['pt', 'es', 'en']) ...[
+          if (code != 'pt') const SizedBox(width: 4),
+          GestureDetector(
+            onTap: () => onSelect(code),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: current == code
+                    ? _cyan.withValues(alpha: 0.18)
+                    : _white06,
+                borderRadius: BorderRadius.circular(6),
+                border: Border.all(
+                  color: current == code
+                      ? _cyan.withValues(alpha: 0.5)
+                      : _white12,
+                ),
+              ),
+              child: Text(
+                code.toUpperCase(),
+                style: GoogleFonts.shareTechMono(
+                  fontSize: 9,
+                  color: current == code ? _cyan : _hint,
+                  letterSpacing: 0.4,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
 }
 
 /// Ícone Google — paths SVG oficiais (viewBox 24×24) escalados para o canvas.
