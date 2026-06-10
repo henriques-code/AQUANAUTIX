@@ -63,8 +63,10 @@ class CommunityRepository {
   }
 
   Future<String> uploadPhoto(XFile file) async {
+    final uid = _db.auth.currentSession?.user.id;
+    if (uid == null) throw Exception('Not authenticated');
     final ext  = file.name.split('.').last.toLowerCase();
-    final path = '${DateTime.now().millisecondsSinceEpoch}.$ext';
+    final path = '$uid/${DateTime.now().millisecondsSinceEpoch}.$ext';
     await _db.storage.from(_bucket).uploadBinary(
       path,
       await file.readAsBytes(),
