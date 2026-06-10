@@ -10,23 +10,28 @@ const _resetRedirectUrl = String.fromEnvironment(
 bool get isSupabaseConfigured =>
     _supabaseUrl.isNotEmpty && _supabaseAnonKey.isNotEmpty;
 
+bool _supabaseInitialized = false;
+
+bool get isSupabaseReady => _supabaseInitialized;
+
 SupabaseClient? get supabaseClientOrNull =>
-    isSupabaseConfigured ? Supabase.instance.client : null;
+    isSupabaseReady ? Supabase.instance.client : null;
 
 String get resetRedirectUrl => _resetRedirectUrl;
 
 bool get isSupabaseAuthenticated {
-  if (!isSupabaseConfigured) return false;
-  return Supabase.instance.client.auth.currentSession != null;
+  final client = supabaseClientOrNull;
+  if (client == null) return false;
+  return client.auth.currentSession != null;
 }
 
 String? get supabaseCurrentUserEmail {
-  if (!isSupabaseConfigured) return null;
-  return Supabase.instance.client.auth.currentUser?.email;
+  return supabaseClientOrNull?.auth.currentUser?.email;
 }
 
 Future<void> initSupabaseIfConfigured() async {
-  if (!isSupabaseConfigured) return;
+  if (!isSupabaseConfigured || _supabaseInitialized) return;
   await Supabase.initialize(url: _supabaseUrl, anonKey: _supabaseAnonKey);
+  _supabaseInitialized = true;
 }
 

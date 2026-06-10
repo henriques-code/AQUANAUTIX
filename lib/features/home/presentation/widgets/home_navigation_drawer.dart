@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
-
 import '../../../../core/l10n/aqx_l10n.dart';
+import '../../../../core/supabase_bootstrap.dart';
 import '../../../../core/state/home_tab_index.dart';
 import '../../../../core/state/logbook_tab_index.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -20,7 +19,7 @@ class HomeNavigationDrawer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final t = AqxL10n(Localizations.localeOf(context).languageCode);
-    final email = Supabase.instance.client.auth.currentUser?.email;
+    final email = supabaseCurrentUserEmail;
 
     return Drawer(
       backgroundColor: AppColors.nav,

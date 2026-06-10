@@ -26,6 +26,7 @@ import '../core/tides/oracle_hourly_score.dart';
 import '../features/home/domain/entities/hourly_condition.dart';
 import 'widgets/aqx_pressable.dart';
 import 'widgets/oracle_community_strip.dart';
+import 'widgets/oracle_mini_map.dart';
 import 'widgets/oracle_conditions_fold.dart';
 import 'widgets/oracle_decision_card.dart';
 import 'widgets/oracle_fishing_metrics_grid.dart';
@@ -829,6 +830,18 @@ class _OraculoScreenState extends State<OraculoScreen>
           _planningSourceRow(t),
           const SizedBox(height: 8),
 
+          if (_oracleMiniMapCoords() case final coords?) ...[
+            OracleMiniMap(
+              lat: coords.lat,
+              lon: coords.lon,
+              isPlanning: _planningPlace != null,
+              isRio: _rioMode,
+              onViewMap: _openMapTab,
+              viewMapLabel: t.es ? 'VER MAPA' : 'VER MAPA',
+            ),
+            const SizedBox(height: 8),
+          ],
+
           // ── Decisão do Oráculo ─────────────────────────
           FadeTransition(
             opacity: _fade,
@@ -1042,7 +1055,7 @@ class _OraculoScreenState extends State<OraculoScreen>
                     ? 'Descubre lo que captura la comunidad'
                     : 'Descobre o que a comunidade está a capturar',
                 viewLabel: t.es ? 'VER COMUNIDAD' : 'VER COMUNIDADE',
-                shareLabel: t.es ? 'COMPARTIR 👻' : 'PARTILHAR 👻',
+                shareLabel: t.es ? 'COMPARTIR' : 'PARTILHAR',
                 onViewCommunity: _openCommunityTab,
                 onShare: _openCommunityShare,
               );
@@ -1298,6 +1311,14 @@ class _OraculoScreenState extends State<OraculoScreen>
         ),
       ),
     );
+  }
+
+  ({double lat, double lon})? _oracleMiniMapCoords() {
+    final last = OracleDataService.instance.lastCoords;
+    if (last != null) return last;
+    final place = _planningPlace;
+    if (place != null) return (lat: place.lat, lon: place.lon);
+    return null;
   }
 
   Widget _planningSourceRow(AqxL10n t) {

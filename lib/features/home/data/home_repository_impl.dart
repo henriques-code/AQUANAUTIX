@@ -1,6 +1,5 @@
-import 'package:supabase_flutter/supabase_flutter.dart';
-
 import '../../../core/location/gps_access.dart';
+import '../../../core/supabase_bootstrap.dart';
 import '../../../core/state/fishing_context_store.dart';
 import '../../../core/tides/marine_bundle.dart';
 import '../../../core/tides/moon_phase.dart';
@@ -329,7 +328,7 @@ class HomeRepositoryImpl implements HomeRepository {
   // ─── Helpers ──────────────────────────────────────────────────────────────
   String _getUserDisplayName() {
     try {
-      final user = Supabase.instance.client.auth.currentUser;
+      final user = supabaseClientOrNull?.auth.currentUser;
       if (user == null) return 'Pescador';
       final m = user.userMetadata;
       final fullName = m?['full_name'] as String? ?? m?['name'] as String?;

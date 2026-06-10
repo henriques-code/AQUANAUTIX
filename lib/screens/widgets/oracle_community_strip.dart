@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../_shared.dart';
 import '../../core/community/community_post.dart';
+import '../../core/widgets/aqx_ghost_mode_badge.dart';
 import 'aqx_pressable.dart';
 
 /// Bloco Comunidade Ghost no Oráculo — feed compacto + CTAs.
@@ -15,7 +16,7 @@ class OracleCommunityStrip extends StatelessWidget {
     this.title = 'ACTIVIDADE NA ZONA',
     this.subtitle = 'Descobre o que a comunidade está a capturar',
     this.viewLabel = 'VER COMUNIDADE',
-    this.shareLabel = 'PARTILHAR 👻',
+    this.shareLabel = 'PARTILHAR',
     this.es = false,
   });
 
@@ -73,7 +74,7 @@ class OracleCommunityStrip extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Text('👻', style: TextStyle(fontSize: 16)),
+              const AqxGhostModeBadge(size: 14),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(title, style: mono(11, c: kCyan, ls: 0.8)),
@@ -114,10 +115,17 @@ class OracleCommunityStrip extends StatelessWidget {
                     Icon(Icons.circle, size: 6, color: kGreen.withValues(alpha: 0.8)),
                     const SizedBox(width: 8),
                     Expanded(
-                      child: Text(
-                        '${_speciesLabel(p.species)} · ${p.zoneLabel} · '
-                        '${timeAgo(p.createdAt, es: es)}',
-                        style: ibm(12, c: Colors.white70),
+                      child: Text.rich(
+                        TextSpan(
+                          style: ibm(12, c: Colors.white70),
+                          children: [
+                            TextSpan(text: '${_speciesLabel(p.species)} · '),
+                            TextSpan(
+                              text: AqxGhostModeBadge.stripLegacyPrefix(p.zoneLabel),
+                            ),
+                            TextSpan(text: ' · ${timeAgo(p.createdAt, es: es)}'),
+                          ],
+                        ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),

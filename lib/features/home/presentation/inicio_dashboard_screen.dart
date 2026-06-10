@@ -55,14 +55,16 @@ class _InicioDashboardScreenState extends State<InicioDashboardScreen> {
     _data = HomeRepositoryImpl.instantFallback();
     unawaited(_load(silent: true));
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      unawaited(_checkGpsBanner());
+      unawaited(_requestGpsOnEntry());
     });
-    _authSub = Supabase.instance.client.auth.onAuthStateChange.listen((_) {
-      _authReloadDebounce?.cancel();
-      _authReloadDebounce = Timer(const Duration(milliseconds: 800), () {
-        if (mounted) unawaited(_load(silent: true));
+    if (isSupabaseReady) {
+      _authSub = Supabase.instance.client.auth.onAuthStateChange.listen((_) {
+        _authReloadDebounce?.cancel();
+        _authReloadDebounce = Timer(const Duration(milliseconds: 800), () {
+          if (mounted) unawaited(_load(silent: true));
+        });
       });
-    });
+    }
   }
 
   @override
@@ -72,9 +74,21 @@ class _InicioDashboardScreenState extends State<InicioDashboardScreen> {
     super.dispose();
   }
 
-  Future<void> _checkGpsBanner() async {
-    final status = await GpsAccess.check();
-    if (!mounted || status == GpsAccessStatus.granted) return;
+  /// Pede localização ao entrar no Início (pós-login); banner só se recusar.
+  Future<void> _requestGpsOnEntry() async {
+    var status = await GpsAccess.check();
+    if (!mounted) return;
+    if (status == GpsAccessStatus.granted) {
+      unawaited(GpsAccess.tryGetFixQuick());
+      return;
+    }
+    status = await GpsAccess.request();
+    if (!mounted) return;
+    if (status == GpsAccessStatus.granted) {
+      unawaited(GpsAccess.tryGetFixQuick());
+      unawaited(_load(silent: true));
+      return;
+    }
     setState(() => _showGpsBanner = true);
   }
 
@@ -115,14 +129,15 @@ class _InicioDashboardScreenState extends State<InicioDashboardScreen> {
   }
 
   String _resolveUserDisplay(String fallback) {
-    if (!isSupabaseConfigured) return fallback;
+    final client = supabaseClientOrNull;
+    if (client == null) return fallback;
     try {
-      final m = Supabase.instance.client.auth.currentUser?.userMetadata;
+      final m = client.auth.currentUser?.userMetadata;
       final name = m?['full_name'] as String? ?? m?['name'] as String?;
       if (name != null && name.trim().isNotEmpty) {
         return name.trim().split(RegExp(r'\s+')).first;
       }
-      final email = Supabase.instance.client.auth.currentUser?.email;
+      final email = client.auth.currentUser?.email;
       if (email != null && email.contains('@')) {
         return email.split('@').first;
       }

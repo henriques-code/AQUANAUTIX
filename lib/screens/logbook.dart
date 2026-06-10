@@ -18,6 +18,7 @@ import '../core/supabase_bootstrap.dart';
 import '../core/community/community_post.dart';
 import '../core/community/community_store.dart';
 import '../core/l10n/aqx_l10n.dart';
+import '../core/widgets/aqx_ghost_mode_badge.dart';
 
 // Dados das capturas (demo)
 class _Captura {
@@ -654,11 +655,22 @@ class _LogbookScreenState extends State<LogbookScreen>
             ],
 
             const SizedBox(height: 10),
-            Text(
-                t.es
-                    ? '👻 Coordenadas exactas protegidas · Ghost Mode activo'
-                    : '👻 Coordenadas exactas protegidas · Ghost Mode activo',
-                style: mono(9, c: kHint), textAlign: TextAlign.center),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const AqxGhostModeBadge(size: 11, showPill: false),
+                const SizedBox(width: 6),
+                Flexible(
+                  child: Text(
+                    t.es
+                        ? 'Coordenadas exactas protegidas · Ghost Mode activo'
+                        : 'Coordenadas exactas protegidas · Ghost Mode activo',
+                    style: mono(9, c: kHint),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ],
+            ),
             const SizedBox(height: 14),
 
             Row(children: [
@@ -721,7 +733,7 @@ class _LogbookScreenState extends State<LogbookScreen>
     CommunityPost(
       id: 'mock-2', userId: 'mock-u2', username: 'RuiSurf_PT', tier: 'PRO',
       avatarUrl: 'https://i.pravatar.cc/80?img=22',
-      zoneLabel: '👻 Zona de Comporta',
+      zoneLabel: 'Zona de Comporta',
       photoUrl: 'https://images.unsplash.com/photo-1499728603263-13726abce5fd?w=600&q=75&auto=format',
       species: 'PARGO', weightKg: 3.1,
       caption: 'Recorde pessoal de pargo! 🏆 Técnica de fundo.',
@@ -732,7 +744,7 @@ class _LogbookScreenState extends State<LogbookScreen>
     CommunityPost(
       id: 'mock-3', userId: 'mock-u3', username: 'Carlos_V', tier: 'PRO',
       avatarUrl: 'https://i.pravatar.cc/80?img=44',
-      zoneLabel: '👻 Zona de Sesimbra',
+      zoneLabel: 'Zona de Sesimbra',
       photoUrl: 'https://images.unsplash.com/photo-1518568814500-bf0f8d125f46?w=600&q=75&auto=format',
       species: 'CORVINA', weightKg: 2.3,
       caption: 'Corvina boa ao surfcasting! Score 68.',
@@ -769,7 +781,7 @@ class _LogbookScreenState extends State<LogbookScreen>
               border: Border.all(color: kAmber.withValues(alpha: 0.2)),
             ),
             child: Row(children: [
-              const Text('👻', style: TextStyle(fontSize: 14)),
+              const AqxGhostModeBadge(size: 13),
               const SizedBox(width: 8),
               Expanded(child: Text(
                 t.es
@@ -867,7 +879,7 @@ class _LogbookScreenState extends State<LogbookScreen>
                     _tierBadgeSmall(post.tier),
                   ]),
                   const SizedBox(height: 2),
-                  Text(post.zoneLabel, style: mono(9)),
+                  AqxGhostZoneLabel(label: post.zoneLabel, style: mono(9), badgeSize: 9),
                 ],
               )),
               Text(_timeAgo(post.createdAt), style: mono(9)),
@@ -952,7 +964,7 @@ class _LogbookScreenState extends State<LogbookScreen>
                   const Icon(Icons.track_changes_rounded, color: kCyan, size: 14),
                   const SizedBox(width: 6),
                   Expanded(child: Text(
-                    'Score Oráculo · ${post.zoneLabel.replaceAll('👻 ', '').replaceAll('📍 ', '').replaceAll('🔒 ', '')}',
+                    'Score Oráculo · ${AqxGhostModeBadge.stripLegacyPrefix(post.zoneLabel).replaceAll('📍 ', '').replaceAll('🔒 ', '')}',
                     style: mono(9),
                   )),
                   Text('${post.oracleScore}', style: orb(16, c: kCyan, fw: FontWeight.w900, ls: 0)),
@@ -1327,17 +1339,17 @@ class _LogbookScreenState extends State<LogbookScreen>
 
   // Zonas fuzzy PT + ES — nunca coordenadas exactas
   static const _ptZones = [
-    '👻 Zona de Sesimbra', '👻 Costa Alentejana', '👻 Zona de Comporta',
-    '👻 Cabo Espichel',    '👻 Algarve Central',  '👻 Algarve Barlavento',
-    '👻 Algarve Sotavento','👻 Costa de Cascais',  '👻 Zona de Setúbal',
-    '👻 Costa da Caparica','👻 Norte de Portugal',  '👻 Douro Litoral',
-    '👻 Zona dos Açores',  '👻 Zona da Madeira',
+    'Zona de Sesimbra', 'Costa Alentejana', 'Zona de Comporta',
+    'Cabo Espichel',    'Algarve Central',  'Algarve Barlavento',
+    'Algarve Sotavento','Costa de Cascais',  'Zona de Setúbal',
+    'Costa da Caparica','Norte de Portugal',  'Douro Litoral',
+    'Zona dos Açores',  'Zona da Madeira',
   ];
   static const _esZones = [
-    '👻 Costa Brava',   '👻 Costa Daurada',  '👻 Delta del Ebro',
-    '👻 Bahía de Cádiz','👻 Costa de la Luz', '👻 Mar Menor',
-    '👻 Costa del Sol', '👻 Islas Baleares',  '👻 Galicia Norte',
-    '👻 Galicia Sur',   '👻 Asturias',        '👻 País Vasco',
+    'Costa Brava',   'Costa Daurada',  'Delta del Ebro',
+    'Bahía de Cádiz','Costa de la Luz', 'Mar Menor',
+    'Costa del Sol', 'Islas Baleares',  'Galicia Norte',
+    'Galicia Sur',   'Asturias',        'País Vasco',
   ];
 
   void _showNovoPostSheet() {
@@ -1382,10 +1394,16 @@ class _LogbookScreenState extends State<LogbookScreen>
                     Text(t.es ? 'COMPARTIR CAPTURA' : 'PARTILHAR CAPTURA', style: orb(14, c: kCyan, ls: 1.4)),
                     const SizedBox(height: 4),
                     Row(children: [
-                      const Text('👻', style: TextStyle(fontSize: 12)),
-                      const SizedBox(width: 4),
-                      Text(t.es ? 'Coordenadas nunca compartidas · Ghost Mode' : 'Coordenadas nunca partilhadas · Ghost Mode',
-                          style: ibm(10, c: kHint)),
+                      const AqxGhostModeBadge(size: 11, showPill: false),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          t.es
+                              ? 'Coordenadas nunca compartidas · Ghost Mode'
+                              : 'Coordenadas nunca partilhadas · Ghost Mode',
+                          style: ibm(10, c: kHint),
+                        ),
+                      ),
                     ]),
                     const SizedBox(height: 14),
 
@@ -1450,7 +1468,13 @@ class _LogbookScreenState extends State<LogbookScreen>
                           icon: const Icon(Icons.arrow_drop_down, color: kCyan),
                           isExpanded: true,
                           items: zones.map((z) => DropdownMenuItem(
-                              value: z, child: Text(z, style: ibm(13)))).toList(),
+                              value: z,
+                              child: Row(children: [
+                                const AqxGhostModeBadge(size: 10, showPill: false),
+                                const SizedBox(width: 6),
+                                Expanded(child: Text(z, style: ibm(13))),
+                              ]),
+                            )).toList(),
                           onChanged: (v) => setSS(() => selZone = v!),
                         ),
                       ),

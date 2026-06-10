@@ -483,7 +483,7 @@ class _SegmentTap extends StatelessWidget {
   }
 }
 
-/// Neon primário compacto (ex.: PARTILHAR 👻).
+/// Neon primário compacto (ex.: PARTILHAR na Comunidade).
 class AqxNeonCompactButton extends StatelessWidget {
   const AqxNeonCompactButton({
     super.key,
@@ -615,12 +615,17 @@ class _AqxMeteoRevealButtonState extends State<AqxMeteoRevealButton>
         primary: !expanded,
         builder: (pressed) {
           final depth = pressed ? 1.5 : 4.0;
-          return SizedBox(
-            height: 50,
-            child: Stack(
-              clipBehavior: Clip.none,
-              alignment: Alignment.topCenter,
-              children: [
+          return LayoutBuilder(
+            builder: (context, constraints) {
+              // Em Row sem Expanded o pai dá largura infinita — Stack não suporta.
+              final w = constraints.hasBoundedWidth ? constraints.maxWidth : 96.0;
+              return SizedBox(
+                width: w,
+                height: 50,
+                child: Stack(
+                  clipBehavior: Clip.none,
+                  alignment: Alignment.topCenter,
+                  children: [
                 Positioned(
                   left: 0,
                   right: 0,
@@ -710,7 +715,9 @@ class _AqxMeteoRevealButtonState extends State<AqxMeteoRevealButton>
                   ),
                 ),
               ],
-            ),
+                ),
+              );
+            },
           );
         },
       ),

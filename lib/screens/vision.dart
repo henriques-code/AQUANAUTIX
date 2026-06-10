@@ -15,6 +15,7 @@ import '../core/state/fishing_context_store.dart';
 import '../core/vision/vision_scan_result.dart';
 import '../core/vision/vision_scan_service.dart';
 import '../core/l10n/aqx_l10n.dart';
+import '../core/widgets/aqx_ghost_mode_badge.dart';
 
 // ══════════════════════════════════════════════════════════
 // P2 — ECRÃ 03 · VISION SCANNER (animado + OpenAI Vision)
@@ -709,7 +710,19 @@ class _VisionScreenState extends State<VisionScreen>
                 icon: const Icon(Icons.ios_share_rounded, size: 16),
                 label: Text(t.es ? 'COMPARTIR' : 'PARTILHAR', style: orb(9, c: kCyan, ls: 1)),
                 onPressed: () => ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text(t.es ? 'Compartiendo en Comunidad… 👻' : 'A partilhar na Comunidade… 👻', style: ibm(13)), backgroundColor: kCard),
+                  SnackBar(
+                    content: Row(children: [
+                      const AqxGhostModeBadge(size: 11, showPill: false),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          t.es ? 'Compartiendo en Comunidad…' : 'A partilhar na Comunidade…',
+                          style: ibm(13),
+                        ),
+                      ),
+                    ]),
+                    backgroundColor: kCard,
+                  ),
                 ),
               ),
             ),

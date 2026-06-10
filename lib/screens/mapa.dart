@@ -15,6 +15,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '_shared.dart';
 import 'especies.dart';
 import '../core/widgets/aquanautix_pins.dart';
+import '../core/widgets/aqx_ghost_mode_badge.dart';
 import '../core/widgets/map_legend_widget.dart';
 import 'paywall.dart';
 import '../core/services/analytics_service.dart';
@@ -1304,18 +1305,10 @@ class _MapaScreenState extends State<MapaScreen> {
                   padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
                   child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                     Row(children: [
-                      Text('👻 ${t.es ? "CAPTURAS RECIENTES · ZONA" : "CAPTURAS RECENTES · ZONA"}',
+                      const AqxGhostModeBadge(size: 11, showPill: false),
+                      const SizedBox(width: 6),
+                      Text(t.es ? 'CAPTURAS RECIENTES · ZONA' : 'CAPTURAS RECENTES · ZONA',
                           style: mono(10, ls: 1.1)),
-                      const Spacer(),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: kAmber.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(4),
-                          border: Border.all(color: kAmber.withValues(alpha: 0.3)),
-                        ),
-                        child: Text('GHOST', style: mono(7, c: kAmber)),
-                      ),
                     ]),
                     const SizedBox(height: 10),
                     ...ghostCaptures.map((c) => Padding(
@@ -1723,19 +1716,7 @@ class _MapaScreenState extends State<MapaScreen> {
         child: Text(t, style: mono(9, c: c)),
       );
 
-  Widget _ghostBadge() => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-        decoration: BoxDecoration(
-          color: kAmber.withValues(alpha: 0.12),
-          borderRadius: BorderRadius.circular(4),
-          border: Border.all(color: kAmber.withValues(alpha: 0.4)),
-        ),
-        child: Row(mainAxisSize: MainAxisSize.min, children: [
-          const Icon(Icons.lock_outline, size: 9, color: kAmber),
-          const SizedBox(width: 2),
-          Text('GHOST', style: mono(8, c: kAmber)),
-        ]),
-      );
+  Widget _ghostBadge() => const AqxGhostModeBadge(size: 10, showHex: false);
 
   Future<void> _pickSpotReferencePhoto(String spotName) async {
     final file = await ImagePicker().pickImage(source: ImageSource.gallery, imageQuality: 80, maxWidth: 1600);

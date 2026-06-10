@@ -11,7 +11,7 @@ class CommunityDemoPosts {
           username: 'Nuno_Sesimbra',
           tier: 'PRO',
           avatarUrl: 'https://i.pravatar.cc/80?img=11',
-          zoneLabel: '👻 Zona Sesimbra',
+          zoneLabel: 'Zona Sesimbra',
           photoUrl:
               'https://images.unsplash.com/photo-1544979590-04bcee11af7d?w=600&q=75&auto=format',
           species: 'ROBALO',
@@ -28,7 +28,7 @@ class CommunityDemoPosts {
           username: 'RuiSurf_PT',
           tier: 'PRO',
           avatarUrl: 'https://i.pravatar.cc/80?img=22',
-          zoneLabel: '👻 Zona Comporta',
+          zoneLabel: 'Zona Comporta',
           photoUrl:
               'https://images.unsplash.com/photo-1499728603263-13726abce5fd?w=600&q=75&auto=format',
           species: 'SARGO',
@@ -44,7 +44,7 @@ class CommunityDemoPosts {
           username: 'Carlos_V',
           tier: 'PRO',
           avatarUrl: 'https://i.pravatar.cc/80?img=44',
-          zoneLabel: '👻 Zona Setúbal',
+          zoneLabel: 'Zona Setúbal',
           photoUrl:
               'https://images.unsplash.com/photo-1518568814500-bf0f8d125f46?w=600&q=75&auto=format',
           species: 'DOURADA',
