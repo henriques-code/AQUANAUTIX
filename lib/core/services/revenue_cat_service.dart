@@ -16,6 +16,20 @@ const _entitlementElite = String.fromEnvironment(
   defaultValue: 'elite',
 );
 
+// Package identifiers — alinhados com offering `default` no dashboard RC.
+const _pkgProMonthly = String.fromEnvironment(
+  'REVENUECAT_PACKAGE_PRO_MONTHLY',
+  defaultValue: 'pro_monthly',
+);
+const _pkgProAnnual = String.fromEnvironment(
+  'REVENUECAT_PACKAGE_PRO_ANNUAL',
+  defaultValue: 'pro_annual',
+);
+const _pkgEliteAnnual = String.fromEnvironment(
+  'REVENUECAT_PACKAGE_ELITE_ANNUAL',
+  defaultValue: 'elite_annual',
+);
+
 /// Erro tipado para operações RevenueCat — sem dependência de UI.
 class RevenueCatException implements Exception {
   final String message;
@@ -129,7 +143,92 @@ class RevenueCatService {
     }
   }
 
+  /// Associa compras ao ID Supabase (restore cross-device).
+  Future<CustomerInfo> logIn(String appUserId) async {
+    _assertReady();
+    try {
+      final result = await Purchases.logIn(appUserId);
+      return result.customerInfo;
+    } on PlatformException catch (e) {
+      throw _wrap(e);
+    }
+  }
+
+  /// Volta ao utilizador anónimo RC (logout Supabase).
+  Future<CustomerInfo> logOut() async {
+    _assertReady();
+    try {
+      return await Purchases.logOut();
+    } on PlatformException catch (e) {
+      throw _wrap(e);
+    }
+  }
+
+  /// Listener de actualizações de entitlement (compras, restore, expiração).
+  void addCustomerInfoListener(void Function(CustomerInfo info) listener) {
+    if (!_configured) return;
+    Purchases.addCustomerInfoUpdateListener(listener);
+  }
+
   // ── Helpers puros ────────────────────────────────────────────────────────
+
+  /// Chaves de plano usadas no paywall → package identifier RC.
+  static String packageIdForPlanKey(String planKey) => switch (planKey) {
+        'pro_monthly' => _pkgProMonthly,
+        'pro_annual' => _pkgProAnnual,
+        'elite_annual' => _pkgEliteAnnual,
+        _ => '',
+      };
+
+  /// Resolve package por identifier configurado, depois por [PackageType].
+  static Package? resolvePackage(
+    Offerings? offerings, {
+    required String planKey,
+  }) {
+    final current = offerings?.current;
+    if (current == null) return null;
+
+    final id = packageIdForPlanKey(planKey);
+    if (id.isNotEmpty) {
+      for (final p in current.availablePackages) {
+        if (p.identifier == id) return p;
+      }
+    }
+
+    return switch (planKey) {
+      'pro_monthly' => current.monthly ?? _firstOfType(current, PackageType.monthly),
+      'pro_annual' => current.annual ?? _firstOfType(current, PackageType.annual),
+      'elite_annual' => _packageByHint(current, 'elite') ??
+          _secondAnnualOrLast(current),
+      _ => null,
+    };
+  }
+
+  static Package? _firstOfType(Offering offering, PackageType type) {
+    for (final p in offering.availablePackages) {
+      if (p.packageType == type) return p;
+    }
+    return null;
+  }
+
+  static Package? _packageByHint(Offering offering, String hint) {
+    for (final p in offering.availablePackages) {
+      if (p.identifier.toLowerCase().contains(hint)) return p;
+    }
+    return null;
+  }
+
+  static Package? _secondAnnualOrLast(Offering offering) {
+    Package? firstAnnual;
+    for (final p in offering.availablePackages) {
+      if (p.packageType == PackageType.annual) {
+        if (firstAnnual != null) return p;
+        firstAnnual = p;
+      }
+    }
+    if (offering.availablePackages.isEmpty) return null;
+    return offering.availablePackages.last;
+  }
 
   /// True se o entitlement [entitlementId] está activo em [info].
   bool customerHasEntitlement(CustomerInfo info, String entitlementId) =>

@@ -1,3 +1,4 @@
+import 'package:aquanautix/core/services/revenue_cat_service.dart';
 import 'package:aquanautix/core/state/subscription_store.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -27,5 +28,12 @@ void main() {
       const SubscriptionState(plan: SubscriptionPlan.elite).hasProEntitlement,
       true,
     );
+  });
+
+  test('packageIdForPlanKey: defaults alinhados com offering RC', () {
+    expect(RevenueCatService.packageIdForPlanKey('pro_monthly'), 'pro_monthly');
+    expect(RevenueCatService.packageIdForPlanKey('pro_annual'), 'pro_annual');
+    expect(RevenueCatService.packageIdForPlanKey('elite_annual'), 'elite_annual');
+    expect(RevenueCatService.packageIdForPlanKey('unknown'), '');
   });
 }

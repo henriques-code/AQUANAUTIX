@@ -1,6 +1,23 @@
 # RevenueCat — Guia de Configuração Completa
 
-**Estado:** API key Android configurada · produtos por configurar no dashboard
+**Estado:** SDK integrado · auth bridge Supabase↔RC · produtos por publicar no Play Console
+
+---
+
+## Checklist P0 (código ✅ · dashboard manual)
+
+| Item | Estado |
+|------|--------|
+| `RevenueCatService.configure()` no arranque | ✅ |
+| `SubscriptionStore.syncFromRevenueCat()` + listener | ✅ |
+| `SubscriptionAuthBridge` — `logIn`/`logOut` Supabase | ✅ |
+| Paywall — resolve package por ID + fallback `PackageType` | ✅ |
+| Trial 3 dias — local (`startTrialIfNeeded`), sem compra forçada | ✅ |
+| Restauro — `hasProEntitlement` (inclui trial) | ✅ |
+| Bypass local (`_activateLocal`) só em `kDebugMode` | ✅ |
+| Perfil FREE manual só em `kDebugMode` | ✅ |
+| `run_dev.ps1` — defaults package IDs | ✅ |
+| Produtos Play Console + Offering RC publicada | ⏳ manual |
 
 ---
 

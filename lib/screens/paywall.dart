@@ -8,20 +8,6 @@ import '../core/state/subscription_store.dart';
 import '../core/l10n/aqx_l10n.dart';
 import '_shared.dart';
 
-// Opcional: alinhar com os Package identifiers no dashboard RevenueCat.
-const _pkgProMonthly = String.fromEnvironment(
-  'REVENUECAT_PACKAGE_PRO_MONTHLY',
-  defaultValue: '',
-);
-const _pkgProAnnual = String.fromEnvironment(
-  'REVENUECAT_PACKAGE_PRO_ANNUAL',
-  defaultValue: '',
-);
-const _pkgEliteAnnual = String.fromEnvironment(
-  'REVENUECAT_PACKAGE_ELITE_ANNUAL',
-  defaultValue: '',
-);
-
 /// Paywall de teste / produção: PRO mensal, **PRO anual** (oferta), ELITE anual, trial 3d.
 class PaywallScreen extends StatefulWidget {
   const PaywallScreen({super.key, required this.source});
@@ -46,6 +32,32 @@ class PaywallScreen extends StatefulWidget {
 class _PaywallScreenState extends State<PaywallScreen> {
   bool _committed = false;
   bool _busy = false;
+  Offerings? _offerings;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadOfferings();
+  }
+
+  Future<void> _loadOfferings() async {
+    if (!RevenueCatService.instance.isSdkReady) return;
+    try {
+      final offerings = await RevenueCatService.instance.getOfferings();
+      if (mounted) setState(() => _offerings = offerings);
+    } catch (_) {}
+  }
+
+  String _priceLabel(String planKey, String fallback) {
+    final pkg = RevenueCatService.resolvePackage(_offerings, planKey: planKey);
+    final storePrice = pkg?.storeProduct.priceString;
+    if (storePrice == null || storePrice.isEmpty) return fallback;
+    return switch (planKey) {
+      'pro_monthly' => '$storePrice/mês',
+      'pro_annual' || 'elite_annual' => '$storePrice/ano',
+      _ => storePrice,
+    };
+  }
 
   Future<void> _trackPlanSelected(String planKey) async {
     await AnalyticsService.instance.track(
@@ -61,47 +73,33 @@ class _PaywallScreenState extends State<PaywallScreen> {
     );
   }
 
+  /// Trial 3 dias — local (prefs), independente da compra na loja.
   Future<void> _startTrial() async {
     final t = aqxL10nOf(context);
     if (_busy) return;
-    final rc = RevenueCatService.instance;
-    if (!rc.isSdkReady) {
-      await _startTrialLocal();
+
+    if (!RevenueCatService.instance.isSdkReady && !kDebugMode) {
+      _snack(
+        t.es
+            ? 'Trial no disponible en este build.'
+            : 'Trial indisponível neste build.',
+      );
+      return;
+    }
+
+    final sub = SubscriptionStore.instance.value.value;
+    if (sub.trialStartedAt != null && sub.trialDaysLeft <= 0) {
+      _snack(
+        t.es
+            ? 'Ya usaste el trial de 3 días.'
+            : 'Já usaste o trial de 3 dias.',
+      );
       return;
     }
 
     setState(() => _busy = true);
     try {
-      final offerings = await rc.getOfferings();
-      final pkg = _resolvePackage(offerings, 'pro_monthly');
-      if (pkg == null) {
-        if (kDebugMode) {
-          setState(() => _committed = true);
-          await SubscriptionStore.instance.startTrialIfNeeded();
-          await AnalyticsService.instance.track(
-            AnalyticsEvents.trialStart,
-            params: {'source': widget.source},
-          );
-          if (mounted) Navigator.of(context).pop();
-          return;
-        }
-        _snack(
-          t.es
-              ? 'Trial no disponible: define REVENUECAT_PACKAGE_PRO_MONTHLY u offering en RC.'
-              : 'Trial indisponível: define REVENUECAT_PACKAGE_PRO_MONTHLY ou offering no RC.',
-        );
-        return;
-      }
-
-      try {
-        await rc.purchasePackage(pkg);
-      } on RevenueCatException catch (e) {
-        if (e.isUserCancelled) return;
-        _snack(e.message);
-        return;
-      }
-
-      await SubscriptionStore.instance.syncFromRevenueCat();
+      await SubscriptionStore.instance.startTrialIfNeeded();
       setState(() => _committed = true);
       await AnalyticsService.instance.track(
         AnalyticsEvents.trialStart,
@@ -112,17 +110,6 @@ class _PaywallScreenState extends State<PaywallScreen> {
     } finally {
       if (mounted) setState(() => _busy = false);
     }
-  }
-
-  Future<void> _startTrialLocal() async {
-    setState(() => _committed = true);
-    await SubscriptionStore.instance.startTrialIfNeeded();
-    await AnalyticsService.instance.track(
-      AnalyticsEvents.trialStart,
-      params: {'source': widget.source},
-    );
-    if (!mounted) return;
-    Navigator.of(context).pop();
   }
 
   Future<void> _restorePurchases() async {
@@ -144,13 +131,13 @@ class _PaywallScreenState extends State<PaywallScreen> {
       }
 
       await SubscriptionStore.instance.syncFromRevenueCat();
-      final plan = SubscriptionStore.instance.value.value.plan;
-      if (plan == SubscriptionPlan.free) {
+      if (!SubscriptionStore.instance.value.value.hasProEntitlement) {
         _snack(t.es ? 'No se encontró ninguna compra.' : 'Nenhuma compra encontrada.');
         return;
       }
 
       setState(() => _committed = true);
+      final plan = SubscriptionStore.instance.value.value.plan;
       await AnalyticsService.instance.track(
         AnalyticsEvents.purchaseSuccess,
         params: {'source': widget.source, 'plan': plan.name, 'plan_key': 'restore'},
@@ -167,23 +154,33 @@ class _PaywallScreenState extends State<PaywallScreen> {
     if (_busy) return;
     final rc = RevenueCatService.instance;
     if (!rc.isSdkReady) {
-      await _activateLocal(plan, planKey);
+      if (kDebugMode) {
+        await _activateLocal(plan, planKey);
+      } else {
+        _snack(
+          t.es
+              ? 'Compras no disponibles. Configura RevenueCat.'
+              : 'Compras indisponíveis. Configura RevenueCat.',
+        );
+      }
       return;
     }
 
     setState(() => _busy = true);
     final before = SubscriptionStore.instance.value.value.plan.name;
     try {
-      final offerings = await rc.getOfferings();
-      final pkg = _resolvePackage(offerings, planKey);
+      final offerings = _offerings ?? await rc.getOfferings();
+      if (_offerings == null && mounted) setState(() => _offerings = offerings);
+
+      final pkg = RevenueCatService.resolvePackage(offerings, planKey: planKey);
       if (pkg == null) {
         if (kDebugMode) {
           await _activateLocal(plan, planKey);
           return;
         }
         _snack(t.es
-            ? 'Paquete no disponible. Configura offering en RevenueCat y dart-define REVENUECAT_PACKAGE_*.'
-            : 'Pacote indisponível. Configura offering no RevenueCat e dart-define REVENUECAT_PACKAGE_*.');
+            ? 'Paquete no disponible. Configura offering en RevenueCat.'
+            : 'Pacote indisponível. Configura offering no RevenueCat.');
         return;
       }
 
@@ -238,24 +235,6 @@ class _PaywallScreenState extends State<PaywallScreen> {
     );
     if (!mounted) return;
     Navigator.of(context).pop();
-  }
-
-  static Package? _resolvePackage(Offerings? offerings, String planKey) {
-    final current = offerings?.current;
-    if (current == null) return null;
-
-    final id = switch (planKey) {
-      'pro_monthly' => _pkgProMonthly,
-      'pro_annual' => _pkgProAnnual,
-      'elite_annual' => _pkgEliteAnnual,
-      _ => '',
-    };
-    if (id.isEmpty) return null;
-
-    for (final p in current.availablePackages) {
-      if (p.identifier == id) return p;
-    }
-    return null;
   }
 
   @override
@@ -317,8 +296,8 @@ class _PaywallScreenState extends State<PaywallScreen> {
                 _plan(
                   context,
                   title: 'PRO — ANUAL',
-                  subtitle: t.es ? 'Equiv. ~€3.33/mes vs €4.99 mensual' : 'Equiv. ~€3.33/mês vs €4.99 mensal',
-                  price: '€39.99/ano',
+                  subtitle: t.es ? 'Equiv. ~€3.33/mes vs €4.99 mensual' : 'Equiv. ~€3.33/mês vs €4.99 mensual',
+                  price: _priceLabel('pro_annual', '€39.99/ano'),
                   accent: kCyan,
                   highlight: true,
                   onTap: () => _activate(SubscriptionPlan.pro, planKey: 'pro_annual'),
@@ -328,7 +307,7 @@ class _PaywallScreenState extends State<PaywallScreen> {
                   context,
                   title: t.es ? 'PRO — MENSUAL' : 'PRO — MENSAL',
                   subtitle: t.es ? 'Flexible, cancela cuando quieras' : 'Flexível, cancela quando quiseres',
-                  price: '€4.99/mês',
+                  price: _priceLabel('pro_monthly', '€4.99/mês'),
                   accent: kCyan,
                   highlight: false,
                   onTap: () => _activate(SubscriptionPlan.pro, planKey: 'pro_monthly'),
@@ -338,7 +317,7 @@ class _PaywallScreenState extends State<PaywallScreen> {
                   context,
                   title: 'ELITE — ANUAL',
                   subtitle: t.es ? 'Todo ilimitado + ancla de precio' : 'Tudo ilimitado + âncora de preço',
-                  price: '€59.99/ano',
+                  price: _priceLabel('elite_annual', '€59.99/ano'),
                   accent: kAmber,
                   highlight: false,
                   onTap: () => _activate(SubscriptionPlan.elite, planKey: 'elite_annual'),

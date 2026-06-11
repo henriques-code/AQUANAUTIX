@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '_shared.dart';
@@ -150,7 +151,9 @@ class _PerfilScreenState extends State<PerfilScreen> {
             ],
             btnLabel: t.es ? 'PLAN ACTUAL' : 'PLANO ACTUAL',
             btnFilled: false,
-            onTap: () async => SubscriptionStore.instance.setPlan(SubscriptionPlan.free),
+            onTap: kDebugMode
+                ? () async => SubscriptionStore.instance.setPlan(SubscriptionPlan.free)
+                : () {},
           ),
 
           const SizedBox(height: 10),
@@ -544,7 +547,7 @@ class _PerfilScreenState extends State<PerfilScreen> {
     try {
       await client.auth.signOut();
       GpsBootstrap.reset();
-      await SubscriptionStore.instance.setPlan(SubscriptionPlan.free);
+      // RevenueCat logOut via SubscriptionAuthBridge (onAuthStateChange).
       if (!mounted) return;
       setState(() {});
       ScaffoldMessenger.of(context).showSnackBar(

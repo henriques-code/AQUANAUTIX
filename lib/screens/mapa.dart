@@ -23,6 +23,7 @@ import '../core/services/app_insights_service.dart';
 import '../core/l10n/aqx_l10n.dart';
 import '../core/state/fishing_context_store.dart';
 import '../core/state/fishing_mode_store.dart';
+import '../core/state/subscription_store.dart';
 import '../core/state/home_tab_index.dart';
 import '../core/tides/oracle_data_service.dart';
 import '../core/catch_photos/catch_photo_model.dart';
@@ -621,6 +622,13 @@ class _MapaScreenState extends State<MapaScreen> {
 
   Future<void> _ghostOrPaywall() async {
     HapticFeedback.mediumImpact();
+    if (SubscriptionStore.instance.value.value.hasProEntitlement) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Ghost Mode activo', style: ibm(13))),
+      );
+      return;
+    }
     await PaywallScreen.open(context, source: 'mapa_ghost_mode');
   }
 

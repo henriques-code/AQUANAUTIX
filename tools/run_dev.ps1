@@ -35,7 +35,20 @@ $coreDefines = @(
     "REVENUECAT_API_KEY_ANDROID=$($defines['REVENUECAT_API_KEY_ANDROID'])"
 )
 
-# Defines opcionais RevenueCat (só incluídos se preenchidos no .env)
+# Defines opcionais RevenueCat — defaults alinhados com REVENUECAT_SETUP.md
+$rcDefaults = @{
+    'REVENUECAT_ENTITLEMENT_PRO'       = 'pro'
+    'REVENUECAT_ENTITLEMENT_ELITE'     = 'elite'
+    'REVENUECAT_PACKAGE_PRO_MONTHLY'   = 'pro_monthly'
+    'REVENUECAT_PACKAGE_PRO_ANNUAL'    = 'pro_annual'
+    'REVENUECAT_PACKAGE_ELITE_ANNUAL'  = 'elite_annual'
+}
+foreach ($key in $rcDefaults.Keys) {
+    if (-not $defines.ContainsKey($key) -or -not $defines[$key]) {
+        $defines[$key] = $rcDefaults[$key]
+    }
+}
+
 $rcOptional = @(
     'REVENUECAT_API_KEY_IOS',
     'REVENUECAT_ENTITLEMENT_PRO',
@@ -44,7 +57,7 @@ $rcOptional = @(
     'REVENUECAT_PACKAGE_PRO_ANNUAL',
     'REVENUECAT_PACKAGE_ELITE_ANNUAL'
 )
-$optDefines = $rcOptional | Where-Object { $defines.ContainsKey($_) -and $defines[$_] } | ForEach-Object { "$_=$($defines[$_])" }
+$optDefines = $rcOptional | ForEach-Object { "$_=$($defines[$_])" }
 
 $dartDefines = ($coreDefines + $optDefines) | ForEach-Object { "--dart-define=$_" }
 

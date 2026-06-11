@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -59,7 +61,14 @@ class SubscriptionStore {
 
   Future<void> init() async {
     await _loadFromPrefs();
+    if (RevenueCatService.instance.isSdkReady) {
+      RevenueCatService.instance.addCustomerInfoListener(_onCustomerInfoUpdated);
+    }
     await syncFromRevenueCat();
+  }
+
+  void _onCustomerInfoUpdated(CustomerInfo info) {
+    unawaited(_applyCustomerInfo(info));
   }
 
   /// Recarrega entitlements do RevenueCat quando o SDK está pronto.
@@ -101,7 +110,11 @@ class SubscriptionStore {
       remotePlan = SubscriptionPlan.free;
     }
 
-    value.value = value.value.copyWith(plan: remotePlan);
+    final clearTrial = remotePlan != SubscriptionPlan.free;
+    value.value = value.value.copyWith(
+      plan: remotePlan,
+      clearTrial: clearTrial,
+    );
     await _persist();
   }
 

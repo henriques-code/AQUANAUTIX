@@ -10,6 +10,7 @@ import 'core/state/app_locale_store.dart';
 import 'core/state/fishing_context_store.dart';
 import 'core/state/subscription_store.dart';
 import 'core/services/revenue_cat_service.dart';
+import 'core/monetization/subscription_auth_bridge.dart';
 import 'core/config/mapbox_config.dart';
 
 Future<void> main() async {
@@ -28,6 +29,7 @@ Future<void> main() async {
     // RC indisponível em dev sem keys — app continua com SubscriptionStore local.
   }
   await SubscriptionStore.instance.init();
+  SubscriptionAuthBridge.init();
   SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
