@@ -9,6 +9,8 @@ import 'logbook.dart';
 import 'perfil.dart';
 import 'comunidade.dart';
 import '../features/home/presentation/inicio_dashboard_screen.dart';
+import '../features/home/presentation/widgets/home_app_bar.dart';
+import '../features/home/presentation/widgets/home_navigation_drawer.dart';
 import '../core/l10n/aqx_l10n.dart';
 import '../core/services/analytics_service.dart';
 import '../core/state/home_tab_index.dart';
@@ -113,7 +115,10 @@ class _AquanautixHomeState extends State<AquanautixHome> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: kBg,
+      appBar: const HomeAppBar(),
+      drawer: HomeNavigationDrawer(onOpenTab: _setTab),
       body: SafeArea(
+        top: false,
         bottom: false,
         child: _activeTab(),
       ),

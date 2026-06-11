@@ -41,6 +41,7 @@ class HomeNavigationDrawer extends StatelessWidget {
               ),
             ),
             const Divider(height: 1, color: Color(0xFF1A3050)),
+            _item(context, Icons.home_outlined, t.tabHome, tabIndex: HomeTabIndex.inicioTabIndex),
             _item(context, Icons.track_changes_rounded, t.tabOracle, tabIndex: HomeTabIndex.oracleTabIndex),
             _item(context, Icons.map_outlined, t.tabMap, tabIndex: HomeTabIndex.mapTabIndex),
             _item(context, Icons.photo_camera_outlined, t.tabVision, tabIndex: HomeTabIndex.visionTabIndex),

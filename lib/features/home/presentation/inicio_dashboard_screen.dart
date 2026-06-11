@@ -20,8 +20,6 @@ import '../domain/repositories/home_repository.dart';
 import 'widgets/community_activity_card.dart';
 import 'widgets/featured_spot_card.dart';
 import 'widgets/greeting_header.dart';
-import 'widgets/home_app_bar.dart';
-import 'widgets/home_navigation_drawer.dart';
 import 'widgets/hourly_condition_card.dart';
 import 'widgets/section_header.dart';
 import 'widgets/weather_card.dart';
@@ -211,37 +209,33 @@ class _InicioDashboardScreenState extends State<InicioDashboardScreen>
     final t = AqxL10n(lang);
 
     if (_loading) {
-      return _homeScaffold(
-        body: const Center(
-          child: SizedBox(
-            width: 36,
-            height: 36,
-            child: CircularProgressIndicator(strokeWidth: 2.2, color: AppColors.accent),
-          ),
+      return const Center(
+        child: SizedBox(
+          width: 36,
+          height: 36,
+          child: CircularProgressIndicator(strokeWidth: 2.2, color: AppColors.accent),
         ),
       );
     }
 
     if (_error != null || _data == null) {
-      return _homeScaffold(
-        body: Center(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(t.homeLoadError, textAlign: TextAlign.center, style: AppTextStyles.ibmSans(15)),
-                const SizedBox(height: AppSpacing.md),
-                FilledButton(
-                  onPressed: _load,
-                  style: FilledButton.styleFrom(
-                    backgroundColor: AppColors.accent,
-                    foregroundColor: AppColors.background,
-                  ),
-                  child: Text(t.homeRetry),
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(t.homeLoadError, textAlign: TextAlign.center, style: AppTextStyles.ibmSans(15)),
+              const SizedBox(height: AppSpacing.md),
+              FilledButton(
+                onPressed: _load,
+                style: FilledButton.styleFrom(
+                  backgroundColor: AppColors.accent,
+                  foregroundColor: AppColors.background,
                 ),
-              ],
-            ),
+                child: Text(t.homeRetry),
+              ),
+            ],
           ),
         ),
       );
@@ -250,8 +244,7 @@ class _InicioDashboardScreenState extends State<InicioDashboardScreen>
     final data = _data!;
     final hour = DateTime.now().hour;
 
-    return _homeScaffold(
-      body: RefreshIndicator(
+    return RefreshIndicator(
         color: AppColors.accent,
         backgroundColor: const Color(0xFF071428),
         onRefresh: _onPullRefresh,
@@ -369,17 +362,7 @@ class _InicioDashboardScreenState extends State<InicioDashboardScreen>
                   )),
           ],
         ),
-        ),
       ),
-    );
-  }
-
-  Widget _homeScaffold({required Widget body}) {
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: const HomeAppBar(),
-      drawer: HomeNavigationDrawer(onOpenTab: widget.onOpenTab),
-      body: body,
     );
   }
 }
