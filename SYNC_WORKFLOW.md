@@ -55,11 +55,18 @@ OPENAI_API_KEY=sk-...          # preferir Edge Function a médio prazo
 
 1. `git diff --staged` — sem ficheiros sensíveis
 2. `git status` — confirmar que `.env` não aparece
-3. Se migration SQL nova → `migration list` local = remoto após `db push`
+3. Hook local: `.\tools\install_git_hooks.ps1` (uma vez por clone) — bloqueia `.env`, tokens no conteúdo
+4. Se migration SQL nova → `migration list` local = remoto após `db push`
 
 ---
 
 ## 4. Comandos oficiais
+
+### Setup (uma vez por clone)
+
+```powershell
+.\tools\install_git_hooks.ps1   # pre-commit bloqueia segredos
+```
 
 ### Verificação rápida (correr sempre ao fechar trabalho)
 

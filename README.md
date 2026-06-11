@@ -32,7 +32,7 @@ AQUANAUTIX/
 ├── android/ · ios/ · windows/    # Plataformas
 ├── supabase/                     # Migrations SQL (8) + README_setup.md
 ├── Site V2/                      # Site marketing Vercel (NÃO alterar sem AUTORIZO)
-├── tools/                        # run_dev.ps1, local_secrets.ps1.example
+├── tools/                        # run_dev.ps1, sync_check.ps1, install_git_hooks.ps1
 ├── AQUANAUTIX_CONTEXT.md         # Contexto técnico detalhado
 ├── CLAUDE.md                     # Instruções IA
 ├── ECOSYSTEM.md                  # Serviços, env, sincronização
