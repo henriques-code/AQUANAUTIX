@@ -7,6 +7,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:video_player/video_player.dart';
 
 import '_shared.dart';
+import '../core/auth/login_session_store.dart';
+import '../core/auth/password_recovery_service.dart';
 import '../core/l10n/aqx_l10n.dart';
 import '../core/state/app_locale_store.dart';
 import '../core/supabase_bootstrap.dart';
@@ -40,15 +42,28 @@ class _LoginModuleScreenState extends State<LoginModuleScreen> {
   @override
   void initState() {
     super.initState();
-    unawaited(_checkExistingSession());
+    unawaited(_bootstrapLogin());
     unawaited(_initVideo());
   }
 
-  Future<void> _checkExistingSession() async {
-    await Future.delayed(Duration.zero);
-    if (!mounted || !isSupabaseReady) return;
+  Future<void> _bootstrapLogin() async {
+    await LoginSessionStore.applySessionPolicy();
+    if (!mounted) return;
+
+    final remember = await LoginSessionStore.getRememberSession();
+    final email = await LoginSessionStore.getSavedEmail();
+    if (!mounted) return;
+
+    setState(() {
+      _rememberMe = remember;
+      if (email != null && email.isNotEmpty) {
+        _emailCtrl.text = email;
+      }
+    });
+
+    if (!isSupabaseReady || !remember) return;
     final session = supabaseClientOrNull?.auth.currentSession;
-    if (session != null) {
+    if (session != null && mounted) {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => const AquanautixHome()),
@@ -213,6 +228,8 @@ class _LoginModuleScreenState extends State<LoginModuleScreen> {
                     hint: t.loginEmailHint,
                     icon: Icons.mail_outline_rounded,
                     controller: _emailCtrl,
+                    keyboardType: TextInputType.emailAddress,
+                    autofillHints: const [AutofillHints.email],
                   ),
                   const SizedBox(height: 12),
                   Align(
@@ -245,7 +262,17 @@ class _LoginModuleScreenState extends State<LoginModuleScreen> {
                   Align(
                     alignment: Alignment.centerLeft,
                     child: GestureDetector(
-                      onTap: () => setState(() => _rememberMe = !_rememberMe),
+                      onTap: () async {
+                        final next = !_rememberMe;
+                        setState(() => _rememberMe = next);
+                        await LoginSessionStore.setRememberSession(next);
+                        if (!next) {
+                          await LoginSessionStore.setSavedEmail(null);
+                          if (isSupabaseReady) {
+                            await supabaseClientOrNull?.auth.signOut();
+                          }
+                        }
+                      },
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
@@ -407,6 +434,8 @@ class _LoginModuleScreenState extends State<LoginModuleScreen> {
     required IconData icon,
     required TextEditingController controller,
     bool obscure = false,
+    TextInputType? keyboardType,
+    Iterable<String>? autofillHints,
     Widget? trailing,
   }) {
     return Container(
@@ -424,6 +453,9 @@ class _LoginModuleScreenState extends State<LoginModuleScreen> {
             child: TextField(
               controller: controller,
               obscureText: obscure,
+              keyboardType: keyboardType,
+              autofillHints: autofillHints,
+              autocorrect: keyboardType == TextInputType.emailAddress ? false : true,
               style: ibm(13, c: Colors.white),
               decoration: InputDecoration(
                 isDense: true,
@@ -482,6 +514,10 @@ class _LoginModuleScreenState extends State<LoginModuleScreen> {
         password: _passwordCtrl.text,
       );
       debugPrint('[AUTH] signInWithPassword result — user: ${response.user?.email}');
+      await LoginSessionStore.persistAfterLogin(
+        rememberSession: _rememberMe,
+        email: _emailCtrl.text.trim(),
+      );
       if (mounted) {
         Navigator.pushReplacement(
           context,
@@ -675,6 +711,7 @@ class _LoginModuleScreenState extends State<LoginModuleScreen> {
       builder: (ctx) {
         bool loading = false;
         bool sent = false;
+        String? errorText;
 
         return StatefulBuilder(
           builder: (ctx, setModalState) => Padding(
@@ -717,6 +754,23 @@ class _LoginModuleScreenState extends State<LoginModuleScreen> {
                   ),
                 ),
                 const SizedBox(height: 20),
+                if (errorText != null)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.redAccent.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: Colors.redAccent.withValues(alpha: 0.35)),
+                      ),
+                      child: Text(
+                        errorText!,
+                        style: const TextStyle(color: Colors.redAccent, fontSize: 12),
+                      ),
+                    ),
+                  ),
                 if (sent)
                   Container(
                     width: double.infinity,
@@ -727,7 +781,7 @@ class _LoginModuleScreenState extends State<LoginModuleScreen> {
                       border: Border.all(color: Colors.green.withValues(alpha: 0.4)),
                     ),
                     child: Text(
-                      t.loginResetSent,
+                      '${t.loginResetSent}\n\n${t.loginResetSpamHint}',
                       style: const TextStyle(color: Colors.greenAccent, fontSize: 12),
                       textAlign: TextAlign.center,
                     ),
@@ -744,35 +798,32 @@ class _LoginModuleScreenState extends State<LoginModuleScreen> {
                       ),
                       onPressed: loading ? null : () async {
                         final email = emailCtrl.text.trim();
-                        if (email.isEmpty) {
-                          _showSnack(t.loginEnterEmail);
-                          return;
-                        }
-                        setModalState(() => loading = true);
+                        setModalState(() {
+                          loading = true;
+                          errorText = null;
+                        });
                         try {
-                          final client = supabaseClientOrNull;
-                          if (client == null) {
-                            _showSnack(t.loginSupabaseGuestFallback);
-                            return;
-                          }
-                          await client.auth.resetPasswordForEmail(
-                            email,
-                            redirectTo: null,
-                          );
+                          await PasswordRecoveryService.instance.sendResetLink(email);
                           if (ctx.mounted) {
-                            setModalState(() { loading = false; sent = true; });
+                            setModalState(() {
+                              loading = false;
+                              sent = true;
+                            });
                           }
-                        } on AuthException catch (e) {
-                          debugPrint('[RESET] AuthException: ${e.message}');
+                        } on PasswordRecoveryException catch (e) {
                           if (ctx.mounted) {
-                            _showSnack(t.loginAuthErrorMessage(e.message));
-                            setModalState(() => loading = false);
+                            setModalState(() {
+                              loading = false;
+                              errorText = e.message;
+                            });
                           }
                         } catch (e) {
                           debugPrint('[RESET] Error: $e');
                           if (ctx.mounted) {
-                            _showSnack(t.loginResetEmailError);
-                            setModalState(() => loading = false);
+                            setModalState(() {
+                              loading = false;
+                              errorText = t.loginResetEmailError;
+                            });
                           }
                         }
                       },
@@ -817,6 +868,11 @@ class _LoginModuleScreenState extends State<LoginModuleScreen> {
         provider: OAuthProvider.google,
         idToken: googleAuth.idToken!,
         accessToken: googleAuth.accessToken,
+      );
+      final googleEmail = googleUser.email;
+      await LoginSessionStore.persistAfterLogin(
+        rememberSession: _rememberMe,
+        email: googleEmail,
       );
       if (mounted) {
         Navigator.pushReplacement(

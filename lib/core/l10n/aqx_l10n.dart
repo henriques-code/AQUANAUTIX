@@ -161,6 +161,12 @@ class AqxL10n {
         en: '✓ Email sent! Check your inbox.',
       );
 
+  String get loginResetSpamHint => _l(
+        pt: 'Verifica também SPAM/Lixo. Limite Supabase: ~2 emails/hora. Conta tem de estar registada com email+password.',
+        es: 'Revisa también SPAM. Límite Supabase: ~2 emails/hora. La cuenta debe estar registrada con email+contraseña.',
+        en: 'Also check SPAM. Supabase limit: ~2 emails/hour. Account must be registered with email+password.',
+      );
+
   String get loginSendLink =>
       _l(pt: 'ENVIAR LINK', es: 'ENVIAR ENLACE', en: 'SEND LINK');
 

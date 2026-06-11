@@ -31,7 +31,14 @@ String? get supabaseCurrentUserEmail {
 
 Future<void> initSupabaseIfConfigured() async {
   if (!isSupabaseConfigured || _supabaseInitialized) return;
-  await Supabase.initialize(url: _supabaseUrl, anonKey: _supabaseAnonKey);
+  await Supabase.initialize(
+    url: _supabaseUrl,
+    anonKey: _supabaseAnonKey,
+    authOptions: const FlutterAuthClientOptions(
+      authFlowType: AuthFlowType.pkce,
+      detectSessionInUri: true,
+    ),
+  );
   _supabaseInitialized = true;
 }
 
