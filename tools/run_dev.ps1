@@ -49,6 +49,10 @@ foreach ($key in $rcDefaults.Keys) {
     }
 }
 
+if (-not $defines.ContainsKey('SUPABASE_RESET_REDIRECT') -or -not $defines['SUPABASE_RESET_REDIRECT']) {
+    $defines['SUPABASE_RESET_REDIRECT'] = 'https://aquanautix.vercel.app/reset-password'
+}
+
 $rcOptional = @(
     'REVENUECAT_API_KEY_IOS',
     'REVENUECAT_ENTITLEMENT_PRO',

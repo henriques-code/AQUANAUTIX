@@ -150,9 +150,9 @@ class AqxL10n {
       );
 
   String get loginResetBody => _l(
-        pt: 'Insere o teu email e recebes um link para redefinir a password.',
-        es: 'Introduce tu email y recibirás un enlace para restablecer la contraseña.',
-        en: 'Enter your email and you will receive a link to reset your password.',
+        pt: 'Recebes um link (não password nem código). Abre-o no telemóvel — a app abre para definires a nova password.',
+        es: 'Recibirás un enlace (no contraseña ni código). Ábrelo en el móvil — la app se abre para definir la nueva contraseña.',
+        en: 'You receive a link (not a password or code). Open it on your phone — the app opens to set your new password.',
       );
 
   String get loginResetSent => _l(

@@ -4,7 +4,7 @@ const _supabaseUrl = String.fromEnvironment('SUPABASE_URL');
 const _supabaseAnonKey = String.fromEnvironment('SUPABASE_ANON_KEY');
 const _resetRedirectUrl = String.fromEnvironment(
   'SUPABASE_RESET_REDIRECT',
-  defaultValue: 'aquanautix://reset-password',
+  defaultValue: 'https://aquanautix.vercel.app/reset-password',
 );
 
 bool get isSupabaseConfigured =>

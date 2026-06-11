@@ -33,9 +33,10 @@ if ($url -notmatch 'https://([^.]+)\.supabase\.co') {
 $ref = $Matches[1]
 
 $redirectList = @(
+    'https://aquanautix.vercel.app/reset-password'
+    'https://aquanautix.vercel.app/**'
     'aquanautix://reset-password'
     'aquanautix://**'
-    'https://aquanautix.vercel.app/**'
     'http://localhost:3000/**'
 ) -join ','
 

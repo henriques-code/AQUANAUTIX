@@ -99,7 +99,7 @@ Todas as migrations actuais são **idempotentes** (`IF NOT EXISTS`, `DROP POLICY
 
 - Bootstrap: `lib/core/supabase_bootstrap.dart` (`dart-define` / env).
 - Login Google + email: `lib/screens/login_module.dart`.
-- Redirect reset password: `SUPABASE_RESET_REDIRECT` (default `aquanautix://reset-password`).
+- Redirect reset password: `SUPABASE_RESET_REDIRECT` (default `https://aquanautix.vercel.app/reset-password` → ponte `Site V2/reset-password.html` → app).
 
 Sem `SUPABASE_URL` + `SUPABASE_ANON_KEY` a app corre em modo offline (comunidade demo, sem sync).
 
