@@ -78,6 +78,7 @@ class _MapaScreenState extends State<MapaScreen> {
   bool _sheetExpanded = false; // sheet spots aberto/fechado (começa fechado)
   final _mapController = MapController();
   final Map<String, Uint8List> _spotReferencePhotos = {};
+  MapFocusRequest? _focusPin;
 
   // Dados dos spots com coordenadas reais PT/ES
   static const _spots = [
@@ -117,6 +118,13 @@ class _MapaScreenState extends State<MapaScreen> {
     final target = HomeTabIndex.pendingMapFocus.value;
     if (target == null || !mounted) return;
     HomeTabIndex.pendingMapFocus.value = null;
+    setState(() {
+      _focusPin = (
+        lat: target.lat,
+        lon: target.lon,
+        label: target.label,
+      );
+    });
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       try {
@@ -599,6 +607,7 @@ class _MapaScreenState extends State<MapaScreen> {
           ),
         MarkerLayer(
           markers: [
+            ..._buildFocusPinMarkers(),
             ..._buildCommunitySpotMarkers(),
             ..._buildBaitShopMarkers(),
             ..._buildSavedFishermanMarkers(),
@@ -630,6 +639,50 @@ class _MapaScreenState extends State<MapaScreen> {
       return;
     }
     await PaywallScreen.open(context, source: 'mapa_ghost_mode');
+  }
+
+  /// Pin de destaque ao abrir mapa desde Início (Spots em Destaque) ou Oráculo.
+  List<Marker> _buildFocusPinMarkers() {
+    final pin = _focusPin;
+    if (pin == null) return [];
+    return [
+      Marker(
+        point: LatLng(pin.lat, pin.lon),
+        width: 44,
+        height: pin.label != null && pin.label!.isNotEmpty ? 68 : 44,
+        alignment: Alignment.bottomCenter,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (pin.label != null && pin.label!.isNotEmpty)
+              Container(
+                margin: const EdgeInsets.only(bottom: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: kBg.withValues(alpha: 0.88),
+                  borderRadius: BorderRadius.circular(6),
+                  border: Border.all(color: kCyan.withValues(alpha: 0.45)),
+                ),
+                child: Text(
+                  pin.label!,
+                  style: mono(9, c: kCyan, ls: 0.3),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            Icon(
+              Icons.place_rounded,
+              color: kCyan,
+              size: 36,
+              shadows: const [
+                Shadow(color: Colors.black87, blurRadius: 6),
+                Shadow(color: Colors.black54, blurRadius: 2),
+              ],
+            ),
+          ],
+        ),
+      ),
+    ];
   }
 
   /// Comunidade curada: FREE amarelo, PRO azulão, ELITE âmbar.

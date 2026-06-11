@@ -32,8 +32,9 @@ class HomeRepositoryImpl implements HomeRepository {
       name: 'Peniche',
       imageUrl: 'assets/marketing/spots/peniche.jpg',
       quality: SpotQuality.muitoBom,
-      lat: 39.3545,
-      lon: -9.3835,
+      // Porto / doca de pesca — ~38.35°N (não 39.35).
+      lat: 38.3558,
+      lon: -9.3812,
     ),
     FeaturedSpot(
       id: '3',

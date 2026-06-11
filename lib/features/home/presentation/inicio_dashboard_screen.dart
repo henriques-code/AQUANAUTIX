@@ -120,7 +120,11 @@ class _InicioDashboardScreenState extends State<InicioDashboardScreen>
   }
 
   void _openFeaturedSpotOnMap(FeaturedSpot spot) {
-    HomeTabIndex.pendingMapFocus.value = (lat: spot.lat, lon: spot.lon);
+    HomeTabIndex.pendingMapFocus.value = (
+      lat: spot.lat,
+      lon: spot.lon,
+      label: spot.name,
+    );
     widget.onOpenTab(HomeTabIndex.mapTabIndex);
   }
 

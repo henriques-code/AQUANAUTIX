@@ -454,7 +454,11 @@ class _OraculoScreenState extends State<OraculoScreen>
   void _openMapTab() {
     final coords = OracleDataService.instance.lastCoords;
     if (coords != null) {
-      HomeTabIndex.pendingMapFocus.value = (lat: coords.lat, lon: coords.lon);
+      HomeTabIndex.pendingMapFocus.value = (
+        lat: coords.lat,
+        lon: coords.lon,
+        label: null,
+      );
     }
     HomeTabIndex.notifier.value = HomeTabIndex.mapTabIndex;
     unawaited(
