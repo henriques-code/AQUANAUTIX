@@ -144,10 +144,18 @@ class _LogbookScreenState extends State<LogbookScreen>
   void _applyPendingLogTab() {
     final pending = LogbookTabIndex.pendingTab.value;
     if (pending != null && pending >= 0 && pending < _tabCtrl.length) {
-      if (_tabCtrl.index != pending) {
-        _tabCtrl.animateTo(pending);
-      }
       LogbookTabIndex.pendingTab.value = null;
+      final target = pending;
+      // TabController só está ligado ao TabBarView após o 1.º frame.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        if (_tabCtrl.index != target) {
+          _tabCtrl.animateTo(target);
+        }
+        if (_tabIndex != target) {
+          setState(() => _tabIndex = target);
+        }
+      });
     }
 
     final action = LogbookTabIndex.pendingAction.value;

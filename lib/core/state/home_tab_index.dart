@@ -1,7 +1,9 @@
 import 'package:flutter/foundation.dart';
 
+import '../community/community_public_profile.dart';
+
 /// Índice do tab em [AquanautixHome].
-/// 6 tabs: Início(0) · Oráculo(1) · Mapa(2) · Vision(3) · Log(4) · Perfil(5)
+/// 7 tabs: Início(0) · Oráculo(1) · Mapa(2) · Vision(3) · Log(4) · Perfil(5) · Comunidade(6)
 class HomeTabIndex {
   HomeTabIndex._();
 
@@ -11,6 +13,7 @@ class HomeTabIndex {
   static const int visionTabIndex   = 3;
   static const int logTabIndex      = 4;
   static const int profileTabIndex  = 5;
+  static const int communityTabIndex = 6;
 
   static final ValueNotifier<int> notifier = ValueNotifier<int>(0);
 
@@ -21,4 +24,8 @@ class HomeTabIndex {
   /// Centrar mapa nas coords do Oráculo (VER NO MAPA).
   static final ValueNotifier<({double lat, double lon})?> pendingMapFocus =
       ValueNotifier<({double lat, double lon})?>(null);
+
+  /// Perfil Ghost a abrir ao entrar no tab Comunidade (tap no Início).
+  static final ValueNotifier<CommunityPublicProfile?> pendingCommunityProfile =
+      ValueNotifier<CommunityPublicProfile?>(null);
 }

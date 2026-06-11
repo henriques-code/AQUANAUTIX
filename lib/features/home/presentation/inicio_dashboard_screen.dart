@@ -5,10 +5,12 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/l10n/aqx_l10n.dart';
 import '../../../core/location/gps_access.dart';
+import '../../../core/location/gps_bootstrap.dart';
 import '../../../core/supabase_bootstrap.dart';
 import '../../../core/state/home_tab_index.dart';
-import '../../../core/state/logbook_tab_index.dart';
+import '../domain/entities/community_activity.dart';
 import '../../../core/tides/oracle_data_service.dart';
+import '../../../core/community/community_public_profile.dart';
 import '../domain/entities/featured_spot.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
@@ -43,7 +45,8 @@ class InicioDashboardScreen extends StatefulWidget {
   State<InicioDashboardScreen> createState() => _InicioDashboardScreenState();
 }
 
-class _InicioDashboardScreenState extends State<InicioDashboardScreen> {
+class _InicioDashboardScreenState extends State<InicioDashboardScreen>
+    with WidgetsBindingObserver {
   late final HomeRepository _repo = widget.repository ?? HomeRepositoryImpl();
 
   bool _loading = false;
@@ -56,16 +59,25 @@ class _InicioDashboardScreenState extends State<InicioDashboardScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _data = HomeRepositoryImpl.instantFallback();
     unawaited(_load(silent: true));
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      unawaited(_requestGpsOnEntry());
+      unawaited(_startGpsFlow());
     });
     if (isSupabaseReady) {
-      _authSub = Supabase.instance.client.auth.onAuthStateChange.listen((_) {
+      _authSub = Supabase.instance.client.auth.onAuthStateChange.listen((event) {
+        if (event.event == AuthChangeEvent.signedIn) {
+          GpsBootstrap.reset();
+        }
         _authReloadDebounce?.cancel();
-        _authReloadDebounce = Timer(const Duration(milliseconds: 800), () {
-          if (mounted) unawaited(_load(silent: true));
+        _authReloadDebounce = Timer(const Duration(milliseconds: 600), () {
+          if (!mounted) return;
+          if (event.event == AuthChangeEvent.signedIn) {
+            unawaited(_startGpsFlow(forcePermission: true));
+          } else {
+            unawaited(_load(silent: true));
+          }
         });
       });
     }
@@ -73,27 +85,38 @@ class _InicioDashboardScreenState extends State<InicioDashboardScreen> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _authReloadDebounce?.cancel();
     _authSub?.cancel();
     super.dispose();
   }
 
-  /// Pede localização ao entrar no Início (pós-login); banner só se recusar.
-  Future<void> _requestGpsOnEntry() async {
-    var status = await GpsAccess.check();
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state != AppLifecycleState.resumed || !mounted) return;
+    if (GpsAccess.cachedFix != null || GpsAccess.cachedFixStale != null) return;
+    unawaited(_refreshGpsInBackground());
+  }
+
+  /// Permissão (diálogo) → fix curto em background → reload se houver coords.
+  Future<void> _startGpsFlow({bool forcePermission = false}) async {
+    final status = await GpsBootstrap.ensurePermission(forceRetry: forcePermission);
     if (!mounted) return;
-    if (status != GpsAccessStatus.granted) {
-      status = await GpsAccess.request();
-      if (!mounted) return;
-    }
     if (status == GpsAccessStatus.granted) {
-      await GpsAccess.tryGetFix(timeout: const Duration(seconds: 15));
-      if (!mounted) return;
-      OracleDataService.instance.invalidateCache();
-      await _load(silent: true);
+      if (_showGpsBanner) setState(() => _showGpsBanner = false);
+      unawaited(_refreshGpsInBackground());
       return;
     }
     setState(() => _showGpsBanner = true);
+  }
+
+  Future<void> _refreshGpsInBackground({bool forceRefresh = false}) async {
+    final fix = await GpsBootstrap.refreshFix(forceRefresh: forceRefresh);
+    if (!mounted) return;
+    if (fix != null || forceRefresh) {
+      OracleDataService.instance.invalidateCache();
+      await _load(silent: true, forceRefresh: forceRefresh || fix != null);
+    }
   }
 
   void _openFeaturedSpotOnMap(FeaturedSpot spot) {
@@ -101,26 +124,42 @@ class _InicioDashboardScreenState extends State<InicioDashboardScreen> {
     widget.onOpenTab(HomeTabIndex.mapTabIndex);
   }
 
-  void _openCommunityUser() {
-    LogbookTabIndex.pendingTab.value = LogbookTabIndex.comunidadeTab;
-    widget.onOpenTab(HomeTabIndex.logTabIndex);
+  void _openCommunityProfile(CommunityActivity activity) {
+    HomeTabIndex.pendingCommunityProfile.value =
+        CommunityPublicProfile.fromActivity(activity);
+    widget.onOpenTab(HomeTabIndex.communityTabIndex);
   }
 
   Future<void> _enableGpsFromBanner() async {
-    final next = await GpsAccess.request();
+    GpsBootstrap.reset();
+    final status = await GpsBootstrap.ensurePermission(forceRetry: true);
     if (!mounted) return;
-    if (next == GpsAccessStatus.granted) {
+    if (status == GpsAccessStatus.granted) {
       setState(() => _showGpsBanner = false);
-      await GpsAccess.tryGetFix(timeout: const Duration(seconds: 15));
-      if (!mounted) return;
-      OracleDataService.instance.invalidateCache();
-      await _load(silent: true);
+      await _refreshGpsInBackground();
       return;
     }
-    await GpsAccess.openSystemSettings(next);
+    await GpsAccess.openSystemSettings(status);
   }
 
-  Future<void> _load({bool silent = false}) async {
+  Future<void> _onPullRefresh() async {
+    try {
+      OracleDataService.instance.invalidateCache();
+      final granted = await GpsAccess.check() == GpsAccessStatus.granted;
+      if (granted) {
+        await GpsAccess.tryGetFix(
+          timeout: const Duration(seconds: 12),
+          forceRefresh: true,
+        );
+      }
+      await _load(silent: true, forceRefresh: true)
+          .timeout(const Duration(seconds: 15));
+    } on TimeoutException {
+      // Completa o RefreshIndicator mesmo se a rede demorar.
+    }
+  }
+
+  Future<void> _load({bool silent = false, bool forceRefresh = false}) async {
     if (!silent) {
       setState(() {
         _loading = _data == null;
@@ -128,7 +167,7 @@ class _InicioDashboardScreenState extends State<InicioDashboardScreen> {
       });
     }
     try {
-      final d = await _repo.loadDashboard();
+      final d = await _repo.loadDashboard(forceRefresh: forceRefresh);
       if (!mounted) return;
       final displayName = _resolveUserDisplay(d.userDisplayName);
       setState(() {
@@ -211,7 +250,7 @@ class _InicioDashboardScreenState extends State<InicioDashboardScreen> {
       body: RefreshIndicator(
         color: AppColors.accent,
         backgroundColor: const Color(0xFF071428),
-        onRefresh: () => _load(silent: true),
+        onRefresh: _onPullRefresh,
         child: SingleChildScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.fromLTRB(AppSpacing.md, AppSpacing.xs, AppSpacing.md, AppSpacing.lg),
@@ -304,7 +343,7 @@ class _InicioDashboardScreenState extends State<InicioDashboardScreen> {
                       children: [
                         CommunityActivityCard(
                           activity: a,
-                          onUserTap: _openCommunityUser,
+                          onUserTap: () => _openCommunityProfile(a),
                         ),
                         const SizedBox(height: 3),
                         Row(

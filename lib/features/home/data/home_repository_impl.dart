@@ -105,14 +105,29 @@ class HomeRepositoryImpl implements HomeRepository {
 
   // ─── loadDashboard ────────────────────────────────────────────────────────
   @override
-  Future<HomeDashboardData> loadDashboard() async {
+  Future<HomeDashboardData> loadDashboard({bool forceRefresh = false}) async {
     final now = DateTime.now();
     final ctx = FishingContextStore.instance.value.value;
     final preset = TideMapPreset.forRegion(ctx.region);
 
-    // 1. Coordenadas — cache GPS em memória (fix obtido no Início antes do reload).
-    final cachedFix = GpsAccess.cachedFix ?? GpsAccess.cachedFixStale;
+    // 1. Coordenadas — tentar GPS quando permitido (pull-to-refresh força novo fix).
     final gpsGranted = await GpsAccess.check() == GpsAccessStatus.granted;
+    ({double lat, double lon})? cachedFix;
+    if (gpsGranted) {
+      if (forceRefresh) {
+        cachedFix = await GpsAccess.tryGetFix(
+          timeout: const Duration(seconds: 12),
+          forceRefresh: true,
+        );
+      } else {
+        cachedFix = GpsAccess.cachedFix ?? GpsAccess.cachedFixStale;
+        cachedFix ??= await GpsAccess.tryGetFix(
+          timeout: const Duration(seconds: 8),
+        );
+      }
+    } else {
+      cachedFix = GpsAccess.cachedFix ?? GpsAccess.cachedFixStale;
+    }
     final hasGpsCoords = gpsGranted && cachedFix != null;
     final lat = cachedFix?.lat ?? preset.latitude;
     final lon = cachedFix?.lon ?? preset.longitude;
@@ -125,15 +140,19 @@ class HomeRepositoryImpl implements HomeRepository {
     );
 
     // 2. OracleBundle — GPS quando há fix; senão regional. Re-fetch se cache é só regional.
-    OracleBundle? bundle = OracleDataService.instance.lastBundle;
+    if (forceRefresh) {
+      OracleDataService.instance.invalidateCache();
+    }
+    OracleBundle? bundle =
+        forceRefresh ? null : OracleDataService.instance.lastBundle;
     final bundleNeedsGpsRefresh =
         hasGpsCoords && bundle != null && !bundle.usedGps;
-    if (bundle == null || bundleNeedsGpsRefresh) {
+    if (bundle == null || bundleNeedsGpsRefresh || forceRefresh) {
       try {
         if (hasGpsCoords) {
           bundle = await OracleDataService.instance
-              .fetch(ctx: ctx)
-              .timeout(const Duration(seconds: 15));
+              .fetch(ctx: ctx, knownCoords: cachedFix)
+              .timeout(const Duration(seconds: 10));
         } else {
           bundle = await OracleDataService.instance
               .fetch(ctx: ctx, planningPlace: regionalPlace)

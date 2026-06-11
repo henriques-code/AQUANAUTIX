@@ -201,7 +201,7 @@ class OracleDataService {
         break;
     }
 
-    final fix = await GpsAccess.tryGetFix();
+    final fix = await GpsAccess.tryGetFix(timeout: const Duration(seconds: 5));
     if (fix != null) return fix;
 
     final stale = GpsAccess.cachedFixStale ?? _lastCoords;
@@ -211,26 +211,33 @@ class OracleDataService {
   }
 
   /// Fetch COSTA — GPS em modo ao vivo; [planningPlace] em modo planeamento (sem GPS).
+  /// [knownCoords] — fix já em cache (Início); evita novo `tryGetFix` bloqueante.
   Future<OracleBundle> fetch({
     required FishingContext ctx,
     OsmPlace? planningPlace,
+    ({double lat, double lon})? knownCoords,
   }) async {
     final tz = TideMapPreset.timezoneForCountry(ctx.country);
     double lat;
     double lon;
 
     final tGps = AqxL10n(AppLocaleStore.instance.locale.languageCode);
-    if (planningPlace != null) {
+    final bool isPlanning;
+    if (knownCoords != null) {
+      lat = knownCoords.lat;
+      lon = knownCoords.lon;
+      isPlanning = false;
+    } else if (planningPlace != null) {
       lat = planningPlace.lat;
       lon = planningPlace.lon;
+      isPlanning = true;
     } else {
       final fix = await _requireGpsFix(tGps);
       lat = fix.lat;
       lon = fix.lon;
+      isPlanning = false;
     }
     _lastCoords = (lat: lat, lon: lon);
-
-    final isPlanning = planningPlace != null;
 
     OsmReverseResult? geo;
     String? gpsCountryIso2;
@@ -272,13 +279,13 @@ class OracleDataService {
     );
     final placeLabel = geo?.label ?? '';
 
-    final headline = isPlanning
+    final headline = isPlanning && planningPlace != null
         ? planningPlace.label
         : (placeLabel.isNotEmpty ? placeLabel : t.yourPosition);
     final subtitle = isPlanning
         ? t.planningSubtitle(lat, lon)
         : '${lat.toStringAsFixed(3)}°, ${lon.toStringAsFixed(3)}°';
-    final placeShort = isPlanning
+    final placeShort = isPlanning && planningPlace != null
         ? planningPlace.label.split('·').first.trim()
         : 'ti';
 

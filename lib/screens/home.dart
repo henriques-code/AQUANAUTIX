@@ -7,12 +7,14 @@ import 'mapa.dart';
 import 'vision.dart';
 import 'logbook.dart';
 import 'perfil.dart';
+import 'comunidade.dart';
 import '../features/home/presentation/inicio_dashboard_screen.dart';
 import '../core/l10n/aqx_l10n.dart';
 import '../core/services/analytics_service.dart';
 import '../core/state/home_tab_index.dart';
+import '../core/location/gps_bootstrap.dart';
 
-/// Ecrã principal com navegação entre os 6 ecrãs AQUANAUTIX.
+/// Ecrã principal com navegação entre os 7 ecrãs AQUANAUTIX.
 class AquanautixHome extends StatefulWidget {
   const AquanautixHome({super.key});
 
@@ -35,6 +37,10 @@ class _AquanautixHomeState extends State<AquanautixHome> {
     super.initState();
     HomeTabIndex.notifier.value = _idx;
     HomeTabIndex.notifier.addListener(_onExternalTabRequest);
+    // GPS o mais cedo possível após login — só permissão; fix em background no Início.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      unawaited(GpsBootstrap.ensurePermission());
+    });
   }
 
   @override
@@ -71,6 +77,8 @@ class _AquanautixHomeState extends State<AquanautixHome> {
         return const LogbookScreen(key: ValueKey('tab_logbook'));
       case 5:
         return const PerfilScreen(key: ValueKey('tab_perfil'));
+      case 6:
+        return const ComunidadeScreen(key: ValueKey('tab_comunidade'));
       default:
         return const SizedBox.shrink();
     }
@@ -87,6 +95,7 @@ class _AquanautixHomeState extends State<AquanautixHome> {
     Icons.photo_camera_outlined,
     Icons.menu_book_outlined,
     Icons.person_outline_rounded,
+    Icons.groups_outlined,
   ];
 
   void _openOracleFromMap() {
@@ -119,6 +128,7 @@ class _AquanautixHomeState extends State<AquanautixHome> {
         t.tabVision,
         t.tabLog,
         t.tabProfile,
+        t.tabCommunity,
       ];
 
   Widget _buildNav() {
@@ -134,7 +144,7 @@ class _AquanautixHomeState extends State<AquanautixHome> {
           ),
           padding: const EdgeInsets.fromLTRB(4, 8, 4, 8),
           child: Row(
-            children: List.generate(6, (i) {
+            children: List.generate(7, (i) {
               final sel = _idx == i;
               final c = sel ? kCyan : kInact;
               return Expanded(
@@ -151,7 +161,17 @@ class _AquanautixHomeState extends State<AquanautixHome> {
                   child: Column(mainAxisSize: MainAxisSize.min, children: [
                     Icon(_icons[i], size: 20, color: c),
                     const SizedBox(height: 3),
-                    Text(labels[i], style: mono(8, c: c)),
+                    SizedBox(
+                      width: double.infinity,
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(
+                          labels[i],
+                          style: mono(8, c: c),
+                          maxLines: 1,
+                        ),
+                      ),
+                    ),
                     const SizedBox(height: 4),
                     Container(
                       width: 4,

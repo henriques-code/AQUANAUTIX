@@ -6,8 +6,25 @@ class CommunityDemoPosts {
 
   static List<CommunityPost> posts() => [
         CommunityPost(
+          id: 'mock-br',
+          userId: 'brunopescas',
+          username: 'BrunoPescas',
+          tier: 'PRO',
+          avatarUrl:
+              'https://images.unsplash.com/photo-1568602471122-7832951cc4c5?w=96&q=80',
+          zoneLabel: 'Zona Sesimbra',
+          photoUrl: 'assets/marketing/catches/dourada.jpg',
+          species: 'DOURADA',
+          weightKg: 2.4,
+          caption: 'Dourada de 2.4 kg ao amanhecer · Sesimbra',
+          oracleScore: 79,
+          country: 'PT',
+          createdAt: DateTime.now().subtract(const Duration(hours: 2)),
+          likesCount: 24,
+        ),
+        CommunityPost(
           id: 'mock-0',
-          userId: 'mock-u0',
+          userId: 'nuno_sesimbra',
           username: 'Nuno_Sesimbra',
           tier: 'PRO',
           avatarUrl: 'https://i.pravatar.cc/80?img=11',
@@ -21,6 +38,23 @@ class CommunityDemoPosts {
           country: 'PT',
           createdAt: DateTime.now().subtract(const Duration(minutes: 23)),
           likesCount: 47,
+        ),
+        CommunityPost(
+          id: 'mock-mp',
+          userId: 'miguel_peniche',
+          username: 'Miguel_Peniche',
+          tier: 'PRO',
+          avatarUrl:
+              'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=96&q=80',
+          zoneLabel: 'Zona Peniche',
+          photoUrl: 'assets/marketing/catches/sargo.jpg',
+          species: 'SARGO',
+          weightKg: 1.6,
+          caption: 'Sargo de 1.6 kg na costa rochosa · Peniche',
+          oracleScore: 72,
+          country: 'PT',
+          createdAt: DateTime.now().subtract(const Duration(hours: 9)),
+          likesCount: 18,
         ),
         CommunityPost(
           id: 'mock-2',

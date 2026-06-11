@@ -20,20 +20,23 @@ class CommunityActivityCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AquaCard(
+    final card = AquaCard(
       borderRadius: 12,
       borderAlpha: 0.2,
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _userAvatarTap(),
+          ClipOval(child: _avatar(activity.avatarUrl)),
           const SizedBox(width: 8),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _usernameTap(),
+                Text(
+                  activity.username,
+                  style: AppTextStyles.ibmSans(12, fw: FontWeight.w700),
+                ),
                 const SizedBox(height: 1),
                 Text(
                   activity.activityText,
@@ -64,28 +67,17 @@ class CommunityActivityCard extends StatelessWidget {
         ],
       ),
     );
-  }
 
-  Widget _userAvatarTap() {
-    final avatar = ClipOval(child: _avatar(activity.avatarUrl));
-    if (onUserTap == null) return avatar;
-    return InkWell(
-      onTap: onUserTap,
-      customBorder: const CircleBorder(),
-      child: avatar,
-    );
-  }
+    if (onUserTap == null) return card;
 
-  Widget _usernameTap() {
-    final label = Text(
-      activity.username,
-      style: AppTextStyles.ibmSans(12, fw: FontWeight.w700),
-    );
-    if (onUserTap == null) return label;
-    return InkWell(
-      onTap: onUserTap,
-      borderRadius: BorderRadius.circular(4),
-      child: label,
+    // Material + InkWell + GestureDetector — fiável no MIUI (padrão FeaturedSpotCard).
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onUserTap,
+        borderRadius: BorderRadius.circular(12),
+        child: card,
+      ),
     );
   }
 

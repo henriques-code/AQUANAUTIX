@@ -20,5 +20,5 @@ class HomeDashboardData {
 }
 
 abstract class HomeRepository {
-  Future<HomeDashboardData> loadDashboard();
+  Future<HomeDashboardData> loadDashboard({bool forceRefresh = false});
 }

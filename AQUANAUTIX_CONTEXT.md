@@ -1,6 +1,6 @@
 # AQUANAUTIX — Central de contexto
 
-**Última revisão estrutural:** 10 Jun 2026 — GPS Início, spots→mapa, maré MSL, i18n login, Ghost badge, mini-mapa Oráculo.
+**Última revisão estructural:** 11 Jun 2026 — Tab Comunidade (7 tabs), GPS MIUI + pull-to-refresh, perfil Ghost, Início com coords reais.
 
 ## Estrutura do repositório (mono-repo)
 
@@ -48,16 +48,17 @@ AQUANAUTIX/
 ## Estado Flutter
 
 - **`lib/main.dart` / `app.dart`:** bootstrap Supabase, RevenueCat, analytics, tema, `flutter_localizations` e locale derivado de GPS (PT/ES).
-- **Navegação:** `AquanautixHome` com **6 tabs** — Início · Oráculo · Mapa · Vision · Log · Perfil (via `HomeTabIndex`).
+- **Navegação:** `AquanautixHome` com **7 tabs lazy** — Início · Oráculo · Mapa · Vision · Log · Perfil · **Comunidade** (via `HomeTabIndex`; índice 6 = `communityTabIndex`).
 - **Ecrãs:** `home` (6 tabs lazy `_tabCache`; WeatherCard compacto + barra solunar, Condições Favoráveis horárias com score Oráculo, grid 3×spots com fotos locais, comunidade 3 entradas compactas com fotos de espécies), `oraculo` (**Sprint 1 + fold 9 Jun:** card **Decisão**, **`OracleConditionsFold`** (métricas + timeline 12h), strip **Comunidade Ghost**, accordion meteorologia 16 cartões + `AqxMeteoRevealButton`, COSTA/RIO, chips espécie no card isco/cana, pesquisa Nominatim, fallback **regional Open‑Meteo** sem GPS, banner GPS **inline** no Início, CTAs registar captura / mapa / comunidade), `mapa`, `vision`, `logbook`, `perfil`, `paywall`, `splash`, fluxos login/password.
 - **`lib/screens/widgets/`:** `aqx_pressable.dart` (botões 3D neon/glass + `AqxMeteoRevealButton` ABRIR), `oracle_decision_card.dart`, `oracle_fishing_metrics_grid.dart`, `oracle_conditions_fold.dart` (card unificado condições 12h), `oracle_timeline_24h.dart`, `oracle_community_strip.dart`, `location_access_sheet.dart`, `oracle_weather_details_grid.dart` (16 cartões 3D; marés 2D; correntes).
-- **`lib/core/location/`:** `gps_access.dart` — cache memória, single-flight, `tryGetFixQuick()`, `cachedFix`/`cachedFixStale` (Início / Oráculo).
+- **`lib/core/location/`:** `gps_access.dart` — cache memória, single-flight, `tryGetFix`/`tryGetFixQuick`, `forceRefresh`, `AndroidSettings(forceLocationManager)` (MIUI); `gps_bootstrap.dart` — permissão no arranque + `refreshFix` em background.
+- **`lib/screens/comunidade.dart` + `lib/features/community/`:** tab **COMUN.** — feed Ghost, sheet perfil público (`community_ghost_profile_sheet.dart`, `community_public_profile.dart`); tap no Início → `pendingCommunityProfile` + tab Comunidade.
 - **`lib/core/tides/`:** `oracle_hourly_score.dart` — score horário solunar+nuvens+chuva (timeline + Início).
 - **`lib/core/community/`:** `community_demo_posts.dart` — feed Ghost offline quando Supabase vazio.
 - **`lib/core`:** `OracleDataService` + tides/Nominatim, `supabase_bootstrap.dart`, `community/`, `catch_photos/`, espécies/compliance, vision, estado (`logbook_tab_index`, `home_tab_index`).
 - **`supabase/`:** migrations Postgres (insights, comunidade Ghost, catch_photos PostGIS) — ver `supabase/README_setup.md`.
 - Design system Midnight Deep Sea (`screens/_shared.dart`).
-- **`lib/features/home/`:** arquitectura feature-first (data/domain/presentation); `WeatherData` com `solunarScore`, `windDir`, `pressure`, `hasTide`; `HomeRepositoryImpl` — fetch Oráculo com **GPS real** quando há fix (re-fetch se cache regional); spots em `assets/marketing/spots/` (**Cabo Espichel**, Peniche, Sesimbra) com **lat/lon** e tap → `HomeTabIndex.pendingMapFocus`; comunidade em `assets/marketing/catches/`; `FeaturedSpotCard` com `InkWell` + `onTap`.
+- **`lib/features/home/`:** arquitectura feature-first (data/domain/presentation); `WeatherData` com `solunarScore`, `windDir`, `pressure`, `hasTide`; `HomeRepositoryImpl.loadDashboard(forceRefresh)` — obtém GPS dentro do load, invalida Oráculo no refresh, `knownCoords` no fetch; pull-to-refresh: GPS primeiro (12s) → invalidate → reload; spots em `assets/marketing/spots/` (**Cabo Espichel**, Peniche, Sesimbra) com **lat/lon** e tap → `pendingMapFocus`; `CommunityActivityCard` clicável → perfil Ghost.
 - **`lib/core/widgets/aqx_ghost_mode_badge.dart`:** badge Ghost (hex ciano + pill âmbar) — substitui 👻 em Oráculo, Logbook, Mapa, Vision, comunidade.
 - **`lib/screens/widgets/oracle_mini_map.dart`:** mini-mapa ~140px no Oráculo (GPS/planeamento + CTA VER MAPA).
 - **`lib/core/l10n/aqx_l10n.dart` + `app_locale_store.dart`:** login **PT/ES/EN** (Fase 1); resto da app PT/ES; `setLocale` bloqueia override GPS.
@@ -211,6 +212,25 @@ AQUANAUTIX/
 **Dependências**
 - Removidas 6 dependências não usadas: `speech_to_text`, `qr_flutter`, `crypto`, `flutter_local_notifications`, `timezone`, `flutter_timezone`
 - `pubspec.yaml`: 23 → 17 dependências; `pubspec.lock`: menos 15 pacotes transitivos
+
+### Sessão 11 Jun 2026
+
+**Tab Comunidade + perfil Ghost**
+- **7.º tab** `COMUN.` em `home.dart` — `ComunidadeScreen` (`lib/screens/comunidade.dart`)
+- `community_public_profile.dart` + `community_ghost_profile_sheet.dart` — perfis mock BrunoPescas, Nuno_Sesimbra, Miguel_Peniche (sem coords)
+- Início: tap card comunidade → `HomeTabIndex.pendingCommunityProfile` + tab 6 → sheet
+- Drawer e Oráculo: navegam para tab Comunidade (não Logbook sub-tab)
+- `aqx_l10n.tabCommunity` · labels nav com `FittedBox`
+
+**GPS MIUI + pull-to-refresh (Início)**
+- `gps_bootstrap.dart` — permissão no arranque; `refreshFix` 12s
+- `gps_access.dart` — `forceRefresh`, `AndroidSettings(forceLocationManager)`, retry medium/high/low
+- `loadDashboard(forceRefresh)` — obtém GPS no load; invalida Oráculo; `knownCoords` em `OracleDataService.fetch`
+- Pull-to-refresh: GPS → invalidate → reload (fix confirmado em dispositivo Xiaomi)
+
+**Outros**
+- `logbook.dart` — fix `pendingTab` com post-frame callback
+- `perfil.dart` — `GpsBootstrap.reset()` no logout
 
 ## Próximos passos (sugestão)
 

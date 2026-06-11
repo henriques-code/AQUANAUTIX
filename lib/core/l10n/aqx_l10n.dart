@@ -429,6 +429,9 @@ class AqxL10n {
   String get tabLog => es ? 'DIARIO' : 'LOG';
   String get tabProfile => es ? 'PERFIL' : 'PERFIL';
 
+  /// Abreviado para caber na barra com 7 tabs (mesma linha que PERFIL, ORÁCULO).
+  String get tabCommunity => 'COMUN.';
+
   String get tabHome => es ? 'INICIO' : 'INÍCIO';
 
   String get homeTagline =>

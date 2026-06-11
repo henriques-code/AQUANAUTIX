@@ -466,8 +466,7 @@ class _OraculoScreenState extends State<OraculoScreen>
   }
 
   void _openCommunityTab() {
-    LogbookTabIndex.pendingTab.value = LogbookTabIndex.comunidadeTab;
-    HomeTabIndex.notifier.value = HomeTabIndex.logTabIndex;
+    HomeTabIndex.notifier.value = HomeTabIndex.communityTabIndex;
   }
 
   void _openCommunityShare() {

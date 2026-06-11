@@ -3,7 +3,6 @@ import 'package:geolocator/geolocator.dart';
 import '../../../../core/l10n/aqx_l10n.dart';
 import '../../../../core/supabase_bootstrap.dart';
 import '../../../../core/state/home_tab_index.dart';
-import '../../../../core/state/logbook_tab_index.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../screens/especies.dart';
@@ -86,8 +85,7 @@ class HomeNavigationDrawer extends StatelessWidget {
 
   void _openCommunity(BuildContext context) {
     Navigator.pop(context);
-    LogbookTabIndex.pendingTab.value = LogbookTabIndex.comunidadeTab;
-    onOpenTab(HomeTabIndex.logTabIndex);
+    onOpenTab(HomeTabIndex.communityTabIndex);
   }
 
   void _openSpecies(BuildContext context) {

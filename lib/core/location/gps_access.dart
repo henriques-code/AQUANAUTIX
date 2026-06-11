@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:geolocator/geolocator.dart';
 
 /// Estado de acesso GPS — partilhado Início / Oráculo / Mapa.
@@ -62,7 +64,17 @@ class GpsAccess {
         perm == LocationPermission.unableToDetermine) {
       perm = await Geolocator.requestPermission();
     }
-    return check();
+    if (perm == LocationPermission.deniedForever) {
+      return GpsAccessStatus.deniedForever;
+    }
+    if (perm == LocationPermission.denied ||
+        perm == LocationPermission.unableToDetermine) {
+      return GpsAccessStatus.denied;
+    }
+    if (!await Geolocator.isLocationServiceEnabled()) {
+      return GpsAccessStatus.serviceOff;
+    }
+    return GpsAccessStatus.granted;
   }
 
   /// Fix GPS robusto (MIUI/Android): cache → last-known → current (timeout curto).
@@ -70,12 +82,15 @@ class GpsAccess {
     Duration freshMaxAge = const Duration(minutes: 45),
     Duration timeout = const Duration(seconds: 8),
     bool allowStaleCache = true,
+    bool forceRefresh = false,
   }) {
-    final cached = cachedFix;
-    if (cached != null) return Future.value(cached);
+    if (!forceRefresh) {
+      final cached = cachedFix;
+      if (cached != null) return Future.value(cached);
 
-    final inFlight = _inFlight;
-    if (inFlight != null) return inFlight;
+      final inFlight = _inFlight;
+      if (inFlight != null) return inFlight;
+    }
 
     final future = _tryGetFixImpl(
       freshMaxAge: freshMaxAge,
@@ -86,6 +101,26 @@ class GpsAccess {
     return future.whenComplete(() {
       if (identical(_inFlight, future)) _inFlight = null;
     });
+  }
+
+  static LocationSettings _locationSettings({
+    required LocationAccuracy accuracy,
+    required Duration timeout,
+  }) {
+    if (Platform.isAndroid) {
+      return AndroidSettings(
+        accuracy: accuracy,
+        timeLimit: timeout,
+        forceLocationManager: true,
+      );
+    }
+    if (Platform.isIOS) {
+      return AppleSettings(
+        accuracy: accuracy,
+        timeLimit: timeout,
+      );
+    }
+    return LocationSettings(accuracy: accuracy, timeLimit: timeout);
   }
 
   /// Recheck leve (resume / tab) — não bloqueia dezenas de segundos.
@@ -117,32 +152,27 @@ class GpsAccess {
       }
     } catch (_) {}
 
-    try {
-      final pos = await Geolocator.getCurrentPosition(
-        locationSettings: LocationSettings(
-          accuracy: LocationAccuracy.high,
-          timeLimit: timeout,
-        ),
-      );
-      _rememberFix(pos.latitude, pos.longitude);
-      return (lat: pos.latitude, lon: pos.longitude);
-    } catch (_) {}
+    for (final accuracy in [
+      LocationAccuracy.medium,
+      LocationAccuracy.high,
+      LocationAccuracy.low,
+    ]) {
+      try {
+        final pos = await Geolocator.getCurrentPosition(
+          locationSettings: _locationSettings(
+            accuracy: accuracy,
+            timeout: timeout,
+          ),
+        );
+        _rememberFix(pos.latitude, pos.longitude);
+        return (lat: pos.latitude, lon: pos.longitude);
+      } catch (_) {}
+    }
 
     if (cached != null) {
       _rememberFix(cached.latitude, cached.longitude);
       return (lat: cached.latitude, lon: cached.longitude);
     }
-
-    try {
-      final pos = await Geolocator.getCurrentPosition(
-        locationSettings: LocationSettings(
-          accuracy: LocationAccuracy.low,
-          timeLimit: const Duration(seconds: 5),
-        ),
-      );
-      _rememberFix(pos.latitude, pos.longitude);
-      return (lat: pos.latitude, lon: pos.longitude);
-    } catch (_) {}
 
     if (allowStaleCache) {
       final stale = cachedFixStale;

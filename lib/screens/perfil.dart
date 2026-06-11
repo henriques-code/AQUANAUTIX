@@ -10,6 +10,7 @@ import '../core/services/analytics_service.dart';
 import '../core/state/fishing_context_store.dart';
 import '../core/state/subscription_store.dart';
 import '../core/l10n/aqx_l10n.dart';
+import '../core/location/gps_bootstrap.dart';
 
 // ══════════════════════════════════════════════════════════
 // P6 — ECRÃ 05 · PERFIL + PLANOS (com ELITE)
@@ -542,6 +543,7 @@ class _PerfilScreenState extends State<PerfilScreen> {
     setState(() => _logoutLoading = true);
     try {
       await client.auth.signOut();
+      GpsBootstrap.reset();
       await SubscriptionStore.instance.setPlan(SubscriptionPlan.free);
       if (!mounted) return;
       setState(() {});
