@@ -37,3 +37,9 @@ Não remover nem alterar sem autorização explícita do utilizador:
 
 ## Estilo de código
 - Alterações mínimas e focadas no pedido; alinhar ao estilo existente; evitar refactors não solicitados.
+
+## Sincronização e segurança (obrigatório)
+- Fluxo completo: **`SYNC_WORKFLOW.md`** · verificação: **`.\tools\sync_check.ps1`**
+- Agente: ao fechar sessão ou pedido «sync/atualizar tudo» → analyze + migration list + docs + commit/push (sem `.env`/secrets).
+- Supabase CLI: **`.\tools\supabase_with_env.ps1`** (token `SUPABASE_ACCESS_TOKEN` só no `.env` local).
+- **Nunca** commitar `.env`, `sbp_*`, `sk_*`, `Imagens/` (salvo pedido explícito).

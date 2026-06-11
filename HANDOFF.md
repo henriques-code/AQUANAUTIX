@@ -49,7 +49,7 @@ SUPABASE
 - Deploy: supabase link --project-ref ycmvqokcfzxkpinvcyhk && supabase db push
 - Pendente remoto: confirmar db push · rate limits · Edge Functions (oracle, vision-identify)
 
-DOCS: AQUANAUTIX_CONTEXT.md · CLAUDE.md · README.md · ECOSYSTEM.md · HANDOFF.md
+DOCS: AQUANAUTIX_CONTEXT.md · CLAUDE.md · README.md · ECOSYSTEM.md · SYNC_WORKFLOW.md · HANDOFF.md
 BACKLOG: .cursor/rules/proximos-movimentos.mdc (P1–P17)
 
 PENDENTE P0/P1: RevenueCat produtos/gates · onboarding.dart · push Janela de Ouro · Sprint C assets spots
