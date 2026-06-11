@@ -51,8 +51,8 @@ supabase/
 
 | Ficheiro | Conteúdo | App Flutter |
 |----------|----------|-------------|
-| `20260427_app_insights.sql` | `app_insights` (jsonb) | fallback insights |
-| `20260427_app_insights_v2.sql` | `app_insights_v2` + seed PT/ES | `AppInsightsService` |
+| `20260427090000_app_insights.sql` | `app_insights` (jsonb) | fallback insights |
+| `20260427120000_app_insights_v2.sql` | `app_insights_v2` + seed PT/ES | `AppInsightsService` |
 | `20260503_community.sql` | comunidade Ghost + RLS | `CommunityRepository` |
 | `20260512000000_catch_photos.sql` | `catch_photos` + PostGIS | `CatchPhotoRepository`, mapa |
 | `20260512000001_catch_photos_lat_lng.sql` | trigger lat/lng → geometry | inserts PostgREST |
@@ -215,7 +215,7 @@ Git:          main → origin/main (GitHub: henriques-code/AQUANAUTIX)
 | Docs (CONTEXT, CLAUDE, HANDOFF, README, ECOSYSTEM) | 11 Jun 2026 | ✅ Repo |
 | Site V2 produção | último deploy Vercel (sem alterações recentes) | ⏸️ Estável |
 | Protótipos HTML | 5–6 ecrãs | ⚠️ Desalinhados (intencional) |
-| Supabase remoto | 8 migrations no repo | ⚠️ Confirmar `db push` |
+| Supabase remoto | 8 migrations aplicadas (`db push` 11 Jun) | ✅ Sincronizado |
 | Edge Functions | — | ❌ Pendente |
 | Play Store / App Store | debug builds | ❌ Não publicado |
 

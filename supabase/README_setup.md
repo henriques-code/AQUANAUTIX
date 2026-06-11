@@ -14,8 +14,8 @@ supabase/
 ├── README_setup.md          ← este ficheiro
 ├── config.toml              ← Supabase CLI (project_id)
 ├── migrations/              ← SQL idempotente — aplicar por ordem de nome
-│   ├── 20260427_app_insights.sql
-│   ├── 20260427_app_insights_v2.sql
+│   ├── 20260427090000_app_insights.sql
+│   ├── 20260427120000_app_insights_v2.sql
 │   ├── 20260503_community.sql
 │   ├── 20260512000000_catch_photos.sql
 │   ├── 20260512000001_catch_photos_lat_lng.sql
@@ -38,8 +38,8 @@ supabase/
 
 | Migration | Tabelas / objectos | Código Flutter |
 |-----------|-------------------|----------------|
-| `20260427_app_insights.sql` | `app_insights` (jsonb por key) | legado / fallback |
-| `20260427_app_insights_v2.sql` | `app_insights_v2` (legal, privacy, compliance, confidence) | `AppInsightsService` |
+| `20260427090000_app_insights.sql` | `app_insights` (jsonb por key) | legado / fallback |
+| `20260427120000_app_insights_v2.sql` | `app_insights_v2` (legal, privacy, compliance, confidence) | `AppInsightsService` |
 | `20260503_community.sql` | `user_profiles`, `community_posts`, `community_reactions` + RLS | `CommunityRepository`, `CommunityStore` |
 | `20260512000000_catch_photos.sql` | `catch_photos` + PostGIS `location` + RLS | `CatchPhotoRepository`, `mapa.dart` |
 | `20260512000001_catch_photos_lat_lng.sql` | colunas `lat`/`lng` + trigger `set_catch_location` | insert via lat/lng (PostgREST) |

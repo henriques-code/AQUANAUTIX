@@ -48,29 +48,37 @@ ALTER TABLE community_posts     ENABLE ROW LEVEL SECURITY;
 ALTER TABLE community_reactions ENABLE ROW LEVEL SECURITY;
 
 -- user_profiles
+DROP POLICY IF EXISTS "Public read profiles" ON user_profiles;
 CREATE POLICY "Public read profiles"
   ON user_profiles FOR SELECT USING (true);
 
+DROP POLICY IF EXISTS "Own insert profile" ON user_profiles;
 CREATE POLICY "Own insert profile"
   ON user_profiles FOR INSERT WITH CHECK (auth.uid() = id);
 
+DROP POLICY IF EXISTS "Own update profile" ON user_profiles;
 CREATE POLICY "Own update profile"
   ON user_profiles FOR UPDATE USING (auth.uid() = id);
 
 -- community_posts
+DROP POLICY IF EXISTS "Public read posts" ON community_posts;
 CREATE POLICY "Public read posts"
   ON community_posts FOR SELECT USING (true);
 
+DROP POLICY IF EXISTS "Auth insert post" ON community_posts;
 CREATE POLICY "Auth insert post"
   ON community_posts FOR INSERT WITH CHECK (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Own delete post" ON community_posts;
 CREATE POLICY "Own delete post"
   ON community_posts FOR DELETE USING (auth.uid() = user_id);
 
 -- community_reactions
+DROP POLICY IF EXISTS "Public read reactions" ON community_reactions;
 CREATE POLICY "Public read reactions"
   ON community_reactions FOR SELECT USING (true);
 
+DROP POLICY IF EXISTS "Auth manage reactions" ON community_reactions;
 CREATE POLICY "Auth manage reactions"
   ON community_reactions FOR ALL USING (auth.uid() = user_id);
 
