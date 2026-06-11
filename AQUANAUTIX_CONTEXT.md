@@ -1,6 +1,6 @@
 # AQUANAUTIX — Central de contexto
 
-**Última revisão estrutural:** 9 Jun 2026 — fixes MIUI (Início/Oráculo responsivos), fold condições 12h, selector espécie no card isco.
+**Última revisão estrutural:** 10 Jun 2026 — GPS Início, spots→mapa, maré MSL, i18n login, Ghost badge, mini-mapa Oráculo.
 
 ## Estrutura do repositório (mono-repo)
 
@@ -57,7 +57,11 @@ AQUANAUTIX/
 - **`lib/core`:** `OracleDataService` + tides/Nominatim, `supabase_bootstrap.dart`, `community/`, `catch_photos/`, espécies/compliance, vision, estado (`logbook_tab_index`, `home_tab_index`).
 - **`supabase/`:** migrations Postgres (insights, comunidade Ghost, catch_photos PostGIS) — ver `supabase/README_setup.md`.
 - Design system Midnight Deep Sea (`screens/_shared.dart`).
-- **`lib/features/home/`:** arquitectura feature-first (data/domain/presentation); `WeatherData` com `solunarScore`, `windDir`, `pressure`; `HomeRepositoryImpl` usa `moonFishingFactor` + score Oráculo horário; spots em `assets/marketing/spots/` (Cabo da Roca, Peniche, Sesimbra — Wikimedia); comunidade em `assets/marketing/catches/` (BrunoPescas, Nuno_Sesimbra, Miguel_Peniche); cards compactos com `Image.asset`.
+- **`lib/features/home/`:** arquitectura feature-first (data/domain/presentation); `WeatherData` com `solunarScore`, `windDir`, `pressure`, `hasTide`; `HomeRepositoryImpl` — fetch Oráculo com **GPS real** quando há fix (re-fetch se cache regional); spots em `assets/marketing/spots/` (**Cabo Espichel**, Peniche, Sesimbra) com **lat/lon** e tap → `HomeTabIndex.pendingMapFocus`; comunidade em `assets/marketing/catches/`; `FeaturedSpotCard` com `InkWell` + `onTap`.
+- **`lib/core/widgets/aqx_ghost_mode_badge.dart`:** badge Ghost (hex ciano + pill âmbar) — substitui 👻 em Oráculo, Logbook, Mapa, Vision, comunidade.
+- **`lib/screens/widgets/oracle_mini_map.dart`:** mini-mapa ~140px no Oráculo (GPS/planeamento + CTA VER MAPA).
+- **`lib/core/l10n/aqx_l10n.dart` + `app_locale_store.dart`:** login **PT/ES/EN** (Fase 1); resto da app PT/ES; `setLocale` bloqueia override GPS.
+- **`lib/core/supabase_bootstrap.dart`:** `isSupabaseReady` / `supabaseClientOrNull` — evita crash `Supabase.instance` antes de init.
 - Pendente: monetização RC estável em produção, gates PRO/Elite completos; push Janela de Ouro (EM BREVE na UI).
 
 ### Sessão 8 Jun 2026
@@ -75,6 +79,24 @@ AQUANAUTIX/
 **Oráculo — Botões 3D mix A+B (`f39cd26`)**
 - **`aqx_pressable.dart`:** `AqxNeonButton` / `AqxNeonCompactButton` (CTAs acção) + `AqxGlassButton` / `AqxGlassChip` / `AqxGlassSegmentToggle` (secundários); scale 3D, haptic e `SystemSound.click`.
 - Integrado em decision card, comunidade, banner/sheet GPS, toggle COSTA/RIO e chips espécie.
+
+### Sessão 10 Jun 2026
+
+**Commits em `main` (push feito)**
+- `8cdeb64` — Sprint **A** (`AqxGhostModeBadge`) + Sprint **B** (`oracle_mini_map.dart`); fix `AqxMeteoRevealButton` (unbounded width no accordion MIUI).
+- `b571b12` — **i18n Fase 1:** pills PT|ES|EN no login; `AppLocaleStore.setLocale`; `Locale('en')` em `supportedLocales`.
+
+**Alterações locais (ainda sem commit — 8 ficheiros `lib/`)**
+- **GPS Início** (`inicio_dashboard_screen.dart`) — pede permissão ao entrar; **await** `tryGetFix(15s)` antes de `_load`; invalida cache Oráculo; banner só se recusar.
+- **`home_repository_impl.dart`** — bundle com GPS quando há fix; removido filtro errado `contains('pt'/'es')` no `locationHeadline`; maré com `hasTide` (MSL negativo não esconde coluna).
+- **`weather_card.dart` / `weather_data.dart`** — `hasTide` em vez de `tideHeight > 0`.
+- **Spots em destaque → Mapa** — `FeaturedSpot` + lat/lon; tap centra mapa (zoom **15**); `mapa.dart` aplica `pendingMapFocus` na **primeira visita** ao tab.
+- **Coordenadas corrigidas** — Cabo Espichel `38.4162,-9.2178` (card Início); Cabo Espichel N. `38.4198,-9.2385` (mapa, rocha norte); Peniche porto `39.3545,-9.3835`.
+- **`gps_access.dart`** — `LocationAccuracy.high` no fix principal (MIUI).
+
+**Verificação:** `flutter analyze lib/` — sem issues.
+
+**Pendente commit:** Sprint C (manifest spots), i18n Fase 2 (resto da app + Perfil), renomear asset `cabo_da_roca.jpg` → `cabo_espichel.jpg` (opcional).
 
 ### Sessão 9 Jun 2026
 
@@ -110,7 +132,7 @@ AQUANAUTIX/
 - Commits: `4b02d96` (código), `256d472` (screenshots `Imagens/`)
 
 **Home — Início dashboard (`lib/features/home/`)**
-- `assets/marketing/spots/` — Cabo da Roca, Peniche (porto de pesca), Sesimbra (marina); bundlados offline
+- `assets/marketing/spots/` — Cabo Espichel (ficheiro `cabo_da_roca.jpg`), Peniche, Sesimbra; bundlados offline; coords em `FeaturedSpot`
 - `assets/marketing/catches/` — dourada, robalo, sargo (Wikimedia); comunidade com 3 entradas
 - `WeatherCard` — layout 4 colunas compacto; `SolunarProgressBar` com peixes animados
 - `HourlyCondition` — score Oráculo + badge MELHOR; chips em linha sem scroll

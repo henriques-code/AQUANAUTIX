@@ -6,6 +6,9 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/l10n/aqx_l10n.dart';
 import '../../../core/location/gps_access.dart';
 import '../../../core/supabase_bootstrap.dart';
+import '../../../core/state/home_tab_index.dart';
+import '../../../core/tides/oracle_data_service.dart';
+import '../domain/entities/featured_spot.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/app_text_styles.dart';
@@ -78,18 +81,23 @@ class _InicioDashboardScreenState extends State<InicioDashboardScreen> {
   Future<void> _requestGpsOnEntry() async {
     var status = await GpsAccess.check();
     if (!mounted) return;
-    if (status == GpsAccessStatus.granted) {
-      unawaited(GpsAccess.tryGetFixQuick());
-      return;
+    if (status != GpsAccessStatus.granted) {
+      status = await GpsAccess.request();
+      if (!mounted) return;
     }
-    status = await GpsAccess.request();
-    if (!mounted) return;
     if (status == GpsAccessStatus.granted) {
-      unawaited(GpsAccess.tryGetFixQuick());
-      unawaited(_load(silent: true));
+      await GpsAccess.tryGetFix(timeout: const Duration(seconds: 15));
+      if (!mounted) return;
+      OracleDataService.instance.invalidateCache();
+      await _load(silent: true);
       return;
     }
     setState(() => _showGpsBanner = true);
+  }
+
+  void _openFeaturedSpotOnMap(FeaturedSpot spot) {
+    HomeTabIndex.pendingMapFocus.value = (lat: spot.lat, lon: spot.lon);
+    widget.onOpenTab(HomeTabIndex.mapTabIndex);
   }
 
   Future<void> _enableGpsFromBanner() async {
@@ -97,7 +105,10 @@ class _InicioDashboardScreenState extends State<InicioDashboardScreen> {
     if (!mounted) return;
     if (next == GpsAccessStatus.granted) {
       setState(() => _showGpsBanner = false);
-      unawaited(_load(silent: true));
+      await GpsAccess.tryGetFix(timeout: const Duration(seconds: 15));
+      if (!mounted) return;
+      OracleDataService.instance.invalidateCache();
+      await _load(silent: true);
       return;
     }
     await GpsAccess.openSystemSettings(next);
@@ -254,7 +265,13 @@ class _InicioDashboardScreenState extends State<InicioDashboardScreen> {
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               children: data.featuredSpots
-                  .map((s) => FeaturedSpotCard(spot: s, es: t.es))
+                  .map(
+                    (s) => FeaturedSpotCard(
+                      spot: s,
+                      es: t.es,
+                      onTap: () => _openFeaturedSpotOnMap(s),
+                    ),
+                  )
                   .toList(),
             ),
             const SizedBox(height: AppSpacing.md),

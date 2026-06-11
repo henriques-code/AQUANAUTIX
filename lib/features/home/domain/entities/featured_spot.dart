@@ -6,10 +6,14 @@ class FeaturedSpot {
     required this.name,
     required this.imageUrl,
     required this.quality,
+    required this.lat,
+    required this.lon,
   });
 
   final String id;
   final String name;
   final String imageUrl;
   final SpotQuality quality;
+  final double lat;
+  final double lon;
 }

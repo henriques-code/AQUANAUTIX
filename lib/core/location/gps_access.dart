@@ -120,7 +120,7 @@ class GpsAccess {
     try {
       final pos = await Geolocator.getCurrentPosition(
         locationSettings: LocationSettings(
-          accuracy: LocationAccuracy.medium,
+          accuracy: LocationAccuracy.high,
           timeLimit: timeout,
         ),
       );

@@ -6,16 +6,27 @@ import '../../domain/entities/featured_spot.dart';
 import '../spot_quality_colors.dart';
 
 class FeaturedSpotCard extends StatelessWidget {
-  const FeaturedSpotCard({super.key, required this.spot, required this.es});
+  const FeaturedSpotCard({
+    super.key,
+    required this.spot,
+    required this.es,
+    this.onTap,
+  });
 
   final FeaturedSpot spot;
   final bool es;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     final qc = qualityColor(spot.quality);
     final nameColor = spot.quality == SpotQuality.muitoBom ? AppColors.accent : AppColors.textPrimary;
-    return ClipRRect(
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: ClipRRect(
         borderRadius: BorderRadius.circular(12),
         child: Stack(
           fit: StackFit.expand,
@@ -71,7 +82,9 @@ class FeaturedSpotCard extends StatelessWidget {
             ),
           ],
         ),
-      );
+      ),
+      ),
+    );
   }
 
   Widget _spotPhoto(String source) {

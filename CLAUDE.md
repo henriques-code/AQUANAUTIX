@@ -151,16 +151,17 @@ vercel --prod
 | Área | Estado |
 |---|---|
 | Shell / `home.dart` | ✅ **6 tabs lazy** (`_tabCache` — só tab activa montada; evita bloqueio MIUI) · Início · Oráculo · Mapa · Vision · Log · Perfil |
-| Início (`features/home/`) | ✅ WeatherCard compacto, Condições Favoráveis score Oráculo, spots/comunidade com assets locais · **fallback imediato** + load background · banner GPS **inline** (não modal) |
-| Oráculo (`oraculo.dart`) | ✅ Sprint 1 + **OracleConditionsFold** (métricas+timeline 12h) · selector espécie no card isco/cana · CTAs Log/Mapa (`pendingMapFocus`) · meteorologia accordion + `AqxMeteoRevealButton` · fallback regional · **fix ecrã preto MIUI** (sem `IntrinsicHeight`/animate em scroll) |
-| Mapa (`mapa.dart`) | ✅ `flutter_map` · COSTA: ArcGIS satélite · RIO: OSM · OpenSeaMap toggle · pins custom Canvas · spots PT/ES · lojas ≤5 km · foco via `pendingMapFocus` |
+| Início (`features/home/`) | ✅ WeatherCard + **maré `hasTide`** (MSL negativo) · GPS **auto-request** ao entrar + reload após fix · spots com **tap→Mapa** (`FeaturedSpot.lat/lon`) · fallback imediato + load background |
+| Oráculo (`oraculo.dart`) | ✅ Sprint 1 + **OracleConditionsFold** · **mini-mapa** (`oracle_mini_map.dart`) · **Ghost badge** · CTAs Log/Mapa (`pendingMapFocus`) · fix `AqxMeteoRevealButton` MIUI · fallback regional |
+| Mapa (`mapa.dart`) | ✅ `flutter_map` · spots PT/ES · `pendingMapFocus` na **1.ª visita** · zoom foco **15** · Cabo Espichel N. coords em terra |
+| i18n login | ✅ PT/ES/EN no login (`app_locale_store` + `aqx_l10n`); resto app PT/ES — **Fase 2 pendente** |
 | Vision (`vision.dart`) | ✅ Scanner + compliance espécies |
 | Logbook (`logbook.dart`) | ✅ Registo capturas · fix `_NovaCapturaSheet` · navegação desde Oráculo |
 | Perfil / paywall | 🔄 RevenueCat a consolidar |
 | Auth (Supabase) | ✅ Login, Google Sign-In, recuperação de password |
 | Splash | ✅ Vídeo de fundo + barra de progresso |
 | Comunidade (core + Oráculo strip) | ✅ Store + demo offline Ghost · CTAs para Log |
-| GPS (`gps_access.dart`) | ✅ Cache memória · `tryGetFixQuick()` · single-flight · fallback stale/regional |
+| GPS (`gps_access.dart`) | ✅ Cache memória · `tryGetFix` **high accuracy** · await fix no Início antes de reload · fallback stale/regional |
 
 ### Dependências actuais (17)
 `google_fonts` · `http` · `image_picker` · `geolocator` · `shared_preferences` · `url_launcher` · `supabase_flutter` · `package_info_plus` · `purchases_flutter` · `mapbox_maps_flutter` · `flutter_map` · `latlong2` · `flutter_animate` · `video_player` · `google_sign_in` + `flutter_localizations` + `flutter`
@@ -182,7 +183,7 @@ vercel --prod
 
 ### Notas MIUI / Android (Xiaomi)
 - **Tabs lazy** em `home.dart` — não usar `IndexedStack` com 6 ecrãs pesados (bloqueia toques).
-- **Sem modal GPS automático** ao login — usar banner inline no Início.
+- **GPS Início** — pedido automático ao entrar no tab; banner inline só se recusar; `adb kill-server` se device não aparecer.
 - **Oráculo:** evitar `flutter_animate` + `IntrinsicHeight` dentro de `SingleChildScrollView`.
 - **Install bloqueado:** `adb push build/app/outputs/flutter-apk/app-debug.apk` + `adb shell pm install -r -t /data/local/tmp/app-debug.apk`.
 - **Dispositivo teste:** `WWZLYDXWYXT8PV5D` · `.\tools\run_dev.ps1 -d WWZLYDXWYXT8PV5D`.

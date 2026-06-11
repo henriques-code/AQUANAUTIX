@@ -20,21 +20,28 @@ class HomeRepositoryImpl implements HomeRepository {
   static const _featuredSpots = [
     FeaturedSpot(
       id: '1',
-      name: 'Cabo da Roca',
+      name: 'Cabo Espichel',
       imageUrl: 'assets/marketing/spots/cabo_da_roca.jpg',
       quality: SpotQuality.excelente,
+      // Farol / plato do cabo (terra) — não no mar a leste.
+      lat: 38.4162,
+      lon: -9.2178,
     ),
     FeaturedSpot(
       id: '2',
       name: 'Peniche',
       imageUrl: 'assets/marketing/spots/peniche.jpg',
       quality: SpotQuality.muitoBom,
+      lat: 39.3545,
+      lon: -9.3835,
     ),
     FeaturedSpot(
       id: '3',
       name: 'Sesimbra',
       imageUrl: 'assets/marketing/spots/sesimbra.jpg',
       quality: SpotQuality.bom,
+      lat: 38.4443,
+      lon: -9.1011,
     ),
   ];
 
@@ -103,8 +110,10 @@ class HomeRepositoryImpl implements HomeRepository {
     final ctx = FishingContextStore.instance.value.value;
     final preset = TideMapPreset.forRegion(ctx.region);
 
-    // 1. Coordenadas — cache GPS em memória só (zero await GPS no Início).
+    // 1. Coordenadas — cache GPS em memória (fix obtido no Início antes do reload).
     final cachedFix = GpsAccess.cachedFix ?? GpsAccess.cachedFixStale;
+    final gpsGranted = await GpsAccess.check() == GpsAccessStatus.granted;
+    final hasGpsCoords = gpsGranted && cachedFix != null;
     final lat = cachedFix?.lat ?? preset.latitude;
     final lon = cachedFix?.lon ?? preset.longitude;
 
@@ -115,13 +124,27 @@ class HomeRepositoryImpl implements HomeRepository {
       displayName: preset.label,
     );
 
-    // 2. OracleBundle — cache; senão planeamento regional (sem GPS).
+    // 2. OracleBundle — GPS quando há fix; senão regional. Re-fetch se cache é só regional.
     OracleBundle? bundle = OracleDataService.instance.lastBundle;
-    if (bundle == null) {
+    final bundleNeedsGpsRefresh =
+        hasGpsCoords && bundle != null && !bundle.usedGps;
+    if (bundle == null || bundleNeedsGpsRefresh) {
       try {
-        bundle = await OracleDataService.instance
-            .fetch(ctx: ctx, planningPlace: regionalPlace)
-            .timeout(const Duration(seconds: 10));
+        if (hasGpsCoords) {
+          bundle = await OracleDataService.instance
+              .fetch(ctx: ctx)
+              .timeout(const Duration(seconds: 15));
+        } else {
+          bundle = await OracleDataService.instance
+              .fetch(ctx: ctx, planningPlace: regionalPlace)
+              .timeout(const Duration(seconds: 10));
+        }
+      } on OracleGpsRequiredException {
+        try {
+          bundle = await OracleDataService.instance
+              .fetch(ctx: ctx, planningPlace: regionalPlace)
+              .timeout(const Duration(seconds: 10));
+        } catch (_) {}
       } catch (_) {}
     }
 
@@ -192,11 +215,9 @@ class HomeRepositoryImpl implements HomeRepository {
     // Temperatura: preferência bundle (Open-Meteo marine+weather) > current
     final tempC = bundle?.tempC ?? cur?.tempC ?? 18.0;
 
-    // Localização: usa bundle (geocodificado) ou região padrão como fallback
+    // Localização: headline do Oráculo (GPS ou planeamento) ou região padrão.
     final String location;
-    if (bundle != null && bundle.locationHeadline.isNotEmpty &&
-        !bundle.locationHeadline.contains('pt') &&
-        !bundle.locationHeadline.contains('es')) {
+    if (bundle != null && bundle.locationHeadline.isNotEmpty) {
       location = bundle.locationHeadline;
     } else {
       final preset = TideMapPreset.forRegion(
@@ -208,11 +229,14 @@ class HomeRepositoryImpl implements HomeRepository {
     // Pressão
     final pressureHpa = bundle?.pressureHpa ?? cur?.tempC;
 
-    // Maré
-    final tideHeightM = bundle?.tideHeightM ?? 1.2;
+    // Maré — MSL pode ser negativo; não usar tideHeight > 0 para visibilidade.
+    final tideHeightOpt = bundle?.tideHeightM;
+    final hasTide = tideHeightOpt != null || bundle == null;
+    final tideHeightM = tideHeightOpt ?? 1.2;
     final tideRising = bundle != null
         ? (bundle.tideTrendPt.contains('subir') ||
-            bundle.tideTrendPt.contains('↑'))
+            bundle.tideTrendPt.contains('↑') ||
+            bundle.tideTrendPt.contains('creciente'))
         : true;
 
     // Lua
@@ -246,6 +270,7 @@ class HomeRepositoryImpl implements HomeRepository {
       waveHeight: waveHeightM,
       tideHeight: tideHeightM,
       tideRising: tideRising,
+      hasTide: hasTide,
       moonPhase: moonPhase,
       moonIcon: moonIcon,
       solunarScore: solunarScore,

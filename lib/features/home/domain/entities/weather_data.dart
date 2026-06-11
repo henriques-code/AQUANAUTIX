@@ -8,6 +8,7 @@ class WeatherData {
     required this.waveHeight,
     required this.tideHeight,
     required this.tideRising,
+    this.hasTide = true,
     required this.moonPhase,
     required this.moonIcon,
     this.solunarScore = 0,
@@ -23,6 +24,8 @@ class WeatherData {
   final double waveHeight;
   final double tideHeight;
   final bool tideRising;
+  /// False quando o bundle não traz [tideHeight] (Open‑Meteo marine).
+  final bool hasTide;
   final String moonPhase;
   final String moonIcon;
   final int solunarScore;

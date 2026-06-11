@@ -81,7 +81,7 @@ class _MapaScreenState extends State<MapaScreen> {
   // Dados dos spots com coordenadas reais PT/ES
   static const _spots = [
     (name: 'Praia da Comporta', local: 'Setúbal · PRAIA', tier: 'FREE', score: 71, lat: 38.374, lon: -8.776, locked: false, elite: false, region: 'SETUBAL', species: 'DOURADA', photo: 'https://images.unsplash.com/photo-1505118380757-91f5f5632de0?w=80&q=70&auto=format'),
-    (name: 'Cabo Espichel N.', local: 'Sesimbra · ROCHA', tier: 'PRO', score: 84, lat: 38.415, lon: -9.217, locked: true, elite: false, region: 'SETUBAL', species: 'ROBALO', photo: 'https://images.unsplash.com/photo-1544979590-04bcee11af7d?w=80&q=70&auto=format'),
+    (name: 'Cabo Espichel N.', local: 'Sesimbra · ROCHA', tier: 'PRO', score: 84, lat: 38.4198, lon: -9.2385, locked: true, elite: false, region: 'SETUBAL', species: 'ROBALO', photo: 'https://images.unsplash.com/photo-1544979590-04bcee11af7d?w=80&q=70&auto=format'),
     (name: 'Pedra Branca', local: 'Ericeira · ROCHA', tier: 'PRO', score: 68, lat: 38.970, lon: -9.420, locked: false, elite: false, region: 'MAFRA', species: 'ROBALO', photo: 'https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=80&q=70&auto=format'),
     (name: 'Elite #7 · Sagres', local: 'Algarve · ROCHA', tier: 'ELITE', score: 92, lat: 37.013, lon: -8.943, locked: true, elite: true, region: 'CASCAIS', species: 'CORVINA', photo: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=80&q=70&auto=format'),
   ];
@@ -106,7 +106,9 @@ class _MapaScreenState extends State<MapaScreen> {
     _catchStore.addListener(_onCatchStoreChanged);
     HomeTabIndex.pendingMapFocus.addListener(_applyPendingMapFocus);
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) unawaited(_loadCatchPhotos());
+      if (!mounted) return;
+      _applyPendingMapFocus();
+      unawaited(_loadCatchPhotos());
     });
   }
 
@@ -117,7 +119,7 @@ class _MapaScreenState extends State<MapaScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       try {
-        _mapController.move(LatLng(target.lat, target.lon), 13.0);
+        _mapController.move(LatLng(target.lat, target.lon), 15.0);
       } catch (_) {}
     });
   }

@@ -30,7 +30,7 @@ class WeatherCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bool hasTide = weather.tideHeight > 0;
+    final bool hasTide = weather.hasTide;
     final tideSubValue = weather.tideRising
         ? (t.es ? '↑ Creciente' : '↑ Enchente')
         : (t.es ? '↓ Vaciante' : '↓ Vazante');
