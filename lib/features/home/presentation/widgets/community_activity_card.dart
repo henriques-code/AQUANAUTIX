@@ -6,9 +6,14 @@ import '../../../../core/widgets/aqua_card.dart';
 import '../../domain/entities/community_activity.dart';
 
 class CommunityActivityCard extends StatelessWidget {
-  const CommunityActivityCard({super.key, required this.activity});
+  const CommunityActivityCard({
+    super.key,
+    required this.activity,
+    this.onUserTap,
+  });
 
   final CommunityActivity activity;
+  final VoidCallback? onUserTap;
 
   static const _avatarSize = 28.0;
   static const _catchSize = 40.0;
@@ -20,14 +25,15 @@ class CommunityActivityCard extends StatelessWidget {
       borderAlpha: 0.2,
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          ClipOval(child: _avatar(activity.avatarUrl)),
+          _userAvatarTap(),
           const SizedBox(width: 8),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(activity.username, style: AppTextStyles.ibmSans(12, fw: FontWeight.w700)),
+                _usernameTap(),
                 const SizedBox(height: 1),
                 Text(
                   activity.activityText,
@@ -57,6 +63,29 @@ class CommunityActivityCard extends StatelessWidget {
           ],
         ],
       ),
+    );
+  }
+
+  Widget _userAvatarTap() {
+    final avatar = ClipOval(child: _avatar(activity.avatarUrl));
+    if (onUserTap == null) return avatar;
+    return InkWell(
+      onTap: onUserTap,
+      customBorder: const CircleBorder(),
+      child: avatar,
+    );
+  }
+
+  Widget _usernameTap() {
+    final label = Text(
+      activity.username,
+      style: AppTextStyles.ibmSans(12, fw: FontWeight.w700),
+    );
+    if (onUserTap == null) return label;
+    return InkWell(
+      onTap: onUserTap,
+      borderRadius: BorderRadius.circular(4),
+      child: label,
     );
   }
 

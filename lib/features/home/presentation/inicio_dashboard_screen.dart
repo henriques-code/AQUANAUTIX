@@ -7,6 +7,7 @@ import '../../../core/l10n/aqx_l10n.dart';
 import '../../../core/location/gps_access.dart';
 import '../../../core/supabase_bootstrap.dart';
 import '../../../core/state/home_tab_index.dart';
+import '../../../core/state/logbook_tab_index.dart';
 import '../../../core/tides/oracle_data_service.dart';
 import '../domain/entities/featured_spot.dart';
 import '../../../core/theme/app_colors.dart';
@@ -98,6 +99,11 @@ class _InicioDashboardScreenState extends State<InicioDashboardScreen> {
   void _openFeaturedSpotOnMap(FeaturedSpot spot) {
     HomeTabIndex.pendingMapFocus.value = (lat: spot.lat, lon: spot.lon);
     widget.onOpenTab(HomeTabIndex.mapTabIndex);
+  }
+
+  void _openCommunityUser() {
+    LogbookTabIndex.pendingTab.value = LogbookTabIndex.comunidadeTab;
+    widget.onOpenTab(HomeTabIndex.logTabIndex);
   }
 
   Future<void> _enableGpsFromBanner() async {
@@ -296,7 +302,10 @@ class _InicioDashboardScreenState extends State<InicioDashboardScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        CommunityActivityCard(activity: a),
+                        CommunityActivityCard(
+                          activity: a,
+                          onUserTap: _openCommunityUser,
+                        ),
                         const SizedBox(height: 3),
                         Row(
                           children: [
