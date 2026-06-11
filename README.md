@@ -2,9 +2,11 @@
 
 **App de pesca desportiva de elite para o mercado ibérico (Portugal + Espanha).**
 
-> Oráculo de previsão · Batimetria GEBCO · Vision Scanner IA · Ghost Mode · Offline-first
+> Oráculo de previsão · Mapa costeiro · Vision Scanner IA · Ghost Mode · Comunidade anónima
 
 Site em produção: [aquanautix.vercel.app](https://aquanautix.vercel.app)
+
+**Última revisão doc:** 11 Jun 2026 · app `da3ca79` · 7 tabs (incl. Comunidade)
 
 ---
 
@@ -12,35 +14,29 @@ Site em produção: [aquanautix.vercel.app](https://aquanautix.vercel.app)
 
 ```
 AQUANAUTIX/
-├── lib/                          # App Flutter (ecrãs + serviços; ver também AQUANAUTIX_CONTEXT.md)
-│   ├── main.dart                 # Bootstrap: analytics, Supabase, stores, orientação
-│   ├── app.dart                  # MaterialApp / tema
-│   ├── screens/                  # Oráculo, Mapa, Vision, Logbook, Perfil, Paywall, …
-│   │   └── widgets/              # Oráculo: aqx_pressable (3D + AqxMeteoRevealButton), decision, conditions_fold, metrics, timeline, community, weather grid, location sheet
-│   └── core/                     # analytics, tides, location/gps_access, community, vision, species, state, Supabase
-│   # Nota: roadmap histórico previa lib/features/* (auth, prediction, …); o código actual
-│   # está maioritariamente em screens/ + core/. Alinhar docs ao abrir PRs de refactor.
+├── lib/                          # App Flutter
+│   ├── main.dart                 # Bootstrap: Supabase, Mapbox token, RevenueCat, analytics
+│   ├── app.dart                  # MaterialApp / tema Midnight Deep Sea
+│   ├── screens/                  # home (7 tabs), oraculo, mapa, vision, logbook, perfil, comunidade, …
+│   │   └── widgets/              # Oráculo: decision, conditions_fold, metrics, timeline, weather grid
+│   ├── features/
+│   │   ├── home/                 # Início dashboard (data/domain/presentation)
+│   │   └── community/            # Sheet perfil Ghost
+│   └── core/                     # tides, location, community, vision, species, Supabase, l10n
 ├── assets/
-│   ├── videos/login_bg.mp4       # Vídeo hero login (Android/iOS)
-│   ├── images/login_bg.jpg       # Fallback imagem login
-│   ├── icons/fish_silhouette.svg
-│   └── data/
-├── android/                      # Plataforma Android (gerada)
-├── supabase/                     # Backend: migrations SQL + README_setup.md
-│   ├── migrations/
-│   └── scripts/
-├── windows/                      # Plataforma Windows (gerada)
-├── Site V2/                      # Site marketing + protótipos
-│   ├── index.html                # Landing principal (produção Vercel)
-│   ├── app-prototype.html        # Demo interactiva da app (tabs)
-│   ├── app-5screens.html         # Mockup 5 ecrãs mobile
-│   ├── monetization-prototype.html # Protótipo 5 páginas monetização
-│   ├── images/                   # Assets visuais e mockups
-│   ├── vercel.json               # cleanUrls: true
-│   └── .vercel/                  # Link Vercel CLI
-├── pubspec.yaml                  # Dependências Flutter
-├── .env                          # Chaves (não versionado)
-├── CLAUDE.md                     # Instruções para assistentes IA
+│   ├── video_bg.mp4              # Splash / login
+│   ├── marketing/spots/          # Cabo Espichel, Peniche, Sesimbra
+│   ├── marketing/catches/        # Fotos espécies (demo comunidade)
+│   ├── data/species_ibero.json
+│   └── icons/
+├── android/ · ios/ · windows/    # Plataformas
+├── supabase/                     # Migrations SQL (8) + README_setup.md
+├── Site V2/                      # Site marketing Vercel (NÃO alterar sem AUTORIZO)
+├── tools/                        # run_dev.ps1, local_secrets.ps1.example
+├── AQUANAUTIX_CONTEXT.md         # Contexto técnico detalhado
+├── CLAUDE.md                     # Instruções IA
+├── ECOSYSTEM.md                  # Serviços, env, sincronização
+├── HANDOFF.md                    # Prompt para novos chats
 └── README.md                     # Este ficheiro
 ```
 
@@ -51,24 +47,35 @@ AQUANAUTIX/
 ### App Flutter
 | Camada | Tecnologia |
 |---|---|
-| Framework | Flutter (SDK em `pubspec.yaml`, tipicamente Dart ≥3.3) |
-| Arquitectura | `lib/screens` + `lib/core` — widgets com estado local, stores / `ValueNotifier` |
-| Backend | Supabase (`supabase_flutter`) |
-| Mapas | Mapbox Maps Flutter (`mapbox_maps_flutter`, ver `pubspec.yaml`) |
-| Marés / tempo / geo | Open‑Meteo via `http`; Nominatim (OSM) para pesquisa de local e reverse geocode |
-| Monetização | RevenueCat (`purchases_flutter`) |
-| Vision IA | OpenAI (integração em core; Edge Function em roadmap) |
-| Networking | `package:http` |
-| Analytics | Serviço próprio + Supabase `analytics_events` (ver `lib/core/services/analytics_*.dart`) |
-| i18n | `flutter_localizations` · strings PT/ES (`lib/core/l10n/`) · locale por país GPS onde aplicável |
+| Framework | Flutter SDK ≥ 3.3 (`pubspec.yaml`) |
+| Arquitectura | `screens/` + `core/` + `features/home|community/` · StatefulWidget + ValueNotifier |
+| Backend | Supabase (`supabase_flutter`) — Auth, Postgres, Storage |
+| Mapas (render) | **`flutter_map`** — ArcGIS satélite, OSM, OpenSeaMap (`mapa.dart`) |
+| Mapbox SDK | Só `MapboxOptions.setAccessToken()` no bootstrap — **não** usado para render (MIUI) |
+| Marés / tempo | Open‑Meteo + Nominatim (`lib/core/tides/`) |
+| GPS | `geolocator` — `gps_access.dart`, `gps_bootstrap.dart` (MIUI-safe) |
+| Monetização | RevenueCat (`purchases_flutter`) — parcial |
+| Vision IA | OpenAI via core (roadmap: Edge Function) |
+| i18n | Login PT/ES/EN · resto app PT/ES |
 
 ### Site V2
-| Camada | Tecnologia |
-|---|---|
-| Frontend | HTML + CSS + JS puro |
-| Mapas | Mapbox GL JS v3.3.0 |
-| Solunar | SunCalc |
-| Deploy | Vercel (cleanUrls) |
+HTML + CSS + JS · Mapbox GL JS v3.3.0 · SunCalc · Deploy Vercel (`Site V2/`)
+
+---
+
+## Navegação da app (7 tabs)
+
+| # | Tab | Ecrã |
+|---|-----|------|
+| 0 | INÍCIO | Dashboard: tempo, maré, spots, preview comunidade |
+| 1 | ORÁCULO | Score, condições 12h, meteorologia, planeamento |
+| 2 | MAPA | Spots PT/ES, `flutter_map`, batimetria |
+| 3 | VISION | Scanner IA espécies |
+| 4 | LOG | Logbook capturas |
+| 5 | PERFIL | Conta, planos PRO/ELITE |
+| 6 | COMUN. | Feed Ghost · perfis públicos sem coords |
+
+Tabs **lazy** (`_tabCache` em `home.dart`) — uma tab montada de cada vez (fix MIUI).
 
 ---
 
@@ -77,12 +84,11 @@ AQUANAUTIX/
 | Token | Valor |
 |---|---|
 | `--bg` | `#000814` |
-| `--bg3` | `#071428` |
 | `--cyan` | `#00F5FF` |
 | `--amber` | `#F3C64D` |
 | `--hint` | `#8AADBE` |
 
-**Tipografia:** Orbitron (títulos) · IBM Plex Sans (corpo) · Share Tech Mono (dados)
+**Tipografia:** Orbitron · IBM Plex Sans · Share Tech Mono
 
 ---
 
@@ -90,121 +96,83 @@ AQUANAUTIX/
 
 | Plano | Preço | Destaques |
 |---|---|---|
-| **FREE** | €0 para sempre | Oráculo básico · 1 spot · Logbook · IA Visão 2x/mês |
-| **PRO** | €4.99/mês ou €39.99/ano (paywall na app; alinhar com lojas) | Oráculo completo · GEBCO · IA · Ghost Mode |
-| **ELITE** | €59.99/ano | Tudo PRO + posicionamento premium (ver produto) |
+| **FREE** | €0 | Oráculo básico · Logbook · Vision limitado |
+| **PRO** | €4.99/mês ou €39.99/ano | Oráculo completo · Ghost · spots PRO |
+| **ELITE** | €59.99/ano | Tudo PRO + posicionamento premium |
 
-**Trial:** 3 dias PRO na app (estado local + `hasProEntitlement`) · RevenueCat pendente para trial/compra real
+**Trial:** 3 dias PRO (estado local) · RevenueCat pendente para compra real
 
 ---
 
 ## Arrancar em desenvolvimento
 
 ### Pré-requisitos
-- Flutter 3.41.7+ (`C:\src\flutter\bin` ou PATH configurado)
-- Android Studio + SDK (para target Android)
-- Ficheiro `.env` na raiz com as chaves
-
-### Variáveis de ambiente (`.env`)
-```
-SUPABASE_URL=https://xxxxx.supabase.co
-SUPABASE_ANON_KEY=eyJ...
-MAPBOX_ACCESS_TOKEN=pk.eyJ...
-MAPBOX_DOWNLOAD_TOKEN=sk.eyJ...
-```
+- Flutter 3.x+ no PATH
+- Android SDK (dispositivo físico recomendado — MIUI)
+- `.env` na raiz + opcional `tools/local_secrets.ps1`
 
 ### Comandos
 ```powershell
-# Adicionar Flutter ao PATH (sessão actual)
-$env:PATH += ";C:\src\flutter\bin"
+cd "C:\Users\Joaop\OneDrive\Documentos\AQUANAUTIX"
 
-# Instalar dependências
 flutter pub get
-
-# Verificar dispositivos
-flutter devices
-
-# Correr no Android físico (recomendado — env + secrets locais)
-.\tools\run_dev.ps1 -d <device-id>
-
-# Correr no Windows (limitado: sem Mapbox nem vídeo)
-flutter run -d windows
-
-# Analisar código
 flutter analyze
+
+# Dispositivo teste Xiaomi
+.\tools\run_dev.ps1 -d WWZLYDXWYXT8PV5D
 ```
 
-### Site V2 — servidor local
+### Supabase (backend)
 ```powershell
-cd "Site V2"
-.\_local_server.ps1
-# → http://localhost:8080
+supabase link --project-ref ycmvqokcfzxkpinvcyhk
+supabase db push
 ```
 
-### Site V2 — deploy produção
+### Site V2
 ```powershell
 cd "Site V2"
-vercel --prod
+.\_local_server.ps1          # http://localhost:8080
+vercel --prod                # aquanautix.vercel.app
 ```
 
 ---
 
 ## Estado actual (Jun 2026)
 
-### App Flutter
 | Feature | Estado |
 |---|---|
-| Splash animada (AQUANAUTIX emerge) | ✅ Funcional |
-| Login / Registo (Supabase Auth) | ✅ Funcional |
-| GPS + fallback regional (sem dados demo) | ✅ Banner inline no Início · cache GPS · Open‑Meteo regional |
-| Oráculo Sprint 1 + fold condições 12h | ✅ OracleConditionsFold · selector espécie no card isco · CTAs Log/Mapa · botões 3D |
-| Oráculo + grelha meteorologia (16 cartões, accordion) | ✅ Open‑Meteo + marine API · AqxMeteoRevealButton |
-| Fix MIUI (Início/Oráculo responsivos pós-login) | ✅ Tabs lazy · sem modal GPS automático · layout Oráculo estável |
-| Pesquisa local Nominatim (modo planeamento) | ✅ Funcional |
-| Calendário solunar | ✅ Estrutura completa |
-| Mapa Mapbox + spots | ✅ Android/iOS (sem Windows) |
-| Vision Scanner IA | ✅ Estrutura completa |
-| Logbook de capturas | ✅ Estrutura completa |
-| Compliance PT/ES | ✅ Espécies + medidas legais |
-| Perfil + Planos | ✅ UI com preços correctos |
-| RevenueCat | 🔄 A configurar produtos |
-| Package name | ✅ `com.aquanautix.app` |
-
-### Site V2
-| Ficheiro | Estado |
-|---|---|
-| `index.html` | ✅ Produção — preços actualizados |
-| `monetization-prototype.html` | ✅ 5 páginas + hero underwater |
-| `app-5screens.html` | ✅ 5 ecrãs mobile mockup |
-| `app-prototype.html` | ✅ Demo interactiva |
+| 7 tabs + Comunidade Ghost | ✅ |
+| Início GPS + pull-to-refresh | ✅ MIUI testado |
+| Oráculo Sprint 1 + fold 12h | ✅ |
+| Mapa flutter_map + spots | ✅ |
+| Vision Scanner | ✅ |
+| Logbook | ✅ |
+| Login Supabase + Google | ✅ |
+| i18n login PT/ES/EN | ✅ |
+| RevenueCat gates reais | 🔄 |
+| Push Janela de Ouro | 🔄 EM BREVE |
+| Onboarding 1.ª vez | 🔄 |
+| Site V2 vs app 7 tabs | ⏸️ Protótipos desalinhados (normal) |
 
 ---
 
-## Próximos passos prioritários
+## Documentação
 
-1. **RevenueCat** — configurar produtos PRO (€4.99/mês, €39.99/ano) e ELITE (€59.99/ano)
-2. **Push Janela de Ouro** — notificações PRO (UI EM BREVE)
-3. **Onboarding Flutter** — ligar `onboarding.dart` ao arranque (primeira vez)
-4. **Domínio** — apontar `aquanautix.app` para Vercel
-
----
-
-## Notas importantes
-
-- `.env` **nunca** vai para git — contém chaves Supabase e Mapbox
-- `forceProEntitlement = true` em `subscription_service.dart` — modo dev, desactivar antes de produção
-- Mapbox e video_player **não funcionam no Windows desktop** — usar Android/iOS
-- Ghost Mode: coordenadas reais nunca saem do dispositivo; fuzzing ~3km em partilhas públicas
+| Ficheiro | Conteúdo |
+|----------|----------|
+| [AQUANAUTIX_CONTEXT.md](AQUANAUTIX_CONTEXT.md) | Histórico sessões, ficheiros, decisões |
+| [CLAUDE.md](CLAUDE.md) | Regras engenharia + estado MIUI |
+| [ECOSYSTEM.md](ECOSYSTEM.md) | Serviços, `.env`, matriz sincronização |
+| [HANDOFF.md](HANDOFF.md) | Prompt copy-paste para novos chats |
+| [supabase/README_setup.md](supabase/README_setup.md) | Migrations e buckets |
 
 ---
 
-## Privacidade e compliance
+## Privacidade
 
-- Spots privados por defeito (Ghost Mode)
-- Fuzzing geográfico ~3km em partilhas públicas
-- Privacidade diferencial em heatmaps (k-anonimato)
-- RGPD compliant (PT + ES)
-- Compliance legal PT/ES integrado (tamanhos mínimos, vedas)
+- Ghost Mode: coordenadas exactas nunca em feed público (`zone_id` ~5 km)
+- Compliance PT/ES: tamanhos mínimos e vedas (`species_ibero.json`)
+- `.env` nunca vai para Git
 
 ---
 

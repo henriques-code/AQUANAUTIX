@@ -1,7 +1,7 @@
 # AQUANAUTIX — Ecossistema de Serviços
 
 > Documento de referência para engenharia de sistemas.
-> Auditado em Abril 2026. Actualizar sempre que mudar credenciais ou serviços.
+> **Auditado:** 11 Jun 2026 · alinhado com commit `da3ca79` (app) + `supabase/README_setup.md` (backend).
 
 ---
 
@@ -11,7 +11,8 @@
 |---------|----------|--------------|----------------|
 | **Vercel** | Hosting do site marketing | `Site V2/` → `aquanautix.vercel.app` | `Site V2/.vercel/` (gerado por `vercel link`) |
 | **Supabase** | Auth, DB, Edge Functions, Storage | App Flutter (`supabase_flutter`) + Edge Functions | `SUPABASE_URL` + `SUPABASE_ANON_KEY` no `.env` |
-| **Mapbox** | Mapas, batimetria, estilos | Site (`index.html` GL JS v3.3.0) + App (`mapbox_maps_flutter`) | `MAPBOX_ACCESS_TOKEN` + `MAPBOX_DOWNLOAD_TOKEN` no `.env` |
+| **Mapbox** | Token bootstrap (app) · mapas no site | Site (`index.html` GL JS v3.3.0) + App (`mapbox_maps_flutter` só init) | `MAPBOX_ACCESS_TOKEN` + `MAPBOX_DOWNLOAD_TOKEN` no `.env` |
+| **flutter_map** | Rendering mapa na app (MIUI-safe) | App `mapa.dart` — ArcGIS/OSM/OpenSeaMap | Sem token (tiles públicos) |
 | **OpenAI** | Vision Scanner (espécie/peso/legal), Assistente IA | App → Supabase Edge Function `vision-identify` | `OPENAI_API_KEY` no `.env` (nunca expor no cliente) |
 | **RevenueCat** | Subscriptions PRO / ELITE | App Flutter (`purchases_flutter`) | `REVENUECAT_API_KEY_ANDROID` + `REVENUECAT_ENTITLEMENT_ID` no `.env` |
 | **Supabase `analytics_events`** | Funil, paywall, North Star, D1/D7 (via params) | App (`AnalyticsService`) | Migration `20260609000000_analytics_events.sql` — RLS insert cliente, leitura equipa via dashboard/service role |
@@ -42,7 +43,7 @@ A pasta **`supabase/`** existe na raiz do mono-repo (versionada no Git).
 supabase/
 ├── config.toml
 ├── README_setup.md
-├── migrations/     (6 ficheiros SQL — ver tabela abaixo)
+├── migrations/     (8 ficheiros SQL — ver tabela abaixo)
 └── scripts/check_bucket.sql
 ```
 
@@ -56,6 +57,8 @@ supabase/
 | `20260512000000_catch_photos.sql` | `catch_photos` + PostGIS | `CatchPhotoRepository`, mapa |
 | `20260512000001_catch_photos_lat_lng.sql` | trigger lat/lng → geometry | inserts PostgREST |
 | `20260609000000_analytics_events.sql` | funil / paywall | `AnalyticsService` |
+| `20260610000000_security_hardening.sql` | RLS catch_photos, tier, storage | mapa, comunidade |
+| `20260611000000_storage_cleanup_profiles_social.sql` | storage legado; perfis feed | `CommunityRepository` |
 
 ### Pendente no repo (só referenciado em checklists)
 
@@ -115,33 +118,49 @@ app_s2_mapa.png   == app_s3_vision.png  (SHA256: 841F0B03...)
 Ambos com 15,5 KB e hash igual — **ficheiros byte-a-byte iguais**.
 Um deles pode ser eliminado; confirma qual série é a correcta antes de apagar.
 
-### `assets/` (Flutter) — ficheiros
+### `assets/` (Flutter) — inventário Jun 2026
 
-| Ficheiro | Tamanho | Estado |
-|----------|---------|--------|
-| `assets/icons/fish_silhouette.svg` | 0,2 KB | ✅ OK |
-| `assets/images/login_bg.jpg` | **91 bytes** | 🔴 CORROMPIDO / STUB — ficheiro quasi-vazio |
-| `assets/videos/login_bg.mp4` | 7,3 MB | ✅ OK (vídeo splash) |
+| Caminho | Uso |
+|---------|-----|
+| `assets/video_bg.mp4` | Splash / login (vídeo hero) |
+| `assets/marketing/spots/` | Cabo Espichel (`cabo_da_roca.jpg`), Peniche, Sesimbra — Início + Mapa |
+| `assets/marketing/catches/` | dourada, robalo, sargo — Início + Comunidade demo |
+| `assets/data/species_ibero.json` | Compliance espécies PT/ES |
+| `assets/icons/fish_silhouette.svg` | UI |
 
-> `assets/images/login_bg.jpg` tem apenas **91 bytes** — não é uma imagem válida.
-> O widget `LoginUnderwaterVideoBackground` usa-o como fallback; vai sempre para o `errorBuilder`.
-> Substituir por imagem real ou remover se o vídeo for a solução definitiva.
-
----
-
-## 6. Acoplamentos a Resolver (técnico)
-
-| Problema | Ficheiro | Impacto | Acção sugerida |
-|----------|----------|---------|----------------|
-| App Flutter referencia `Site V2/video_bg.mp4` nos assets | `pubspec.yaml` linha 76 | Build da app depende do site | Copiar para `assets/videos/` ou usar só `login_bg.mp4` |
-| `assets/images/login_bg.jpg` com 91 bytes | `assets/images/` | Fallback de imagem não funciona | Substituir por imagem real underwater |
-| `MapScreen` e `ProfileScreen` paralelos às tabs | `lib/features/map/` e `profile/presentation/` | UX duplicada no telemóvel | Refactor: tabs usam sempre `MapPage` e `ProfilePage` |
-| Token Mapbox exposto em `index.html` | `Site V2/index.html` ~linha 3447 | Risco se sem restrição de domínio | Restringir no dashboard Mapbox a `aquanautix.vercel.app` |
-| Migrations Supabase em falta (rate limits, Edge Functions) | `supabase/` | Checklist de segurança incompleto | Adicionar SQL/functions ao repo ou documentar só no dashboard |
+> `assets/images/login_bg.jpg` — **eliminado** (stub corrompido); fallback = gradiente Midnight Deep Sea.
 
 ---
 
-## 7. RevenueCat — Passos Manuais no Dashboard
+## 6. App Flutter — Navegação e módulos (Jun 2026)
+
+| Tab | Índice | Ecrã | Notas |
+|-----|--------|------|-------|
+| Início | 0 | `inicio_dashboard_screen.dart` | GPS pull-to-refresh · spots→mapa · comunidade→tab 6 |
+| Oráculo | 1 | `oraculo.dart` | Open-Meteo · Nominatim · CTAs Comunidade (tab 6) |
+| Mapa | 2 | `mapa.dart` | `flutter_map` · pendingMapFocus |
+| Vision | 3 | `vision.dart` | OpenAI directo (roadmap Edge Function) |
+| Log | 4 | `logbook.dart` | Capturas + sub-tab COMUNIDADE legado |
+| Perfil | 5 | `perfil.dart` | Planos · logout reset GPS |
+| **Comunidade** | **6** | `comunidade.dart` | Feed Ghost · sheet perfil · demo offline |
+
+**GPS:** `gps_access.dart` + `gps_bootstrap.dart` — partilhado Início/Oráculo/Mapa.
+
+---
+
+## 7. Acoplamentos conhecidos
+
+| Problema | Impacto | Acção |
+|----------|---------|-------|
+| Site V2 protótipos (`app-5screens.html`) ainda 5/6 ecrãs | Marketing desalinhado com app 7 tabs | Actualizar só com AUTORIZO design |
+| Token Mapbox em `index.html` | Risco se sem restrição domínio | Restringir a `aquanautix.vercel.app` |
+| Migrations rate limits + Edge Functions ausentes | Checklist segurança incompleto | Versionar ou documentar no dashboard |
+| Supabase remoto vs repo | Feed real Comunidade | Correr `supabase db push` |
+| RevenueCat parcial | Gates PRO/ELITE | Ver `REVENUECAT_SETUP.md` |
+
+---
+
+## 8. RevenueCat — Passos Manuais no Dashboard
 
 URL: https://app.revenuecat.com
 
@@ -179,24 +198,34 @@ Criar offering `default` com os packages:
 
 ---
 
-## 8. Fluxo de Deploy
+## 9. Fluxo de Deploy
 
 ```
-Site:  editar Site V2/ → vercel --prod (a partir de Site V2/)
-App:   flutter build apk / ios → submeter às lojas
-Supabase: supabase link && supabase db push  (migrations em supabase/migrations/)
-          supabase functions deploy           (quando functions/ existir no repo)
+App Flutter:  .\tools\run_dev.ps1  ·  flutter build apk
+Site:         editar Site V2/ → vercel --prod (só Site V2/)
+Supabase:     supabase link && supabase db push
+Git:          main → origin/main (GitHub: henriques-code/AQUANAUTIX)
 ```
+
+### Matriz de sincronização (11 Jun 2026)
+
+| Artefacto | Versão / estado | Sincronizado? |
+|-----------|-----------------|---------------|
+| `lib/` (app) | `da3ca79` | ✅ GitHub |
+| Docs (CONTEXT, CLAUDE, HANDOFF, README, ECOSYSTEM) | 11 Jun 2026 | ✅ Repo |
+| Site V2 produção | último deploy Vercel (sem alterações recentes) | ⏸️ Estável |
+| Protótipos HTML | 5–6 ecrãs | ⚠️ Desalinhados (intencional) |
+| Supabase remoto | 8 migrations no repo | ⚠️ Confirmar `db push` |
+| Edge Functions | — | ❌ Pendente |
+| Play Store / App Store | debug builds | ❌ Não publicado |
 
 ---
 
-## 8. Próximas Acções Prioritárias
+## 10. Próximas Acções Prioritárias
 
-1. ✅ **`login_bg.jpg` corrompido** → widget usa gradiente Midnight Deep Sea; ficheiro eliminado.
-2. ✅ **Duplicado** `app_s3_vision.png` eliminado (hash idêntico a `app_s2_mapa.png`).
-3. ✅ **`pubspec.yaml`** desacoplado de `Site V2/video_bg.mp4`; splash usa `assets/videos/login_bg.mp4`.
-4. ✅ **`DashboardPage`** usa `AppTabStore` para Mapa (tab 1) e Perfil (tab 4); `MapScreen`/`ProfileScreen` já não são chamados a partir do Oráculo.
-5. 🟡 **Adicionar** migrations em falta (rate limits) e Edge Functions ao repo `supabase/`.
-6. 🟡 **Restringir token Mapbox** no dashboard Mapbox a `aquanautix.vercel.app`.
-7. 🟢 **Preencher** `GOOGLE_PLACES_API_KEY` para activar lojas de isco na app.
-8. 🟢 **Avaliar** se `MapScreen` e `ProfileScreen` (legado) podem ser eliminados após confirmação de que nenhuma outra rota os chama.
+1. 🟡 **`supabase db push`** — garantir remoto = repo (8 migrations).
+2. 🟡 **RevenueCat** — produtos + gates (`REVENUECAT_SETUP.md`).
+3. 🟡 **Edge Functions** — versionar `vision-identify`, `oracle` no repo.
+4. 🟢 **Restringir token Mapbox** no dashboard a `aquanautix.vercel.app`.
+5. 🟢 **Preencher** `GOOGLE_PLACES_API_KEY` (lojas de isco).
+6. 🟢 **Sprint C** — assets spots (`cabo_espichel.jpg`), manifest JSON.

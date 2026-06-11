@@ -27,9 +27,11 @@ AQUANAUTIX/
 │   ├── migrations/           # app_insights, community, catch_photos
 │   ├── scripts/
 │   └── README_setup.md
-├── CLAUDE.md                 # Instruções para assistentes IA
-├── .cursorrules              # Regras do projecto (PT)
-└── AQUANAUTIX_CONTEXT.md     # Este ficheiro
+├── HANDOFF.md                  # Handoff novos chats
+├── ECOSYSTEM.md                # Serviços e sincronização
+├── CLAUDE.md                   # Instruções para assistentes IA
+├── .cursorrules                # Regras do projecto (PT)
+└── AQUANAUTIX_CONTEXT.md       # Este ficheiro
 ```
 
 **Deploy Vercel:** corre `vercel` / `vercel link` a partir da pasta **`Site V2/`** (é aí que existe `vercel.json` e, após link, `.vercel/project.json`).
@@ -49,7 +51,7 @@ AQUANAUTIX/
 
 - **`lib/main.dart` / `app.dart`:** bootstrap Supabase, RevenueCat, analytics, tema, `flutter_localizations` e locale derivado de GPS (PT/ES).
 - **Navegação:** `AquanautixHome` com **7 tabs lazy** — Início · Oráculo · Mapa · Vision · Log · Perfil · **Comunidade** (via `HomeTabIndex`; índice 6 = `communityTabIndex`).
-- **Ecrãs:** `home` (6 tabs lazy `_tabCache`; WeatherCard compacto + barra solunar, Condições Favoráveis horárias com score Oráculo, grid 3×spots com fotos locais, comunidade 3 entradas compactas com fotos de espécies), `oraculo` (**Sprint 1 + fold 9 Jun:** card **Decisão**, **`OracleConditionsFold`** (métricas + timeline 12h), strip **Comunidade Ghost**, accordion meteorologia 16 cartões + `AqxMeteoRevealButton`, COSTA/RIO, chips espécie no card isco/cana, pesquisa Nominatim, fallback **regional Open‑Meteo** sem GPS, banner GPS **inline** no Início, CTAs registar captura / mapa / comunidade), `mapa`, `vision`, `logbook`, `perfil`, `paywall`, `splash`, fluxos login/password.
+- **Ecrãs:** `home` (7 tabs lazy `_tabCache`; Início com WeatherCard, pull-to-refresh GPS, spots→mapa, comunidade→tab COMUN.), `comunidade` (feed Ghost + sheet perfil), `oraculo` (Decisão, **OracleConditionsFold**, strip Comunidade → tab 6, Nominatim, GPS inline), `mapa` (`flutter_map`), `vision`, `logbook`, `perfil`, `paywall`, `splash`, login/password.
 - **`lib/screens/widgets/`:** `aqx_pressable.dart` (botões 3D neon/glass + `AqxMeteoRevealButton` ABRIR), `oracle_decision_card.dart`, `oracle_fishing_metrics_grid.dart`, `oracle_conditions_fold.dart` (card unificado condições 12h), `oracle_timeline_24h.dart`, `oracle_community_strip.dart`, `location_access_sheet.dart`, `oracle_weather_details_grid.dart` (16 cartões 3D; marés 2D; correntes).
 - **`lib/core/location/`:** `gps_access.dart` — cache memória, single-flight, `tryGetFix`/`tryGetFixQuick`, `forceRefresh`, `AndroidSettings(forceLocationManager)` (MIUI); `gps_bootstrap.dart` — permissão no arranque + `refreshFix` em background.
 - **`lib/screens/comunidade.dart` + `lib/features/community/`:** tab **COMUN.** — feed Ghost, sheet perfil público (`community_ghost_profile_sheet.dart`, `community_public_profile.dart`); tap no Início → `pendingCommunityProfile` + tab Comunidade.
@@ -87,17 +89,13 @@ AQUANAUTIX/
 - `8cdeb64` — Sprint **A** (`AqxGhostModeBadge`) + Sprint **B** (`oracle_mini_map.dart`); fix `AqxMeteoRevealButton` (unbounded width no accordion MIUI).
 - `b571b12` — **i18n Fase 1:** pills PT|ES|EN no login; `AppLocaleStore.setLocale`; `Locale('en')` em `supportedLocales`.
 
-**Alterações locais (ainda sem commit — 8 ficheiros `lib/`)**
-- **GPS Início** (`inicio_dashboard_screen.dart`) — pede permissão ao entrar; **await** `tryGetFix(15s)` antes de `_load`; invalida cache Oráculo; banner só se recusar.
-- **`home_repository_impl.dart`** — bundle com GPS quando há fix; removido filtro errado `contains('pt'/'es')` no `locationHeadline`; maré com `hasTide` (MSL negativo não esconde coluna).
-- **`weather_card.dart` / `weather_data.dart`** — `hasTide` em vez de `tideHeight > 0`.
-- **Spots em destaque → Mapa** — `FeaturedSpot` + lat/lon; tap centra mapa (zoom **15**); `mapa.dart` aplica `pendingMapFocus` na **primeira visita** ao tab.
-- **Coordenadas corrigidas** — Cabo Espichel `38.4162,-9.2178` (card Início); Cabo Espichel N. `38.4198,-9.2385` (mapa, rocha norte); Peniche porto `39.3545,-9.3835`.
-- **`gps_access.dart`** — `LocationAccuracy.high` no fix principal (MIUI).
+**Commits (`e7a276b`, `7773a3c`, `da3ca79`) — push feito**
+- **GPS Início + pull-to-refresh** — `gps_bootstrap.dart`, `forceRefresh`, MIUI `forceLocationManager`; invalidate Oráculo no refresh.
+- **`home_repository_impl.dart`** — `loadDashboard(forceRefresh)`; `hasTide`; bundle GPS com `knownCoords`.
+- **Spots → Mapa** — `FeaturedSpot` lat/lon; Cabo Espichel `38.4162,-9.2178`; Peniche `39.3545,-9.3835`.
+- **Tab Comunidade (7.º)** — `comunidade.dart`, perfil Ghost, drawer/Oráculo → tab 6.
 
-**Verificação:** `flutter analyze lib/` — sem issues.
-
-**Pendente commit:** Sprint C (manifest spots), i18n Fase 2 (resto da app + Perfil), renomear asset `cabo_da_roca.jpg` → `cabo_espichel.jpg` (opcional).
+**Pendente:** Sprint C (manifest spots), i18n Fase 2, renomear `cabo_da_roca.jpg` → `cabo_espichel.jpg`.
 
 ### Sessão 9 Jun 2026
 
@@ -110,7 +108,7 @@ AQUANAUTIX/
 - **Logbook** — fix crash «Nova captura» (`_NovaCapturaSheet` StatefulWidget).
 
 **Fix MIUI — Início e Oráculo bloqueados pós-login (`678ff0f`)**
-- **Causa:** `showModalBottomSheet` GPS criava barrier modal invisível; `IndexedStack` montava 6 tabs em paralelo (sobrecarga MIUI); `flutter_animate` + `IntrinsicHeight` em scroll causavam `RenderBox was not laid out` (ecrã preto Oráculo).
+- **Causa:** modal GPS invisível; `IndexedStack` com vários tabs em paralelo (sobrecarga MIUI); `flutter_animate` + `IntrinsicHeight` em scroll (ecrã preto Oráculo).
 - **`home.dart`** — tabs **lazy** via `_tabCache` (só tab activa montada); **sem** modal GPS automático ao entrar.
 - **`inicio_dashboard_screen.dart`** — `instantFallback` imediato; load em background; banner GPS **inline** (dismissível), não modal.
 - **`home_repository_impl.dart`** — zero `requestPermission` no load; coords de cache GPS ou regional; Oracle com `planningPlace`; meteo em paralelo.

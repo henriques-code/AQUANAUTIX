@@ -94,7 +94,7 @@ _Criado: 2026-05-11 · Revisão módulo a módulo · Prioridade decrescente_
 - [ ] Pins gerados em Canvas (`_createPinPng`) — verificar que cache `_pinPngCache` é invalidada se a app reiniciar (não é — é in-memory, correcto)
 - [ ] `_showSpotDetail` para spots ELITE mostra paywall — confirmar que `PaywallScreen.open` é chamado correctamente e o mapa não fica em estado de loading
 - [ ] Lojas de pesca (≤5 km) usam coordenadas hard-coded? Verificar fonte de dados
-- [ ] OpenSeaMap toggle — confirmar que `_showSeamarks` persiste entre navegações de tab (actualmente não — é state local, perde-se ao mudar de tab no `IndexedStack`)
+- [ ] OpenSeaMap toggle — confirmar que `_showSeamarks` persiste entre navegações de tab (state local em `mapa.dart`; perde-se ao sair do tab porque `_tabCache` desmonta o widget)
 
 ### Tarefas
 1. Verificar fonte de dados das lojas de isco — hard-coded vs JSON vs Supabase
