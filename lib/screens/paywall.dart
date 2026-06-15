@@ -48,6 +48,11 @@ class _PaywallScreenState extends State<PaywallScreen> {
     } catch (_) {}
   }
 
+  bool get _storePackagesReady {
+    final pkgs = _offerings?.current?.availablePackages;
+    return pkgs != null && pkgs.isNotEmpty;
+  }
+
   String _priceLabel(String planKey, String fallback) {
     final pkg = RevenueCatService.resolvePackage(_offerings, planKey: planKey);
     final storePrice = pkg?.storeProduct.priceString;
@@ -278,6 +283,24 @@ class _PaywallScreenState extends State<PaywallScreen> {
                     style: ibm(12, fw: FontWeight.w600),
                   ),
                 ),
+                if (RevenueCatService.instance.isSdkReady && !_storePackagesReady) ...[
+                  const SizedBox(height: 10),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: kAmber.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: kAmber.withValues(alpha: 0.35)),
+                    ),
+                    child: Text(
+                      t.es
+                          ? 'Loja no configurada: publica productos en Play Console y offering default en RevenueCat (ver REVENUECAT_SETUP.md).'
+                          : 'Loja não configurada: publica produtos no Play Console e offering default no RevenueCat (ver REVENUECAT_SETUP.md).',
+                      style: mono(9, c: kAmber, ls: 0.2),
+                    ),
+                  ),
+                ],
                 const SizedBox(height: 14),
                 Container(
                   width: double.infinity,

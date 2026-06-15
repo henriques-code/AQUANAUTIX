@@ -1,3 +1,4 @@
+import 'package:aquanautix/core/monetization/subscription_gate.dart';
 import 'package:aquanautix/core/services/revenue_cat_service.dart';
 import 'package:aquanautix/core/state/subscription_store.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -35,5 +36,32 @@ void main() {
     expect(RevenueCatService.packageIdForPlanKey('pro_annual'), 'pro_annual');
     expect(RevenueCatService.packageIdForPlanKey('elite_annual'), 'elite_annual');
     expect(RevenueCatService.packageIdForPlanKey('unknown'), '');
+  });
+
+  test('SubscriptionGate: spots PRO e ELITE', () {
+    const free = SubscriptionState(plan: SubscriptionPlan.free);
+    const pro = SubscriptionState(plan: SubscriptionPlan.pro);
+    const elite = SubscriptionState(plan: SubscriptionPlan.elite);
+
+    expect(
+      SubscriptionGate.isSpotLocked(tier: 'FREE', elite: false, sub: free),
+      false,
+    );
+    expect(
+      SubscriptionGate.isSpotLocked(tier: 'PRO', elite: false, sub: free),
+      true,
+    );
+    expect(
+      SubscriptionGate.isSpotLocked(tier: 'PRO', elite: false, sub: pro),
+      false,
+    );
+    expect(
+      SubscriptionGate.isSpotLocked(tier: 'ELITE', elite: true, sub: pro),
+      true,
+    );
+    expect(
+      SubscriptionGate.isSpotLocked(tier: 'ELITE', elite: true, sub: elite),
+      false,
+    );
   });
 }

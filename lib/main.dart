@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'app.dart';
@@ -30,6 +31,12 @@ Future<void> main() async {
   }
   await SubscriptionStore.instance.init();
   SubscriptionAuthBridge.init();
+  if (kDebugMode && RevenueCatService.instance.isSdkReady) {
+    final d = await RevenueCatService.instance.diagnostics();
+    debugPrint(
+      '[AQUANAUTIX][RC] offering=${d.offeringId ?? "—"} packages=${d.packageCount}',
+    );
+  }
   SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(

@@ -120,6 +120,24 @@ class RevenueCatService {
     }
   }
 
+  /// Resumo para diagnóstico (dev / verify script).
+  Future<({bool sdkReady, String? offeringId, int packageCount})> diagnostics() async {
+    if (!isSdkReady) {
+      return (sdkReady: false, offeringId: null, packageCount: 0);
+    }
+    try {
+      final offerings = await getOfferings();
+      final current = offerings?.current;
+      return (
+        sdkReady: true,
+        offeringId: current?.identifier,
+        packageCount: current?.availablePackages.length ?? 0,
+      );
+    } catch (_) {
+      return (sdkReady: true, offeringId: null, packageCount: 0);
+    }
+  }
+
   /// Inicia a compra de um [Package]. Lança [RevenueCatException] em caso de
   /// erro; usar [RevenueCatException.isUserCancelled] para distinguir
   /// cancelamentos de erros reais.

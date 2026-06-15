@@ -18,6 +18,8 @@
 | Perfil FREE manual só em `kDebugMode` | ✅ |
 | `run_dev.ps1` — defaults package IDs | ✅ |
 | Produtos Play Console + Offering RC publicada | ⏳ manual |
+| Gates dinâmicos (`SubscriptionGate`) — mapa/vision/log | ✅ |
+| Script `tools/verify_revenuecat.ps1` | ✅ |
 
 ---
 
@@ -97,6 +99,20 @@ Verificar no logcat (RC debug mode activo em kDebugMode):
 - `[Purchases] - DEBUG` → SDK inicializado
 - Offerings carregadas com 3 packages
 - Trial 3 dias disponível
+
+---
+
+## 7. Gates na app (automático após compra/restauro)
+
+| Recurso | Regra |
+|---------|--------|
+| Spots PRO no mapa | `hasProEntitlement` (PRO, ELITE ou trial 3d) |
+| Spots ELITE | plano `elite` |
+| Vision (limite FREE) | `hasProEntitlement` |
+| Alertas Início | `hasProEntitlement` |
+| Comunidade/Logbook locked | paywall até PRO |
+
+Após compra ou **Restaurar compras**, `SubscriptionStore.syncFromRevenueCat()` actualiza gates sem reiniciar a app.
 
 ---
 
