@@ -25,6 +25,8 @@
 
 ## 1. Google Play Console — Criar produtos de subscrição
 
+**Guia completo passo-a-passo:** [`tools/PLAY_CONSOLE_SETUP.md`](tools/PLAY_CONSOLE_SETUP.md)
+
 Em [play.google.com/console](https://play.google.com/console) → app `com.aquanautix.app` → Monetização → Produtos → Subscrições:
 
 | Product ID | Nome | Preço | Período |
