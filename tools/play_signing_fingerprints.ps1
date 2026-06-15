@@ -1,8 +1,10 @@
-# play_signing_fingerprints.ps1 — SHA-1/SHA-256 para Google Play + OAuth
+# play_signing_fingerprints.ps1 - SHA-1/SHA-256 para Google Play + OAuth
 # Uso: .\tools\play_signing_fingerprints.ps1
 
-Write-Host "`n=== AQUANAUTIX · Signing fingerprints ===" -ForegroundColor Cyan
-Write-Host "Package: com.aquanautix.app`n" -ForegroundColor Gray
+Write-Host ""
+Write-Host "=== AQUANAUTIX - Signing fingerprints ===" -ForegroundColor Cyan
+Write-Host "Package: com.aquanautix.app" -ForegroundColor Gray
+Write-Host ""
 
 $debugKeystore = Join-Path $env:USERPROFILE ".android\debug.keystore"
 if (Test-Path $debugKeystore) {
@@ -10,7 +12,7 @@ if (Test-Path $debugKeystore) {
     & keytool -list -v -keystore $debugKeystore -alias androiddebugkey -storepass android -keypass android 2>$null |
         Select-String -Pattern "SHA1:|SHA256:"
 } else {
-    Write-Host "DEBUG keystore não encontrado em $debugKeystore" -ForegroundColor Red
+    Write-Host "DEBUG keystore nao encontrado em $debugKeystore" -ForegroundColor Red
 }
 
 $root = Split-Path $PSScriptRoot -Parent
@@ -26,14 +28,16 @@ if (Test-Path $keyProps) {
     }
     $storeFile = $props["storeFile"]
     if ($storeFile -and (Test-Path $storeFile)) {
-        Write-Host "`nRELEASE keystore ($storeFile):" -ForegroundColor Yellow
+        Write-Host ""
+        Write-Host "RELEASE keystore ($storeFile):" -ForegroundColor Yellow
         & keytool -list -v -keystore $storeFile -alias $props["keyAlias"] -storepass $props["storePassword"] 2>$null |
             Select-String -Pattern "SHA1:|SHA256:"
     }
 } else {
-    Write-Host "`nSem android/key.properties — release signing não configurado localmente." -ForegroundColor Gray
+    Write-Host ""
+    Write-Host "Sem android/key.properties - release signing nao configurado." -ForegroundColor Gray
 }
 
 Write-Host ""
-Write-Host "Regista SHA-1 em Google Cloud OAuth + Play Console Integridade da app." -ForegroundColor Cyan
+Write-Host "Regista SHA-1 em Google Cloud OAuth e Play Console Integridade da app." -ForegroundColor Cyan
 Write-Host ""
