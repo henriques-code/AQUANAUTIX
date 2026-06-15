@@ -34,4 +34,6 @@ if (Test-Path $keyProps) {
     Write-Host "`nSem android/key.properties — release signing não configurado localmente." -ForegroundColor Gray
 }
 
-Write-Host "`nRegista SHA-1 em Google Cloud OAuth + Play Console Integridade da app.`n" -ForegroundColor Cyan
+Write-Host ""
+Write-Host "Regista SHA-1 em Google Cloud OAuth + Play Console Integridade da app." -ForegroundColor Cyan
+Write-Host ""
