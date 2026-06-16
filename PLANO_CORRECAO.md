@@ -61,10 +61,12 @@ _Criado: 2026-05-11 · Revisão módulo a módulo · Prioridade decrescente_
 ---
 
 ## MÓDULO 3 — Oráculo
-**Ficheiro:** `screens/oraculo.dart`, `screens/widgets/oracle_weather_details_grid.dart`, `core/tides/oracle_data_service.dart`, `core/tides/weather_details_snapshot.dart`, `core/tides/open_meteo_tides_repository.dart`
-**Estado:** ✅ Core funcional + grelha meteorologia 16 cartões (Jun 2026); pontos de polimento identificados
+**Ficheiro:** `screens/oraculo.dart`, `screens/widgets/oracle_decisao_fold.dart`, `oracle_conversion_pack.dart`, `oracle_hero_decision.dart`, `oracle_weather_details_grid.dart`, `core/tides/oracle_data_service.dart`, …
+**Estado:** ✅ Mockup Decisão + pack conversão PRO (Jun 2026); core funcional + grelha meteorologia 16 cartões
 
 ### Concluído (Jun 2026)
+- [x] **OracleDecisaoFold** — hero pescador, score pulse, janela âmbar, mini-mapa, espécie alvo, CTAs, GHOST cards, spot PRO
+- [x] **Pack conversão PRO** — linha decisão, faixa sticky, drawer trial, blur mapa FREE, CTAs PRO secundários
 - [x] Grelha «Detalhes de meteorologia» — 16 cartões brancos, dados Open‑Meteo + marine + AQI
 - [x] Cartões Marés (onda isométrica 3D) e Correntes (velocidade/direcção oceânica)
 - [x] Pull-to-refresh no Oráculo (`invalidateCache`, `_loadWeatherDetails`)
@@ -73,15 +75,14 @@ _Criado: 2026-05-11 · Revisão módulo a módulo · Prioridade decrescente_
 ### Problemas
 - [ ] Detecção de modo rio por string (`ctx.region == 'ABRANTES'`) — frágil se região mudar
 - [ ] `_activeSpeciesCodes` é completamente estático e hardcoded por nome de local PT — não cobre ES
-- [ ] Banner "Activar alerta" faz `_busy` mas não guarda nada (snackbar demo) — utilizador não percebe que é demo
-- [ ] `t.pushDemoBody(...)` e banner "JANELA DE OURO" são claro demo — considerar label visual "EM BREVE"
+- [ ] Banner "Activar alerta" — UI mockup tem «Alertar janela (PRO) · EM BREVE» desactivado; backend push pendente (P5)
 - [ ] `_speciesUiLabel` sem tradução ES (Corvina, Sargo, etc. são iguais; Achigã → "Black Bass" em ES)
 - [ ] Constantes `_costa` e `_rio` ficam visíveis brevemente antes dos dados reais carregarem — esperado, mas confirmar animação de loading não fica presa
 
 ### Tarefas
 1. Adicionar enum `FishingRegionType` (`costa` / `rio`) para substituir detecção por string
 2. Expandir `_activeSpeciesCodes` com localidades ES (Vigo, Huelva, Cádiz, etc.)
-3. Substituir snackbar "em breve" por badge visual `[EM BREVE]` no botão de alertas
+3. Substituir snackbar "em breve" por badge visual `[EM BREVE]` no botão de alertas — **feito no mockup** (`Alertar janela (PRO) · EM BREVE`)
 4. Adicionar "Achigã" → "Black Bass" a `_speciesUiLabel` quando locale ES
 
 ---

@@ -21,7 +21,8 @@ supabase/
 │   ├── 20260512000001_catch_photos_lat_lng.sql
 │   ├── 20260609000000_analytics_events.sql
 │   ├── 20260610000000_security_hardening.sql
-│   └── 20260611000000_storage_cleanup_profiles_social.sql
+│   ├── 20260611000000_storage_cleanup_profiles_social.sql
+│   └── 20260616174757_storage_no_public_listing.sql
 └── scripts/
     └── check_bucket.sql     ← verificar bucket catch-photos
 ```

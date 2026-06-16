@@ -1,7 +1,7 @@
 # AQUANAUTIX — Fluxo de sincronização e segurança
 
 > **Objectivo:** nada se perde — código, backend, docs e Git alinhados.  
-> **Última revisão:** 16 Jun 2026 · commit de referência `cc359ab`
+> **Última revisão:** 16 Jun 2026 · commit de referência `34b4e38`
 
 ---
 

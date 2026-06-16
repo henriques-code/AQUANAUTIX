@@ -153,7 +153,7 @@ vercel --prod
 | Shell / `home.dart` | ✅ **7 tabs lazy** (`_tabCache`) · Início · Oráculo · Mapa · Vision · Log · Perfil · **Comunidade (COMUN.)** · `GpsBootstrap.ensurePermission()` no 1.º frame |
 | Início (`features/home/`) | ✅ WeatherCard + **maré `hasTide`** · GPS **pull-to-refresh** (fix 12s + invalidate Oráculo + `forceRefresh`) · spots **tap→Mapa** · tap comunidade → tab COMUN. + sheet perfil Ghost |
 | Comunidade (`comunidade.dart`) | ✅ Tab dedicado P9 · feed Ghost · `pendingCommunityProfile` · drawer/Oráculo navegam para tab 6 (não Logbook) |
-| Oráculo (`oraculo.dart`) | ✅ Sprint 1 + **OracleConditionsFold** · **mini-mapa** (`oracle_mini_map.dart`) · **Ghost badge** · CTAs Log/Mapa (`pendingMapFocus`) · fix `AqxMeteoRevealButton` MIUI · fallback regional |
+| Oráculo (`oraculo.dart`) | ✅ **OracleDecisaoFold** mockup (hero pescador, linha decisão, faixa PRO, drawer trial) + **OracleConditionsFold** colapsável · mini-mapa blur FREE · CTAs Log/Mapa/Comunidade · fallback regional |
 | Mapa (`mapa.dart`) | ✅ `flutter_map` · spots PT/ES · `pendingMapFocus` na **1.ª visita** · zoom foco **15** · Cabo Espichel N. coords em terra |
 | i18n login | ✅ PT/ES/EN no login (`app_locale_store` + `aqx_l10n`); resto app PT/ES — **Fase 2 pendente** |
 | Vision (`vision.dart`) | ✅ Scanner + compliance espécies |
@@ -186,7 +186,7 @@ vercel --prod
 - **Tabs lazy** em `home.dart` — não usar `IndexedStack` com 7 ecrãs pesados (bloqueia toques); labels com `FittedBox` para caber COMUN.
 - **GPS Início** — `GpsBootstrap` no arranque; pull-to-refresh aguarda fix antes do reload; banner inline só se recusar; `adb kill-server` se device não aparecer.
 - **Oráculo:** evitar `flutter_animate` + `IntrinsicHeight` dentro de `SingleChildScrollView`.
-- **Install bloqueado:** `adb push build/app/outputs/flutter-apk/app-debug.apk` + `adb shell pm install -r -t /data/local/tmp/app-debug.apk`.
+- **Install bloqueado:** `flutter build apk --debug` → `adb push build/app/outputs/flutter-apk/app-debug.apk /data/local/tmp/app-debug.apk` → `adb shell pm install -r -t /data/local/tmp/app-debug.apk` → `.\tools\run_dev.ps1 -d WWZLYDXWYXT8PV5D -- --use-application-binary=build/app/outputs/flutter-apk/app-debug.apk`.
 - **Dispositivo teste:** `WWZLYDXWYXT8PV5D` · `.\tools\run_dev.ps1 -d WWZLYDXWYXT8PV5D`.
 
 ---

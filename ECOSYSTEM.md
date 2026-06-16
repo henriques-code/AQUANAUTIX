@@ -1,7 +1,7 @@
 # AQUANAUTIX — Ecossistema de Serviços
 
 > Documento de referência para engenharia de sistemas.
-> **Auditado:** 11 Jun 2026 · alinhado com commit `da3ca79` (app) + `supabase/README_setup.md` (backend).
+> **Auditado:** 16 Jun 2026 · alinhado com commit `34b4e38` (app) + `supabase/README_setup.md` (backend).
 
 ---
 
@@ -43,7 +43,7 @@ A pasta **`supabase/`** existe na raiz do mono-repo (versionada no Git).
 supabase/
 ├── config.toml
 ├── README_setup.md
-├── migrations/     (8 ficheiros SQL — ver tabela abaixo)
+├── migrations/     (9 ficheiros SQL — ver tabela abaixo)
 └── scripts/check_bucket.sql
 ```
 
@@ -59,6 +59,7 @@ supabase/
 | `20260609000000_analytics_events.sql` | funil / paywall | `AnalyticsService` |
 | `20260610000000_security_hardening.sql` | RLS catch_photos, tier, storage | mapa, comunidade |
 | `20260611000000_storage_cleanup_profiles_social.sql` | storage legado; perfis feed | `CommunityRepository` |
+| `20260616174757_storage_no_public_listing.sql` | sem listagem pública storage.objects | buckets catch/community photos |
 
 ### Pendente no repo (só referenciado em checklists)
 
