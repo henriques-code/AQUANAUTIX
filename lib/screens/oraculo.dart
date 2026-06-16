@@ -190,7 +190,7 @@ class _OraculoScreenState extends State<OraculoScreen>
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       unawaited(_initLocationAndLoad());
-      if (isSupabaseConfigured) {
+      if (canUseSupabase) {
         unawaited(CommunityStore.instance.loadFeed(country: ctx.country));
       }
     });
@@ -1517,7 +1517,7 @@ class _OraculoScreenState extends State<OraculoScreen>
       force: true,
     );
     await _loadHourlyTimeline();
-    if (isSupabaseConfigured) {
+    if (canUseSupabase) {
       final ctx = FishingContextStore.instance.value.value;
       await CommunityStore.instance.loadFeed(country: ctx.country);
     }

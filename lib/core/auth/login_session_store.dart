@@ -49,7 +49,7 @@ class LoginSessionStore {
 
   /// Sessão Supabase só sobrevive entre arranques se «manter sessão» estiver activo.
   static Future<void> applySessionPolicy() async {
-    if (!isSupabaseReady) return;
+    if (!canUseSupabase) return;
     final client = supabaseClientOrNull;
     if (client == null) return;
     final remember = await getRememberSession();

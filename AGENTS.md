@@ -34,7 +34,7 @@ ffmpeg -y -f lavfi -i color=c=black:s=64x64:d=0.5 -c:v libx264 -pix_fmt yuv420p 
 
 ### Variáveis / `.env`
 
-Chaves via `--dart-define` (ver `tools/run_dev.ps1` no Windows). Ficheiro `.env` na raiz **não** está versionado. Sem `SUPABASE_URL` + `SUPABASE_ANON_KEY`, `initSupabaseIfConfigured()` não corre — convidado entra na app, mas o ecrã **Início** pode rebentar se algum widget aceder a `Supabase.instance` sem config; **Oráculo** e **Mapa** funcionam com APIs públicas (Open‑Meteo, tiles).
+Chaves via `--dart-define` (ver `tools/run_dev.ps1` / `run_dev.sh`). `.env` na raiz **não** está versionado. Sem Supabase: `canUseSupabase` é `false` — modo convidado com dados locais/demo; usar sempre `supabaseClientOrNull` / `supabaseAuthStateChangesOrNull` (nunca `Supabase.instance` directo).
 
 Para auth/logbook cloud: secrets `SUPABASE_URL`, `SUPABASE_ANON_KEY` (e opcionalmente Mapbox, OpenAI, RevenueCat).
 

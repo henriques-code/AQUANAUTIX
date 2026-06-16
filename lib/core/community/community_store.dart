@@ -38,7 +38,7 @@ class CommunityStore {
   final _repo = CommunityRepository();
 
   Future<void> loadFeed({String? country}) async {
-    if (!isSupabaseConfigured) return;
+    if (!canUseSupabase) return;
     // Evita notifyListeners() durante build de outros tabs.
     await Future<void>.delayed(Duration.zero);
     value.value = value.value.copyWith(loading: true, error: null);
@@ -51,7 +51,7 @@ class CommunityStore {
   }
 
   Future<void> toggleLike(String postId) async {
-    if (!isSupabaseConfigured) return;
+    if (!canUseSupabase) return;
     final posts = List<CommunityPost>.from(value.value.posts);
     final idx = posts.indexWhere((p) => p.id == postId);
     if (idx == -1) return;
@@ -66,7 +66,7 @@ class CommunityStore {
   }
 
   Future<String?> uploadPhoto(XFile file) async {
-    if (!isSupabaseConfigured) return null;
+    if (!canUseSupabase) return null;
     try {
       return await _repo.uploadPhoto(file);
     } catch (_) {
@@ -85,7 +85,7 @@ class CommunityStore {
     bool isLegal = true,
     required String country,
   }) async {
-    if (!isSupabaseConfigured) return false;
+    if (!canUseSupabase) return false;
     try {
       final post = await _repo.createPost(
         zoneLabel:   zoneLabel,

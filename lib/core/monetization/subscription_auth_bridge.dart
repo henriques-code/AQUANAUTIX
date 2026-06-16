@@ -13,12 +13,14 @@ class SubscriptionAuthBridge {
   static StreamSubscription<AuthState>? _sub;
 
   static void init() {
-    if (!isSupabaseReady || !RevenueCatService.instance.isSdkReady) return;
+    if (!canUseSupabase || !RevenueCatService.instance.isSdkReady) return;
 
     _sub?.cancel();
-    _sub = Supabase.instance.client.auth.onAuthStateChange.listen(_onAuth);
+    final authStream = supabaseAuthStateChangesOrNull;
+    if (authStream == null) return;
+    _sub = authStream.listen(_onAuth);
 
-    final userId = Supabase.instance.client.auth.currentUser?.id;
+    final userId = supabaseClientOrNull?.auth.currentUser?.id;
     if (userId != null) {
       unawaited(_identify(userId));
     }

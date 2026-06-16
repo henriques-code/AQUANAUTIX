@@ -539,7 +539,7 @@ class _PerfilScreenState extends State<PerfilScreen> {
 
   Future<void> _logout() async {
     final t = aqxL10nOf(context);
-    if (!isSupabaseConfigured) return;
+    if (!canUseSupabase) return;
     final client = supabaseClientOrNull;
     if (client == null) return;
 

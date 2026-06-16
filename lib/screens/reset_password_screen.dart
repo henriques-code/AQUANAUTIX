@@ -159,7 +159,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
     }
 
     final client = supabaseClientOrNull;
-    if (client == null || !isSupabaseConfigured) {
+    if (client == null || !canUseSupabase) {
       _showSnack('Supabase não configurado.');
       return;
     }

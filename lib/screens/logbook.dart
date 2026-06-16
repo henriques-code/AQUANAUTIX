@@ -125,7 +125,7 @@ class _LogbookScreenState extends State<LogbookScreen>
     LogbookTabIndex.pendingAction.addListener(_applyPendingLogTab);
     _applyPendingLogTab();
     unawaited(_loadCapturas());
-    if (isSupabaseConfigured) {
+    if (canUseSupabase) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
         final ctx = FishingContextStore.instance.value.value;
@@ -854,7 +854,7 @@ class _LogbookScreenState extends State<LogbookScreen>
   Widget _buildFeedPost(int idx, CommunityPost post) {
     final t = aqxL10nOf(context);
     final isLocked = post.locked;
-    final isLive   = isSupabaseConfigured && CommunityStore.instance.value.value.posts.isNotEmpty;
+    final isLive   = canUseSupabase && CommunityStore.instance.value.value.posts.isNotEmpty;
     final liked    = isLive ? post.likedByMe : (_feedLikes[idx] ?? false);
     final likeCount = isLive
         ? post.likesCount

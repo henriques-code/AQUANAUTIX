@@ -11,9 +11,9 @@ class CatchPhotoRepository {
   static const _table = 'catch_photos';
   static const _bucket = 'catch-photos';
 
-  SupabaseClient get _db => supabaseClientOrNull!;
+  SupabaseClient? get _db => supabaseClientOrNull;
 
-  String? get _uid => _db.auth.currentSession?.user.id;
+  String? get _uid => _db?.auth.currentSession?.user.id;
 
   static double _distanceKm(double lat1, double lon1, double lat2, double lon2) {
     const d = Distance();
@@ -70,9 +70,11 @@ class CatchPhotoRepository {
   }
 
   Future<List<CatchPhoto>> fetchMine() async {
+    final db = _db;
+    if (db == null) return [];
     final uid = _uid;
     if (uid == null) return [];
-    final rows = await _db
+    final rows = await db
         .from(_table)
         .select()
         .eq('user_id', uid)
@@ -82,16 +84,18 @@ class CatchPhotoRepository {
   }
 
   Future<String> uploadPhoto(XFile file) async {
+    final db = _db;
+    if (db == null) throw Exception('Supabase não disponível');
     final uid = _uid;
     if (uid == null) throw Exception('Não autenticado');
     final ext = file.name.split('.').last.toLowerCase();
     final path = '$uid/${DateTime.now().millisecondsSinceEpoch}.$ext';
-    await _db.storage.from(_bucket).uploadBinary(
+    await db.storage.from(_bucket).uploadBinary(
           path,
           await file.readAsBytes(),
           fileOptions: FileOptions(contentType: 'image/$ext'),
         );
-    return _db.storage.from(_bucket).getPublicUrl(path);
+    return db.storage.from(_bucket).getPublicUrl(path);
   }
 
   Future<CatchPhoto> create({
@@ -106,6 +110,9 @@ class CatchPhotoRepository {
   }) async {
     final uid = _uid;
     if (uid == null) throw Exception('Não autenticado');
+
+    final db = _db;
+    if (db == null) throw Exception('Supabase não disponível');
 
     final photoUrl = await uploadPhoto(photoFile);
 
@@ -124,16 +131,20 @@ class CatchPhotoRepository {
       createdAt: DateTime.now(),
     );
 
-    final row = await _db.from(_table).insert(draft.toInsert(userId: uid)).select().single();
+    final row = await db.from(_table).insert(draft.toInsert(userId: uid)).select().single();
 
     return CatchPhoto.fromJson(row);
   }
 
   Future<void> changePrivacy(String id, CatchPrivacy privacy) async {
-    await _db.from(_table).update({'privacy': privacy.value}).eq('id', id);
+    final db = _db;
+    if (db == null) return;
+    await db.from(_table).update({'privacy': privacy.value}).eq('id', id);
   }
 
   Future<void> delete(String id) async {
-    await _db.from(_table).delete().eq('id', id);
+    final db = _db;
+    if (db == null) return;
+    await db.from(_table).delete().eq('id', id);
   }
 }
