@@ -6,6 +6,7 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 
 import '../_shared.dart';
+import '../../core/state/subscription_store.dart';
 
 /// Asset hero fixo do mockup (pescador AQUANAUTIX + robalo na mão).
 const kOracleMockupHeroAsset =
@@ -28,6 +29,7 @@ class OracleHeroScoreCard extends StatelessWidget {
     this.mapIsRio = false,
     this.mapLabel = 'VER MAPA',
     this.loading = false,
+    this.lockMapPreviewForFree = true,
   });
 
   final String heroImageAsset;
@@ -43,6 +45,7 @@ class OracleHeroScoreCard extends StatelessWidget {
   final bool mapIsRio;
   final String mapLabel;
   final bool loading;
+  final bool lockMapPreviewForFree;
 
   static const _arcgisSatellite =
       'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
@@ -68,99 +71,136 @@ class OracleHeroScoreCard extends StatelessWidget {
     }
 
     final center = LatLng(lat, lon);
-    return GestureDetector(
-      onTap: onViewMap,
-      child: SizedBox(
-        width: 92,
-        height: 68,
-        child: Stack(
-          fit: StackFit.expand,
-          children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: FlutterMap(
-                options: MapOptions(
-                  backgroundColor: kBg,
-                  initialCenter: center,
-                  initialZoom: mapIsPlanning ? 11.0 : 12.5,
-                  interactionOptions: const InteractionOptions(
-                    flags: InteractiveFlag.none,
-                  ),
+    Widget thumb = SizedBox(
+      width: 92,
+      height: 68,
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: FlutterMap(
+              options: MapOptions(
+                backgroundColor: kBg,
+                initialCenter: center,
+                initialZoom: mapIsPlanning ? 11.0 : 12.5,
+                interactionOptions: const InteractionOptions(
+                  flags: InteractiveFlag.none,
                 ),
-                children: [
-                  TileLayer(
-                    urlTemplate: mapIsRio
-                        ? 'https://tile.openstreetmap.org/{z}/{x}/{y}.png'
-                        : _arcgisSatellite,
-                    userAgentPackageName: 'com.example.aquanautix',
-                    maxNativeZoom: 19,
-                  ),
-                  MarkerLayer(
-                    markers: [
-                      Marker(
-                        point: center,
-                        width: 28,
-                        height: 28,
-                        child: AnimatedBuilder(
-                          animation: pulse,
-                          builder: (context, _) {
-                            final t =
-                                0.5 + 0.5 * math.sin(pulse.value * math.pi * 2);
-                            return Stack(
-                              alignment: Alignment.center,
-                              children: [
-                                Container(
-                                  width: 22 + 8 * t,
-                                  height: 22 + 8 * t,
-                                  decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    color: kCyan.withValues(alpha: 0.18 * t),
-                                  ),
+              ),
+              children: [
+                TileLayer(
+                  urlTemplate: mapIsRio
+                      ? 'https://tile.openstreetmap.org/{z}/{x}/{y}.png'
+                      : _arcgisSatellite,
+                  userAgentPackageName: 'com.example.aquanautix',
+                  maxNativeZoom: 19,
+                ),
+                MarkerLayer(
+                  markers: [
+                    Marker(
+                      point: center,
+                      width: 28,
+                      height: 28,
+                      child: AnimatedBuilder(
+                        animation: pulse,
+                        builder: (context, _) {
+                          final t =
+                              0.5 + 0.5 * math.sin(pulse.value * math.pi * 2);
+                          return Stack(
+                            alignment: Alignment.center,
+                            children: [
+                              Container(
+                                width: 22 + 8 * t,
+                                height: 22 + 8 * t,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: kCyan.withValues(alpha: 0.18 * t),
                                 ),
-                                Icon(
-                                  mapIsPlanning
-                                      ? Icons.place_rounded
-                                      : Icons.my_location_rounded,
-                                  color: kCyan,
-                                  size: 18,
-                                ),
-                              ],
-                            );
-                          },
-                        ),
+                              ),
+                              Icon(
+                                mapIsPlanning
+                                    ? Icons.place_rounded
+                                    : Icons.my_location_rounded,
+                                color: kCyan,
+                                size: 18,
+                              ),
+                            ],
+                          );
+                        },
                       ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-            Positioned(
-              left: 0,
-              right: 0,
-              bottom: 0,
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.78),
-                  borderRadius: const BorderRadius.vertical(
-                    bottom: Radius.circular(8),
-                  ),
+                    ),
+                  ],
                 ),
-                padding: const EdgeInsets.symmetric(vertical: 2),
-                alignment: Alignment.center,
-                child: Text(mapLabel, style: mono(6.5, c: kCyan, ls: 0.3)),
-              ),
+              ],
             ),
-            Positioned.fill(
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: kCyan.withValues(alpha: 0.45)),
+          ),
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.black.withValues(alpha: 0.78),
+                borderRadius: const BorderRadius.vertical(
+                  bottom: Radius.circular(8),
                 ),
               ),
+              padding: const EdgeInsets.symmetric(vertical: 2),
+              alignment: Alignment.center,
+              child: Text(mapLabel, style: mono(6.5, c: kCyan, ls: 0.3)),
             ),
-          ],
-        ),
+          ),
+          Positioned.fill(
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: kCyan.withValues(alpha: 0.45)),
+              ),
+            ),
+          ),
+        ],
       ),
+    );
+
+    if (!lockMapPreviewForFree) {
+      return GestureDetector(onTap: onViewMap, child: thumb);
+    }
+
+    return ValueListenableBuilder<SubscriptionState>(
+      valueListenable: SubscriptionStore.instance.value,
+      builder: (context, sub, _) {
+        final locked = !sub.hasProEntitlement;
+        return GestureDetector(
+          onTap: onViewMap,
+          child: Stack(
+            children: [
+              thumb,
+              if (locked)
+                Positioned(
+                  left: 0,
+                  top: 0,
+                  width: 92,
+                  height: 52,
+                  child: ClipRRect(
+                    borderRadius: const BorderRadius.vertical(
+                      top: Radius.circular(8),
+                    ),
+                    child: BackdropFilter(
+                      filter: ui.ImageFilter.blur(sigmaX: 4, sigmaY: 4),
+                      child: Container(
+                        color: kBg.withValues(alpha: 0.25),
+                        alignment: Alignment.center,
+                        child: Icon(Icons.lock_rounded,
+                            size: 14, color: kAmber.withValues(alpha: 0.9)),
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        );
+      },
     );
   }
 
@@ -489,12 +529,20 @@ class OracleMockupCtas extends StatelessWidget {
     required this.onRegisterCatch,
     this.goFishLabel = 'IR PESCAR ->',
     this.registerLabel = 'REGISTAR CAPTURA',
+    this.onComparePro,
+    this.onAlertPro,
+    this.compareProLabel = 'Comparar 3 sítios (PRO)',
+    this.alertProLabel = 'Alertar janela (PRO)',
   });
 
   final VoidCallback onGoFish;
   final VoidCallback onRegisterCatch;
   final String goFishLabel;
   final String registerLabel;
+  final VoidCallback? onComparePro;
+  final VoidCallback? onAlertPro;
+  final String compareProLabel;
+  final String alertProLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -539,7 +587,78 @@ class OracleMockupCtas extends StatelessWidget {
             ),
           ),
         ),
+        if (onComparePro != null || onAlertPro != null) ...[
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              if (onAlertPro != null)
+                Expanded(
+                  child: _ProChipButton(
+                    label: alertProLabel,
+                    icon: Icons.notifications_none_rounded,
+                    enabled: false,
+                    onTap: onAlertPro!,
+                  ),
+                ),
+              if (onAlertPro != null && onComparePro != null)
+                const SizedBox(width: 8),
+              if (onComparePro != null)
+                Expanded(
+                  child: _ProChipButton(
+                    label: compareProLabel,
+                    icon: Icons.compare_arrows_rounded,
+                    enabled: true,
+                    onTap: onComparePro!,
+                  ),
+                ),
+            ],
+          ),
+        ],
       ],
+    );
+  }
+}
+
+class _ProChipButton extends StatelessWidget {
+  const _ProChipButton({
+    required this.label,
+    required this.icon,
+    required this.enabled,
+    required this.onTap,
+  });
+
+  final String label;
+  final IconData icon;
+  final bool enabled;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 38,
+      child: OutlinedButton.icon(
+        onPressed: enabled ? onTap : null,
+        style: OutlinedButton.styleFrom(
+          foregroundColor: kAmber,
+          disabledForegroundColor: kHint.withValues(alpha: 0.55),
+          side: BorderSide(
+            color: enabled
+                ? kAmber.withValues(alpha: 0.65)
+                : kHint.withValues(alpha: 0.25),
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 8),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+          ),
+        ),
+        icon: Icon(icon, size: 15),
+        label: Text(
+          label,
+          style: ibm(10, fw: FontWeight.w600),
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+        ),
+      ),
     );
   }
 }

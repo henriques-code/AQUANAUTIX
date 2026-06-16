@@ -25,6 +25,7 @@ import '../core/supabase_bootstrap.dart';
 import '../core/tides/oracle_hourly_score.dart';
 import '../features/home/domain/entities/hourly_condition.dart';
 import 'widgets/aqx_pressable.dart';
+import 'widgets/oracle_conversion_pack.dart';
 import 'widgets/oracle_decisao_fold.dart';
 import 'widgets/oracle_hero_decision.dart';
 import 'widgets/oracle_mockup_header.dart';
@@ -445,6 +446,26 @@ class _OraculoScreenState extends State<OraculoScreen>
     HomeTabIndex.notifier.value = HomeTabIndex.communityTabIndex;
   }
 
+  void _openProUnlockSheet(
+    BuildContext context, {
+    required AqxL10n t,
+    required String speciesLabel,
+    required int proScore,
+  }) {
+    unawaited(
+      showOracleProUnlockSheet(
+        context,
+        distanceLabel: t.es ? 'Spot PRO a 1.2 km' : 'Spot PRO a 1.2 km',
+        scoreLine: t.es
+            ? 'Score $proScore mañana 07:15'
+            : 'Score $proScore amanhã 07:15',
+        speciesLabel: speciesLabel,
+        source: 'oraculo_pro_drawer',
+        es: t.es,
+      ),
+    );
+  }
+
   void _onFishingMetricTap(OracleFishingMetricKind kind) {
     _weatherGridKey.currentState?.expandAccordion();
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -638,6 +659,29 @@ class _OraculoScreenState extends State<OraculoScreen>
             final mapCoords = _oracleMapCoords();
             final proScore = ((hasData ? d.score : 84) + 8).clamp(0, 100);
             final windowHours = _heroWindowLabel(d.horario);
+            final speciesLabel = _speciesUiLabel(species);
+            final decisionText = OracleDecisionCopy.line(
+              es: t.es,
+              score: hasData ? d.score : 0,
+              windowHours: windowHours,
+              proScore: proScore,
+              loading: loading,
+            );
+            final proSticky = t.es
+                ? 'Spot PRO a 1.2 km · Score $proScore mañana 07:15'
+                : 'Spot PRO a 1.2 km · Score $proScore amanhã 07:15';
+            final ghostPosts = CommunityDemoPosts.oracleGhostRow();
+            final communityProHint = t.es
+                ? '${ghostPosts.length} capturas cerca · PRO ve zona 5 km'
+                : '${ghostPosts.length} capturas perto · PRO vê zona 5 km';
+
+            void openPro() => _openProUnlockSheet(
+                  context,
+                  t: t,
+                  speciesLabel: speciesLabel,
+                  proScore: proScore,
+                );
+
             return OracleDecisaoFold(
               hero: OracleHeroScoreCard(
                 heroImageAsset: _rioMode
@@ -659,6 +703,10 @@ class _OraculoScreenState extends State<OraculoScreen>
                 mapLabel: 'VER MAPA',
                 loading: loading,
               ),
+              decisionText: decisionText,
+              decisionLoading: loading,
+              proStickySummary: proSticky,
+              onProUnlock: openPro,
               speciesCard: OracleSpeciesTargetCard(
                 speciesCodes: zoneCodes,
                 selectedSpecies: species,
@@ -666,7 +714,7 @@ class _OraculoScreenState extends State<OraculoScreen>
                 onSpeciesSelected: (code) {
                   FishingContextStore.instance.update(species: code);
                 },
-                targetSpecies: _speciesUiLabel(species),
+                targetSpecies: speciesLabel,
                 bait: primaryPlan.bait,
                 rodTechnique:
                     '${primaryPlan.rod} · ${primaryPlan.technique}',
@@ -677,18 +725,29 @@ class _OraculoScreenState extends State<OraculoScreen>
                 goFishLabel: t.es ? 'IR A PESCAR ->' : 'IR PESCAR ->',
                 registerLabel:
                     t.es ? 'REGISTRAR CAPTURA' : 'REGISTAR CAPTURA',
+                onComparePro: openPro,
+                compareProLabel:
+                    t.es ? 'Comparar 3 sitios (PRO)' : 'Comparar 3 sítios (PRO)',
+                onAlertPro: () {},
+                alertProLabel: t.es
+                    ? 'Alertar ventana (PRO) · PRONTO'
+                    : 'Alertar janela (PRO) · EM BREVE',
               ),
-              communityPosts: CommunityDemoPosts.oracleGhostRow(),
+              communityPosts: ghostPosts,
               es: t.es,
               communityTitle: t.es
                   ? 'GHOST ACTIVIDAD EN LA ZONA'
                   : 'GHOST ATIVIDADE NA ZONA',
+              communityProHint: communityProHint,
+              onProCommunityHook: openPro,
               onViewCommunity: _openCommunityTab,
               proDistanceLabel: 'Spot PRO a 1.2 km',
               proScoreLine: t.es
                   ? 'Score $proScore mañana 07:15'
                   : 'Score $proScore amanhã 07:15',
-              proUnlockLabel: 'DESBLOQUEAR PRO',
+              proUnlockLabel:
+                  t.es ? 'PRO 3 días gratis →' : 'PRO 3 dias grátis →',
+              proSpeciesLabel: speciesLabel,
             );
           },
         ),
