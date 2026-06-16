@@ -25,10 +25,11 @@ import '../core/supabase_bootstrap.dart';
 import '../core/tides/oracle_hourly_score.dart';
 import '../features/home/domain/entities/hourly_condition.dart';
 import 'widgets/aqx_pressable.dart';
-import 'widgets/oracle_community_strip.dart';
-import 'widgets/oracle_mini_map.dart';
+import 'widgets/oracle_decisao_fold.dart';
+import 'widgets/oracle_hero_decision.dart';
+import 'widgets/oracle_mockup_header.dart';
 import 'widgets/oracle_conditions_fold.dart';
-import 'widgets/oracle_decision_card.dart';
+import 'widgets/oracle_conditions_collapsible.dart';
 import 'widgets/oracle_fishing_metrics_grid.dart';
 import 'widgets/oracle_weather_details_grid.dart';
 import 'widgets/location_access_sheet.dart';
@@ -410,35 +411,6 @@ class _OraculoScreenState extends State<OraculoScreen>
     }
   }
 
-  List<String> _decisionReasons(_ModoData d, WeatherDetailsSnapshot? w) {
-    final reasons = <String>[];
-    for (final line in d.statusDesc.split('\n')) {
-      for (final chunk in line.split('+')) {
-        final s = chunk.trim();
-        if (s.isNotEmpty) {
-          reasons.add(s[0].toUpperCase() + s.substring(1));
-        }
-      }
-    }
-    if (w != null && w.moonPct > 0) {
-      final moonLbl = w.moonPhaseLabel.isNotEmpty
-          ? w.moonPhaseLabel
-          : 'fase ${w.moonPct}%';
-      reasons.add('Solunar · $moonLbl');
-    }
-    if (w?.windSpeedKmh != null &&
-        !reasons.any((r) => r.toLowerCase().contains('vento'))) {
-      reasons.add(
-        'Vento ${w!.windSpeedKmh!.round()} km/h '
-        '${WeatherDetailsSnapshot.windCardinalPt(w.windDirDeg)}',
-      );
-    }
-    if (w?.waveHeightM != null && w!.waveHeightM! > 0 && !_rioMode) {
-      reasons.add('Ondas ~${w.waveHeightM!.toStringAsFixed(1)} m');
-    }
-    return reasons.take(3).toList();
-  }
-
   void _openLogNovaCaptura() {
     LogbookTabIndex.pendingTab.value = LogbookTabIndex.minhasTab;
     LogbookTabIndex.pendingAction.value = 'nova_captura';
@@ -471,12 +443,6 @@ class _OraculoScreenState extends State<OraculoScreen>
 
   void _openCommunityTab() {
     HomeTabIndex.notifier.value = HomeTabIndex.communityTabIndex;
-  }
-
-  void _openCommunityShare() {
-    LogbookTabIndex.pendingTab.value = LogbookTabIndex.comunidadeTab;
-    LogbookTabIndex.pendingAction.value = 'novo_post';
-    HomeTabIndex.notifier.value = HomeTabIndex.logTabIndex;
   }
 
   void _onFishingMetricTap(OracleFishingMetricKind kind) {
@@ -526,36 +492,6 @@ class _OraculoScreenState extends State<OraculoScreen>
     );
   }
 
-  Widget _rigSpeciesChipRow() {
-    return ValueListenableBuilder<FishingContext>(
-      valueListenable: FishingContextStore.instance.value,
-      builder: (context, ctx, _) {
-        final codes = _rioMode
-            ? const ['BARBO', 'ACHIGA']
-            : const ['ROBALO', 'SARGO', 'DOURADA'];
-        return SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: Row(
-            children: [
-              for (final code in codes)
-                Padding(
-                  padding: const EdgeInsets.only(right: 8),
-                  child: AqxGlassChip(
-                    label: _speciesUiLabel(code),
-                    selected: ctx.species == code,
-                    compact: true,
-                    onTap: () {
-                      FishingContextStore.instance.update(species: code);
-                    },
-                  ),
-                ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
   _RigPlan _planForSpecies(
     String code, {
     required bool isRio,
@@ -564,15 +500,15 @@ class _OraculoScreenState extends State<OraculoScreen>
     switch (code.toUpperCase()) {
       case 'SARGO':
         return const _RigPlan(
-          bait: 'Minhoca + Mexilhão',
-          rod: 'Rock 3.3m · 0.20mm',
+          bait: 'Caranguejo + Mexilhão',
+          rod: 'Rock 3–4m',
           technique: 'Rocha / Float',
           distance: '20–35m junto à pedra',
         );
       case 'DOURADA':
         return const _RigPlan(
           bait: 'Minhoca + Amêijoa',
-          rod: 'Surf 4.2m · 0.28mm',
+          rod: 'Surf 3.9m',
           technique: 'Surfcasting',
           distance: '60–90m fundo limpo',
         );
@@ -622,56 +558,12 @@ class _OraculoScreenState extends State<OraculoScreen>
           );
         }
         return const _RigPlan(
-          bait: 'Shad 10–14cm',
-          rod: 'Spinning 9ft · PE 0.8',
-          technique: 'Spinning / Jigging',
+          bait: 'Minhoca + Shad 14cm',
+          rod: 'Rock 3.3m',
+          technique: 'Surfcasting',
           distance: '40–60m do rochedo',
         );
     }
-  }
-
-  List<String> _activeSpeciesCodes({
-    required bool isRio,
-    required String place,
-    required int score,
-    required String selectedSpecies,
-  }) {
-    final sel = selectedSpecies.toUpperCase();
-    List<String> defaults;
-    if (isRio) {
-      defaults = const ['BARBO', 'ACHIGA'];
-    } else {
-      final p = place.toLowerCase();
-      if (p.contains('sesimbra') || p.contains('setúbal') || p.contains('setubal')) {
-        defaults = const ['ROBALO', 'SARGO'];
-      } else if (p.contains('peniche') || p.contains('nazaré') || p.contains('nazare')) {
-        defaults = const ['ROBALO', 'CORVINA'];
-      } else if (p.contains('sagres') || p.contains('lagos') || p.contains('faro')) {
-        defaults = const ['DOURADA', 'SARGO'];
-      } else if (p.contains('cascais') || p.contains('sintra') || p.contains('ericeira')) {
-        defaults = const ['ROBALO', 'SARGO'];
-      } else if (p.contains('vigo') || p.contains('pontevedra')) {
-        defaults = const ['ROBALO', 'DOURADA'];
-      } else if (p.contains('huelva') || p.contains('cádiz') || p.contains('cadiz')) {
-        defaults = const ['DOURADA', 'CORVINA'];
-      } else if (p.contains('coruña') || p.contains('coruna') || p.contains('galicia')) {
-        defaults = const ['ROBALO', 'SARGO'];
-      } else if (p.contains('barcelona') || p.contains('tarragona') || p.contains('girona')) {
-        defaults = const ['DOURADA', 'SARGO'];
-      } else if (p.contains('alicante') || p.contains('valencia') || p.contains('murcia')) {
-        defaults = const ['DOURADA', 'SARGO'];
-      } else if (score >= 75) {
-        defaults = const ['ROBALO', 'SARGO'];
-      } else if (score >= 55) {
-        defaults = const ['DOURADA', 'ROBALO'];
-      } else {
-        defaults = [sel, sel == 'SARGO' ? 'ROBALO' : 'SARGO'];
-      }
-    }
-    if (defaults.contains(sel)) {
-      return [sel, ...defaults.where((c) => c != sel).take(1)];
-    }
-    return [sel, defaults.first];
   }
 
   /// Mesmos limiares que o índice no backend (80 / 65 / 45) — evita «MODERADA» vs «BOM».
@@ -703,6 +595,144 @@ class _OraculoScreenState extends State<OraculoScreen>
     );
   }
 
+  String _heroWindowLabel(String raw) {
+    if (raw.isEmpty || raw == '—') return '—';
+    return raw
+        .replaceAll('->', '→')
+        .replaceAll(RegExp(r'\s*→\s*'), ' → ')
+        .trim();
+  }
+
+  Widget _buildDecisaoFold(BuildContext context, AqxL10n t, _ModoData d) {
+    final hasData = _rioMode ? _hasRioData : _hasCostaData;
+    final gpsErr = _rioMode ? _rioGpsError : _costaGpsError;
+    final loading = !hasData &&
+        !gpsErr &&
+        (_rioMode ? _rioLoad : _costaLoad) == _LoadState.loading;
+    final err = _rioMode ? _rioError : _costaError;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (!hasData && !loading && err != null)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+            child: _inlineDataBanner(
+              message: err,
+              t: t,
+              gpsErr: gpsErr,
+            ),
+          ),
+        ValueListenableBuilder<FishingContext>(
+          valueListenable: FishingContextStore.instance.value,
+          builder: (context, fishingCtx, _) {
+            final species = fishingCtx.species;
+            final primaryPlan = _planForSpecies(
+              species,
+              isRio: _rioMode,
+              t: t,
+            );
+            final zoneCodes = _rioMode
+                ? const ['BARBO', 'ACHIGA']
+                : const ['ROBALO', 'SARGO', 'DOURADA'];
+            final mapCoords = _oracleMapCoords();
+            final proScore = ((hasData ? d.score : 84) + 8).clamp(0, 100);
+            final windowHours = _heroWindowLabel(d.horario);
+            return OracleDecisaoFold(
+              hero: OracleHeroScoreCard(
+                heroImageAsset: _rioMode
+                    ? oracleHeroAssetForSpecies(species, isRio: true)
+                    : kOracleMockupHeroAsset,
+                score: hasData ? d.score : 0,
+                statusLabel:
+                    hasData ? d.statusLabel : (loading ? '…' : '—'),
+                windowHours: windowHours,
+                windowPrefix: t.es
+                    ? 'Mejor ventana hoy:'
+                    : 'Melhor janela hoje:',
+                mapLat: mapCoords?.lat,
+                mapLon: mapCoords?.lon,
+                mapIsPlanning: _planningPlace != null,
+                mapIsRio: _rioMode,
+                onViewMap: _openMapTab,
+                pulse: _fishPulse,
+                mapLabel: 'VER MAPA',
+                loading: loading,
+              ),
+              speciesCard: OracleSpeciesTargetCard(
+                speciesCodes: zoneCodes,
+                selectedSpecies: species,
+                speciesLabelFor: _speciesUiLabel,
+                onSpeciesSelected: (code) {
+                  FishingContextStore.instance.update(species: code);
+                },
+                targetSpecies: _speciesUiLabel(species),
+                bait: primaryPlan.bait,
+                rodTechnique:
+                    '${primaryPlan.rod} · ${primaryPlan.technique}',
+              ),
+              ctas: OracleMockupCtas(
+                onGoFish: _openMapTab,
+                onRegisterCatch: _openLogNovaCaptura,
+                goFishLabel: t.es ? 'IR A PESCAR ->' : 'IR PESCAR ->',
+                registerLabel:
+                    t.es ? 'REGISTRAR CAPTURA' : 'REGISTAR CAPTURA',
+              ),
+              communityPosts: CommunityDemoPosts.oracleGhostRow(),
+              es: t.es,
+              communityTitle: t.es
+                  ? 'GHOST ACTIVIDAD EN LA ZONA'
+                  : 'GHOST ATIVIDADE NA ZONA',
+              onViewCommunity: _openCommunityTab,
+              proDistanceLabel: 'Spot PRO a 1.2 km',
+              proScoreLine: t.es
+                  ? 'Score $proScore mañana 07:15'
+                  : 'Score $proScore amanhã 07:15',
+              proUnlockLabel: 'DESBLOQUEAR PRO',
+            );
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _inlineDataBanner({
+    required String message,
+    required AqxL10n t,
+    required bool gpsErr,
+  }) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: kCard,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+          color: (gpsErr ? kAmber : Colors.red).withValues(alpha: 0.35),
+        ),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            gpsErr ? Icons.location_off_rounded : Icons.wifi_off_rounded,
+            color: gpsErr ? kAmber : Colors.red,
+            size: 18,
+          ),
+          const SizedBox(width: 8),
+          Expanded(child: Text(message, style: ibm(12, c: Colors.white70))),
+          if (gpsErr)
+            GestureDetector(
+              onTap: () => unawaited(_enableLocation(t)),
+              child: Text(
+                t.locationBannerAction,
+                style: ibm(12, c: kCyan, fw: FontWeight.w700),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final t = AqxL10n(Localizations.localeOf(context).languageCode);
@@ -716,476 +746,211 @@ class _OraculoScreenState extends State<OraculoScreen>
       child: SingleChildScrollView(
         controller: _scrollCtrl,
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.fromLTRB(16, 8, 16, 14),
         child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-
-          // ── Header: localização ────────────────────────
-          Row(children: [
-            Expanded(
-              child: FadeTransition(
-                opacity: _fade,
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(7),
-                      decoration: BoxDecoration(
-                        color: kCyan.withValues(alpha: 0.1),
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: kCyan.withValues(alpha: 0.35),
-                        ),
-                      ),
-                      child: Icon(
-                        d.iconeLocal == 'rio'
-                            ? Icons.waves
-                            : (d.locationFromGps
-                                ? Icons.my_location_rounded
-                                : Icons.place_outlined),
-                        size: 24,
-                        color: kCyan,
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            d.local,
-                            style: orb(
-                              18,
-                              c: kCyan,
-                              fw: FontWeight.w800,
-                              ls: 0.35,
-                            ),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          if (d.localSubtitle.isNotEmpty) ...[
-                            const SizedBox(height: 5),
-                            Text(
-                              d.localSubtitle,
-                              style: mono(
-                                11.5,
-                                c: kHint.withValues(alpha: 0.92),
-                                ls: 0.35,
-                              ),
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ],
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            GestureDetector(
-              onTap: () {
-                HapticFeedback.selectionClick();
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      t.alertsProConfigSoon,
-                      style: ibm(14),
-                    ),
-                    backgroundColor: kCard,
-                    behavior: SnackBarBehavior.floating,
-                  ),
-                );
-              },
-              child: Container(
-                padding: const EdgeInsets.all(7),
-                decoration: BoxDecoration(
-                  color: kCard,
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: kAmber.withValues(alpha: 0.4)),
-                ),
-                child: const Icon(Icons.notifications_outlined,
-                    size: 21, color: kAmber),
-              ),
-            ),
-          ]),
-          const SizedBox(height: 10),
-
-          // ── Toggle COSTA / RIO ─────────────────────────
-          AqxGlassSegmentToggle(
-            leftIcon: Icons.waves_rounded,
-            leftLabel: t.costa,
-            rightIcon: Icons.landscape_rounded,
-            rightLabel: t.rio,
-            rightSelected: _rioMode,
-            onLeft: () => _toggle(false),
-            onRight: () => _toggle(true),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+          // ── Mockup: localização + COSTA/RIO ────────────
+          OracleMockupHeader(
+            placeLabel: d.local,
+            coordsLabel: _coordsDisplayLabel().isNotEmpty
+                ? _coordsDisplayLabel()
+                : d.localSubtitle,
+            costaLabel: t.costa,
+            rioLabel: t.rio,
+            rioMode: _rioMode,
+            onCosta: () => _toggle(false),
+            onRio: () => _toggle(true),
+            isRioIcon: d.iconeLocal == 'rio',
+            locationFromGps: d.locationFromGps,
           ),
-
           const SizedBox(height: 8),
 
-          // ── Fonte de dados (GPS / planeamento) ─────────
           if (_isGpsBlocked()) ...[
             _locationAccessBanner(t),
             const SizedBox(height: 8),
           ],
-          _planningSourceRow(t),
-          const SizedBox(height: 8),
-
-          if (_oracleMiniMapCoords() case final coords?) ...[
-            OracleMiniMap(
-              lat: coords.lat,
-              lon: coords.lon,
-              isPlanning: _planningPlace != null,
-              isRio: _rioMode,
-              onViewMap: _openMapTab,
-              viewMapLabel: t.es ? 'VER MAPA' : 'VER MAPA',
-            ),
-            const SizedBox(height: 8),
-          ],
-
-          // ── Decisão do Oráculo ─────────────────────────
-          FadeTransition(
-            opacity: _fade,
-            child: (_rioMode ? !_hasRioData : !_hasCostaData)
-                ? _scoreStatePlaceholder(isRio: _rioMode, t: t)
-                : OracleDecisionCard(
-                        score: d.score,
-                        statusLabel: d.statusLabel,
-                        windowHours: d.horario,
-                        reasons: _decisionReasons(d, _weatherDetails),
-                        registerLabel:
-                            t.es ? 'REGISTRAR CAPTURA' : 'REGISTAR CAPTURA',
-                        mapLabel: t.es ? 'VER EN MAPA' : 'VER NO MAPA',
-                        title: t.es
-                            ? 'DECISIÓN DEL ORÁCULO'
-                            : 'DECISÃO DO ORÁCULO',
-                        windowPrefix:
-                            t.es ? 'Mejor ventana:' : 'Melhor janela:',
-                        onRegisterCatch: _openLogNovaCaptura,
-                        onViewMap: _openMapTab,
-                      ),
-          ),
-
-          const SizedBox(height: 8),
-
-          // ── Condições agora + 12h (fold unificado) ─────
-          FadeTransition(
-            opacity: _fade,
-            child: OracleConditionsFold(
-              metrics: _buildFishingMetrics(d),
-              hours: applyTimelineHighlights(
-                _hourlyTimeline,
-                now: DateTime.now(),
-                goldenWindowHours: d.horario,
-              ),
-              tideSparkline: _weatherDetails?.tideSparkline ?? const [],
-              timelineTitle: t.es
-                  ? 'PRÓXIMAS 12H · SCORE + MAREA'
-                  : 'PRÓXIMAS 12H · SCORE + MARÉ',
-              nowLabel: t.es ? 'ahora' : 'agora',
-              onMetricTap: _onFishingMetricTap,
+          _gpsSearchPill(t),
+              ],
             ),
           ),
 
-          const SizedBox(height: 8),
-
-          // ── Meteorologia completa (accordion) ────────
+          // ── Fold Decisão (mockup — sempre visível) ─────
           FadeTransition(
             opacity: _fade,
-            child: KeyedSubtree(
-              key: _weatherSectionKey,
-              child: OracleWeatherDetailsGrid(
-                key: _weatherGridKey,
-                data: _weatherDetails,
-                loading: _weatherDetailsLoading,
-                loadFailed: _weatherDetailsFailed,
-                collapsible: true,
-                initiallyExpanded: false,
-                onRetry: () => unawaited(_loadWeatherDetails(
-                  costaBundle: _costaBundle,
-                  force: true,
-                )),
-              ),
-            ),
+            child: _buildDecisaoFold(context, t, d),
           ),
 
-          const SizedBox(height: 8),
-
-          // ── Previsão 5 dias ────────────────────────────
-          if (d.dias.isNotEmpty) ...[
-            Text(t.forecastHeader, style: mono(12, ls: 1.2)),
-            const SizedBox(height: 5),
-            FadeTransition(
-              opacity: _fade,
-              child: Row(
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+            child: FadeTransition(
+            opacity: _fade,
+            child: OracleConditionsCollapsible(
+              title: t.es ? 'Condiciones completas' : 'Condições completas',
+              subtitle: t.es ? 'Maré · Vento · Ondas' : 'Maré · Vento · Ondas',
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  for (var i = 0; i < d.dias.length; i++) ...[
-                    if (i > 0) const SizedBox(width: 5),
-                    _diaCard(d.dias[i], i == 0),
+                  OracleConditionsFold(
+                    metrics: _buildFishingMetrics(d),
+                    hours: applyTimelineHighlights(
+                      _hourlyTimeline,
+                      now: DateTime.now(),
+                      goldenWindowHours: d.horario,
+                    ),
+                    tideSparkline: _weatherDetails?.tideSparkline ?? const [],
+                    timelineTitle: t.es
+                        ? 'PRÓXIMAS 12H · SCORE + MAREA'
+                        : 'PRÓXIMAS 12H · SCORE + MARÉ',
+                    nowLabel: t.es ? 'ahora' : 'agora',
+                    onMetricTap: _onFishingMetricTap,
+                  ),
+                  const SizedBox(height: 8),
+                  KeyedSubtree(
+                    key: _weatherSectionKey,
+                    child: OracleWeatherDetailsGrid(
+                      key: _weatherGridKey,
+                      data: _weatherDetails,
+                      loading: _weatherDetailsLoading,
+                      loadFailed: _weatherDetailsFailed,
+                      collapsible: false,
+                      initiallyExpanded: true,
+                      onRetry: () => unawaited(_loadWeatherDetails(
+                        costaBundle: _costaBundle,
+                        force: true,
+                      )),
+                    ),
+                  ),
+                  if (d.dias.isNotEmpty) ...[
+                    const SizedBox(height: 8),
+                    Text(t.forecastHeader, style: mono(12, ls: 1.2)),
+                    const SizedBox(height: 5),
+                    Row(
+                      children: [
+                        for (var i = 0; i < d.dias.length; i++) ...[
+                          if (i > 0) const SizedBox(width: 5),
+                          _diaCard(d.dias[i], i == 0),
+                        ],
+                      ],
+                    ),
                   ],
-                ],
-              ),
-            ),
-            const SizedBox(height: 8),
-          ],
-
-          // ── Janela de Ouro — fiel à referência ────────
-          if (d.janelaTexto.isNotEmpty) ...[
-            FadeTransition(
-              opacity: _fade,
-              child: Container(
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  color: const Color(0xFF0D1A0A),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: kAmber.withValues(alpha: 0.25)),
-                ),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
+                  if (d.janelaTexto.isNotEmpty) ...[
+                    const SizedBox(height: 10),
                     Container(
-                      width: 4,
-                      height: 52,
-                      decoration: const BoxDecoration(
-                        color: kAmber,
-                        borderRadius: BorderRadius.only(
-                          topLeft: Radius.circular(12),
-                          bottomLeft: Radius.circular(12),
-                        ),
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF0D1A0A),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: kAmber.withValues(alpha: 0.25)),
+                      ),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            width: 4,
+                            height: 52,
+                            decoration: const BoxDecoration(
+                              color: kAmber,
+                              borderRadius: BorderRadius.only(
+                                topLeft: Radius.circular(12),
+                                bottomLeft: Radius.circular(12),
+                              ),
+                            ),
+                          ),
+                          Expanded(
+                            child: Padding(
+                              padding: const EdgeInsets.fromLTRB(10, 10, 10, 10),
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text('👑', style: TextStyle(fontSize: 17)),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: RichText(
+                                      text: TextSpan(children: [
+                                        TextSpan(
+                                          text: t.goldenWindowTitle,
+                                          style: ibm(14, c: kAmber,
+                                              fw: FontWeight.w700),
+                                        ),
+                                        TextSpan(
+                                          text: d.janelaTexto,
+                                          style: ibm(14, c: Colors.white70),
+                                        ),
+                                      ]),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    Expanded(
-                      child: Padding(
-                        padding: const EdgeInsets.fromLTRB(10, 10, 10, 10),
-                        child: Row(
+                  ],
+                  const SizedBox(height: 8),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: kCard,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: kHint.withValues(alpha: 0.25)),
+                    ),
+                    child: Row(children: [
+                      Container(
+                        width: 32,
+                        height: 32,
+                        decoration: BoxDecoration(
+                          color: kHint.withValues(alpha: 0.08),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(Icons.notifications_active_outlined,
+                            color: kHint.withValues(alpha: 0.7), size: 17),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text('👑', style: TextStyle(fontSize: 17)),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: RichText(
-                                text: TextSpan(children: [
-                                  TextSpan(
-                                    text: t.goldenWindowTitle,
-                                    style: ibm(14, c: kAmber, fw: FontWeight.w700),
-                                  ),
-                                  TextSpan(
-                                    text: d.janelaTexto,
-                                    style: ibm(14, c: Colors.white70),
-                                  ),
-                                ]),
+                            Text(t.pushGoldenPro,
+                                style: mono(11, c: kHint, ls: 0.8)),
+                            Text(
+                              t.pushDemoBody(
+                                _rioMode ? t.riverTagusDemo : _alertPlaceHint(t),
                               ),
+                              style: ibm(13, c: Colors.white54),
                             ),
                           ],
                         ),
                       ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 8),
-          ],
-
-          // ── P5 — Push Janela de Ouro (EM BREVE) ────────
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: kCard,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: kHint.withValues(alpha: 0.25)),
-            ),
-            child: Row(children: [
-              Container(
-                width: 32,
-                height: 32,
-                decoration: BoxDecoration(
-                  color: kHint.withValues(alpha: 0.08),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(Icons.notifications_active_outlined,
-                    color: kHint.withValues(alpha: 0.7), size: 17),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(t.pushGoldenPro,
-                        style: mono(11, c: kHint, ls: 0.8)),
-                    Text(
-                      t.pushDemoBody(
-                        _rioMode ? t.riverTagusDemo : _alertPlaceHint(t),
-                      ),
-                      style: ibm(13, c: Colors.white54),
-                    ),
-                  ],
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: kHint.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(6),
-                  border: Border.all(color: kHint.withValues(alpha: 0.35)),
-                ),
-                child: Text(
-                  t.es ? 'EM BREVE' : 'EM BREVE',
-                  style: mono(10, c: kHint, ls: 0.5),
-                ),
-              ),
-            ]),
-          ),
-
-          const SizedBox(height: 8),
-
-          // ── Comunidade Ghost (zona) ────────────────────
-          ValueListenableBuilder<CommunityState>(
-            valueListenable: CommunityStore.instance.value,
-            builder: (context, comm, _) {
-              final posts = comm.posts.isNotEmpty
-                  ? comm.posts
-                  : CommunityDemoPosts.posts();
-              return OracleCommunityStrip(
-                posts: posts,
-                loading: comm.loading && comm.posts.isEmpty,
-                es: t.es,
-                title: t.es ? 'ACTIVIDAD EN LA ZONA' : 'ACTIVIDADE NA ZONA',
-                subtitle: t.es
-                    ? 'Descubre lo que captura la comunidad'
-                    : 'Descobre o que a comunidade está a capturar',
-                viewLabel: t.es ? 'VER COMUNIDAD' : 'VER COMUNIDADE',
-                shareLabel: t.es ? 'COMPARTIR' : 'PARTILHAR',
-                onViewCommunity: _openCommunityTab,
-                onShare: _openCommunityShare,
-              );
-            },
-          ),
-
-          const SizedBox(height: 8),
-
-          // ── P3 — Isco + Cana + Técnica ─────────────────
-          FadeTransition(
-            opacity: _fade,
-            child: Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: kCard,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: kCyan.withValues(alpha: 0.1)),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      const Text('🎣', style: TextStyle(fontSize: 17)),
-                      const SizedBox(width: 8),
-                      Expanded(
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: kHint.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(6),
+                          border:
+                              Border.all(color: kHint.withValues(alpha: 0.35)),
+                        ),
                         child: Text(
-                          t.rigCardTitle,
-                          style: mono(12, ls: 1.2),
+                          t.es ? 'EM BREVE' : 'EM BREVE',
+                          style: mono(10, c: kHint, ls: 0.5),
                         ),
                       ),
-                    ],
-                  ),
-                  Divider(height: 10, color: kCyan.withValues(alpha: 0.08)),
-                  ValueListenableBuilder<FishingContext>(
-                    valueListenable: FishingContextStore.instance.value,
-                    builder: (context, fishingCtx, _) {
-                      final zoneCodes = _activeSpeciesCodes(
-                        isRio: _rioMode,
-                        place: d.local,
-                        score: d.score,
-                        selectedSpecies: _rioMode ? 'BARBO' : 'ROBALO',
-                      );
-                      final zoneFishLabel = zoneCodes
-                          .take(2)
-                          .map(_speciesUiLabel)
-                          .join(' + ');
-                      final primaryPlan = _planForSpecies(
-                        fishingCtx.species,
-                        isRio: _rioMode,
-                        t: t,
-                      );
-                      return Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          Text(
-                            t.rigTargetLabel,
-                            style: ibm(12, c: kHint),
-                          ),
-                          const SizedBox(height: 6),
-                          _rigSpeciesChipRow(),
-                          const SizedBox(height: 8),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 4),
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              children: [
-                                Text(
-                                  t.rigActivityNeon,
-                                  style: orb(
-                                    14,
-                                    c: kCyan,
-                                    fw: FontWeight.w800,
-                                    ls: 1.2,
-                                  ).copyWith(
-                                    shadows: [
-                                      Shadow(
-                                        color: kCyan.withValues(alpha: 0.95),
-                                        blurRadius: 10,
-                                      ),
-                                      Shadow(
-                                        color: kCyan.withValues(alpha: 0.55),
-                                        blurRadius: 22,
-                                      ),
-                                      Shadow(
-                                        color: kCyan.withValues(alpha: 0.35),
-                                        blurRadius: 34,
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                const SizedBox(width: 10),
-                                SizedBox(
-                                  width: 88,
-                                  child: Text(
-                                    t.rigMoreActive,
-                                    style: ibm(13, c: kHint),
-                                  ),
-                                ),
-                                Expanded(
-                                  child: Text(
-                                    zoneFishLabel,
-                                    style:
-                                        ibm(14, c: kCyan, fw: FontWeight.w700),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    textAlign: TextAlign.end,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          _iscoRow(t.rigBait, primaryPlan.bait),
-                          _iscoRow(t.rigRod, primaryPlan.rod),
-                          _iscoRow(t.rigTechnique, primaryPlan.technique),
-                          _iscoRow(t.rigDistance, primaryPlan.distance),
-                        ],
-                      );
-                    },
+                    ]),
                   ),
                 ],
               ),
             ),
+            ),
           ),
 
-          const SizedBox(height: 8),
+          const SizedBox(height: 14),
         ],
       ),
       ),
@@ -1316,7 +1081,7 @@ class _OraculoScreenState extends State<OraculoScreen>
     );
   }
 
-  ({double lat, double lon})? _oracleMiniMapCoords() {
+  ({double lat, double lon})? _oracleMapCoords() {
     final last = OracleDataService.instance.lastCoords;
     if (last != null) return last;
     final place = _planningPlace;
@@ -1324,83 +1089,51 @@ class _OraculoScreenState extends State<OraculoScreen>
     return null;
   }
 
-  Widget _planningSourceRow(AqxL10n t) {
+  String _coordsDisplayLabel() {
+    final c = _oracleMapCoords();
+    if (c == null) return '';
+    final latDir = c.lat >= 0 ? 'N' : 'S';
+    final lonDir = c.lon >= 0 ? 'E' : 'W';
+    return '${c.lat.abs().toStringAsFixed(4)}° $latDir, '
+        '${c.lon.abs().toStringAsFixed(4)}° $lonDir';
+  }
+
+  Widget _gpsSearchPill(AqxL10n t) {
     final isP = _planningPlace != null;
     final gpsBlocked = _isGpsBlocked();
-    return GestureDetector(
+    return OracleGpsSearchPill(
+      label: isP
+          ? _planningPlace!.label
+          : gpsBlocked
+              ? t.locationNeededTitle
+              : t.positionGpsLive,
       onTap: () => _openPlaceSearch(t),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-        decoration: BoxDecoration(
-          color: kCard,
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(
-            color: isP
-                ? kAmber.withValues(alpha: 0.45)
-                : gpsBlocked
-                    ? kAmber.withValues(alpha: 0.35)
-                    : kCyan.withValues(alpha: 0.12),
-          ),
-        ),
-        child: Row(
-          children: [
-            Icon(
-              isP
-                  ? Icons.map_outlined
-                  : gpsBlocked
-                      ? Icons.location_off_rounded
-                      : Icons.my_location_rounded,
-              size: 15,
-              color: isP ? kAmber : (gpsBlocked ? kAmber : kCyan),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Text(
-                isP
-                    ? _planningPlace!.label
-                    : gpsBlocked
-                        ? t.locationNeededTitle
-                        : t.positionGpsLive,
-                style: ibm(
-                  13,
-                  c: isP ? kAmber : (gpsBlocked ? kAmber : kCyan),
-                ),
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-            if (isP)
-              GestureDetector(
-                onTap: () {
-                  HapticFeedback.selectionClick();
-                  setState(() => _planningPlace = null);
-                  unawaited(_loadCosta());
-                  unawaited(_loadRio());
-                },
-                child: Padding(
-                  padding: const EdgeInsets.only(left: 8),
-                  child: Icon(Icons.close_rounded, size: 15, color: kHint),
-                ),
-              )
-            else if (gpsBlocked)
-              GestureDetector(
-                onTap: () => unawaited(_enableLocation(t)),
-                child: Padding(
-                  padding: const EdgeInsets.only(left: 4),
+      leadingIcon: isP
+          ? Icons.map_outlined
+          : gpsBlocked
+              ? Icons.location_off_rounded
+              : Icons.search_rounded,
+      highlight: isP,
+      warning: gpsBlocked && !isP,
+      trailing: isP
+          ? GestureDetector(
+              onTap: () {
+                HapticFeedback.selectionClick();
+                setState(() => _planningPlace = null);
+                unawaited(_loadCosta());
+                unawaited(_loadRio());
+              },
+              child: Icon(Icons.close_rounded, size: 18, color: kHint),
+            )
+          : gpsBlocked
+              ? GestureDetector(
+                  onTap: () => unawaited(_enableLocation(t)),
                   child: Text(
                     t.locationBannerAction,
                     style: ibm(12, c: kAmber, fw: FontWeight.w600),
                   ),
-                ),
-              )
-            else
-              Icon(
-                Icons.search_rounded,
-                size: 22,
-                color: kHint.withValues(alpha: 0.6),
-              ),
-          ],
-        ),
-      ),
+                )
+              : null,
     );
   }
 
@@ -1888,6 +1621,7 @@ class _OraculoScreenState extends State<OraculoScreen>
     );
   }
 
+  // ignore: unused_element — legado; mockup fold mostra sempre hero + banner inline
   Widget _scoreStatePlaceholder({required bool isRio, required AqxL10n t}) {
     final gpsErr = isRio ? _rioGpsError : _costaGpsError;
     final loading = (isRio ? _rioLoad : _costaLoad) == _LoadState.loading &&
@@ -2216,14 +1950,6 @@ class _OraculoScreenState extends State<OraculoScreen>
       );
     return inner;
   }
-
-  Widget _iscoRow(String k, String v) => Padding(
-        padding: const EdgeInsets.symmetric(vertical: 4),
-        child: Row(children: [
-          SizedBox(width: 88, child: Text(k, style: ibm(13, c: kHint))),
-          Expanded(child: Text(v, style: ibm(13, c: Colors.white, fw: FontWeight.w600))),
-        ]),
-      );
 
   Widget _melhorJanelaBar(_ModoData d, AqxL10n t) => Container(
         width: double.infinity,

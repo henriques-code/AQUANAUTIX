@@ -4,6 +4,34 @@ import 'community_post.dart';
 class CommunityDemoPosts {
   CommunityDemoPosts._();
 
+  /// Cards GHOST do Oráculo — fotos do mockup (pescador + dourada).
+  static List<CommunityPost> oracleGhostRow() => [
+        CommunityPost(
+          id: 'ghost-robalo',
+          userId: 'ghost',
+          username: 'Ghost',
+          tier: 'PRO',
+          zoneLabel: 'Zona Sesimbra',
+          photoUrl: 'assets/marketing/catches/oracle_hero_pescador.jpg',
+          species: 'ROBALO',
+          weightKg: 2.8,
+          country: 'PT',
+          createdAt: DateTime.now().subtract(const Duration(minutes: 23)),
+        ),
+        CommunityPost(
+          id: 'ghost-dourada',
+          userId: 'ghost',
+          username: 'Ghost',
+          tier: 'PRO',
+          zoneLabel: '',
+          photoUrl: 'assets/marketing/catches/dourada.jpg',
+          species: 'DOURADA',
+          weightKg: 2.4,
+          country: 'PT',
+          createdAt: DateTime.now().subtract(const Duration(hours: 2)),
+        ),
+      ];
+
   static List<CommunityPost> posts() => [
         CommunityPost(
           id: 'mock-br',
@@ -29,8 +57,7 @@ class CommunityDemoPosts {
           tier: 'PRO',
           avatarUrl: 'https://i.pravatar.cc/80?img=11',
           zoneLabel: 'Zona Sesimbra',
-          photoUrl:
-              'https://images.unsplash.com/photo-1544979590-04bcee11af7d?w=600&q=75&auto=format',
+          photoUrl: 'assets/marketing/catches/robalo.jpg',
           species: 'ROBALO',
           weightKg: 2.8,
           caption: 'Manhã incrível! Score 82 e a maré a subir.',

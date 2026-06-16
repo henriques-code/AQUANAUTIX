@@ -67,7 +67,7 @@ class _AquanautixHomeState extends State<AquanautixHome> {
           onOpenTab: _setTab,
         );
       case 1:
-        return const OraculoScreen(key: ValueKey('tab_oraculo'));
+        return const OraculoScreen(key: ValueKey('tab_oraculo_mockup_v5'));
       case 2:
         return MapaScreen(
           key: const ValueKey('tab_mapa'),
