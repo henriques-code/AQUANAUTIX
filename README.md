@@ -6,7 +6,7 @@
 
 Site em produção: [aquanautix.vercel.app](https://aquanautix.vercel.app)
 
-**Última revisão doc:** 11 Jun 2026 · app `da3ca79` · 7 tabs (incl. Comunidade)
+**Última revisão doc:** 16 Jun 2026 · app `34b4e38` · 7 tabs (incl. Comunidade)
 
 ---
 
@@ -18,7 +18,7 @@ AQUANAUTIX/
 │   ├── main.dart                 # Bootstrap: Supabase, Mapbox token, RevenueCat, analytics
 │   ├── app.dart                  # MaterialApp / tema Midnight Deep Sea
 │   ├── screens/                  # home (7 tabs), oraculo, mapa, vision, logbook, perfil, comunidade, …
-│   │   └── widgets/              # Oráculo: decision, conditions_fold, metrics, timeline, weather grid
+│   │   └── widgets/              # Oráculo: decisao_fold, hero, conversion_pack, conditions, weather grid
 │   ├── features/
 │   │   ├── home/                 # Início dashboard (data/domain/presentation)
 │   │   └── community/            # Sheet perfil Ghost
@@ -26,11 +26,11 @@ AQUANAUTIX/
 ├── assets/
 │   ├── video_bg.mp4              # Splash / login
 │   ├── marketing/spots/          # Cabo Espichel, Peniche, Sesimbra
-│   ├── marketing/catches/        # Fotos espécies (demo comunidade)
+│   ├── marketing/catches/        # Fotos espécies + oracle_hero_pescador.jpg (hero Oráculo)
 │   ├── data/species_ibero.json
 │   └── icons/
 ├── android/ · ios/ · windows/    # Plataformas
-├── supabase/                     # Migrations SQL (8) + README_setup.md
+├── supabase/                     # Migrations SQL (9) + README_setup.md
 ├── Site V2/                      # Site marketing Vercel (NÃO alterar sem AUTORIZO)
 ├── tools/                        # run_dev.ps1, sync_check.ps1, install_git_hooks.ps1
 ├── AQUANAUTIX_CONTEXT.md         # Contexto técnico detalhado
@@ -68,7 +68,7 @@ HTML + CSS + JS · Mapbox GL JS v3.3.0 · SunCalc · Deploy Vercel (`Site V2/`)
 | # | Tab | Ecrã |
 |---|-----|------|
 | 0 | INÍCIO | Dashboard: tempo, maré, spots, preview comunidade |
-| 1 | ORÁCULO | Score, condições 12h, meteorologia, planeamento |
+| 1 | ORÁCULO | Score, mockup Decisão, pack PRO, condições 12h, meteorologia, planeamento |
 | 2 | MAPA | Spots PT/ES, `flutter_map`, batimetria |
 | 3 | VISION | Scanner IA espécies |
 | 4 | LOG | Logbook capturas |
@@ -158,7 +158,8 @@ vercel --prod                # aquanautix.vercel.app
 |---|---|
 | 7 tabs + Comunidade Ghost | ✅ |
 | Início GPS + pull-to-refresh | ✅ MIUI testado |
-| Oráculo Sprint 1 + fold 12h | ✅ |
+| Oráculo mockup Decisão + pack PRO | ✅ |
+| Oráculo fold 12h + meteorologia | ✅ |
 | Mapa flutter_map + spots | ✅ |
 | Vision Scanner | ✅ |
 | Logbook | ✅ |

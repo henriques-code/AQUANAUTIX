@@ -1,22 +1,25 @@
 import 'package:flutter/material.dart';
 
 import '../_shared.dart';
-import '../paywall.dart';
 import '../../core/state/subscription_store.dart';
 
-/// Card FOMO horizontal — lock + spot PRO + botão âmbar (mockup).
+/// Card FOMO horizontal — lock + spot PRO + botão trial.
 class OracleProSpotTeaser extends StatelessWidget {
   const OracleProSpotTeaser({
     super.key,
     required this.distanceLabel,
     required this.scoreLine,
     required this.unlockLabel,
+    required this.speciesLabel,
+    required this.onUnlock,
     this.source = 'oraculo_pro_spot',
   });
 
   final String distanceLabel;
   final String scoreLine;
   final String unlockLabel;
+  final String speciesLabel;
+  final VoidCallback onUnlock;
   final String source;
 
   @override
@@ -26,47 +29,47 @@ class OracleProSpotTeaser extends StatelessWidget {
       builder: (context, sub, _) {
         if (sub.hasProEntitlement) return const SizedBox.shrink();
 
-        return Container(
-          width: double.infinity,
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-          decoration: BoxDecoration(
-            color: kCard,
+        return Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: onUnlock,
             borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: kAmber.withValues(alpha: 0.35)),
-          ),
-          child: Row(
-            children: [
-              Container(
-                width: 28,
-                height: 28,
-                decoration: const BoxDecoration(
-                  color: Colors.white,
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(Icons.lock_rounded,
-                    size: 16, color: kBg.withValues(alpha: 0.85)),
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              decoration: BoxDecoration(
+                color: kCard,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: kAmber.withValues(alpha: 0.35)),
               ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      distanceLabel,
-                      style: ibm(13, c: Colors.white, fw: FontWeight.w600),
+              child: Row(
+                children: [
+                  Container(
+                    width: 28,
+                    height: 28,
+                    decoration: const BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
                     ),
-                    const SizedBox(height: 2),
-                    _ProScoreRichText(line: scoreLine),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 8),
-              Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  onTap: () => PaywallScreen.open(context, source: source),
-                  borderRadius: BorderRadius.circular(8),
-                  child: Container(
+                    child: Icon(Icons.lock_rounded,
+                        size: 16, color: kBg.withValues(alpha: 0.85)),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          distanceLabel,
+                          style: ibm(13, c: Colors.white, fw: FontWeight.w600),
+                        ),
+                        const SizedBox(height: 2),
+                        _ProScoreRichText(line: scoreLine),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Container(
                     padding:
                         const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                     decoration: BoxDecoration(
@@ -86,9 +89,9 @@ class OracleProSpotTeaser extends StatelessWidget {
                       ],
                     ),
                   ),
-                ),
+                ],
               ),
-            ],
+            ),
           ),
         );
       },

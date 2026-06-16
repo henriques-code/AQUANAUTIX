@@ -1,7 +1,7 @@
 # AQUANAUTIX — Handoff para novo chat
 
 > Copia este ficheiro (ou a secção «Prompt rápido») para iniciar um chat Cursor/Claude com contexto completo.
-> **Última actualização:** 11 Jun 2026 · commit `da3ca79` · branch `main` = `origin/main`
+> **Última actualização:** 16 Jun 2026 · commit `34b4e38` · branch `main` (merge `chore/gitignore-sync-workflow`)
 
 ---
 
@@ -10,7 +10,7 @@
 ```
 És o engenheiro principal da app Flutter AQUANAUTIX (mono-repo). Responde em português de Portugal. Diagnóstico antes de mudanças grandes. Diff mínimo.
 
-Repo: C:\Users\Joaop\OneDrive\Documentos\AQUANAUTIX · branch main · último commit da3ca79
+Repo: C:\Users\Joaop\OneDrive\Documentos\AQUANAUTIX · branch main · último commit 34b4e38
 
 ESCOPO
 - App Flutter (lib/, pubspec, android/, assets/): ✅ foco principal
@@ -41,7 +41,9 @@ INÍCIO
 - Tap spot → pendingMapFocus · tap comunidade → pendingCommunityProfile + tab 6 + sheet Ghost
 
 ORÁCULO
-- OracleConditionsFold · CTAs Log/Mapa/Comunidade (tab 6, não Logbook)
+- OracleDecisaoFold (mockup hero + linha decisão + faixa PRO sticky + drawer trial)
+- OracleConditionsFold colapsável · pack conversão PRO (oracle_conversion_pack.dart)
+- CTAs Log/Mapa/Comunidade (tab 6) · mini-mapa blur FREE
 - Evitar flutter_animate + IntrinsicHeight em SingleChildScrollView (ecrã preto)
 
 SUPABASE
@@ -64,6 +66,10 @@ TAREFA DESTE CHAT:
 
 | Commit | Descrição |
 |--------|-----------|
+| `34b4e38` | feat(oraculo): pack conversão PRO — drawer trial, sticky strip, blur mapa FREE |
+| `98e1952` | feat(oraculo): layout mockup Decisão — hero pescador, fold CTAs, GHOST cards |
+| `cc359ab` | chore(security): gitignore + pre-commit contra PAT GitHub |
+| `63a674e` | chore(repo): branch protection + gitignore Imagens |
 | `da3ca79` | feat(app): tab Comunidade, perfil Ghost, GPS MIUI pull-to-refresh |
 | `7773a3c` | feat(home): tap username comunidade (base navegação) |
 | `e7a276b` | fix(home): GPS Início, maré MSL, spots→mapa, Cabo Espichel |
@@ -98,24 +104,24 @@ TAREFA DESTE CHAT:
 | Shell / tabs | `lib/screens/home.dart`, `lib/core/state/home_tab_index.dart` |
 | Início | `lib/features/home/presentation/inicio_dashboard_screen.dart`, `home_repository_impl.dart` |
 | Comunidade | `lib/screens/comunidade.dart`, `lib/features/community/presentation/community_ghost_profile_sheet.dart`, `lib/core/community/community_public_profile.dart` |
-| Oráculo | `lib/screens/oraculo.dart`, `widgets/oracle_conditions_fold.dart`, `oracle_weather_details_grid.dart` |
+| Oráculo | `lib/screens/oraculo.dart`, `widgets/oracle_decisao_fold.dart`, `oracle_conversion_pack.dart`, `oracle_hero_decision.dart`, `oracle_conditions_fold.dart`, `oracle_weather_details_grid.dart` |
 | GPS | `lib/core/location/gps_access.dart`, `gps_bootstrap.dart`, `widgets/location_access_sheet.dart` |
 | Dados | `lib/core/tides/oracle_data_service.dart`, `oracle_hourly_score.dart` |
 | Mapa | `lib/screens/mapa.dart` |
 | Supabase app | `lib/core/supabase_bootstrap.dart`, `community/`, `catch_photos/` |
-| Supabase repo | `supabase/migrations/` (8 ficheiros), `supabase/README_setup.md` |
+| Supabase repo | `supabase/migrations/` (9 ficheiros), `supabase/README_setup.md` |
 
 ---
 
-## Sincronização ecossistema (11 Jun 2026)
+## Sincronização ecossistema (16 Jun 2026)
 
 | Componente | Estado |
 |------------|--------|
-| App Flutter `lib/` | ✅ `da3ca79` |
-| GitHub `main` | ✅ push feito |
+| App Flutter `lib/` | ✅ `34b4e38` |
+| GitHub `main` | ✅ push após merge |
 | Docs (CONTEXT, CLAUDE, HANDOFF, ECOSYSTEM, README) | ✅ alinhados nesta revisão |
-| Site V2 produção | ⏸️ Sem alterações (AUTORIZO) — protótipos ainda 5/6 ecrãs |
-| Supabase remoto | ⚠️ Correr `supabase db push` para aplicar 8 migrations |
+| Site V2 produção | ⏸️ Sem alterações (AUTORIZO) |
+| Supabase remoto | ⚠️ Correr `supabase db push` (9 migrations; nova: storage no public listing) |
 | Edge Functions | ❌ Não versionadas no repo |
 | RevenueCat / Lojas | 🔄 Parcial |
 
@@ -137,8 +143,10 @@ supabase link --project-ref ycmvqokcfzxkpinvcyhk
 supabase db push
 
 # Install MIUI bloqueado
+flutter build apk --debug
 adb push build\app\outputs\flutter-apk\app-debug.apk /data/local/tmp/app-debug.apk
 adb shell pm install -r -t /data/local/tmp/app-debug.apk
+.\tools\run_dev.ps1 -d WWZLYDXWYXT8PV5D -- --use-application-binary=build/app/outputs/flutter-apk/app-debug.apk
 ```
 
 ---

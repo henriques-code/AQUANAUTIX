@@ -1,6 +1,6 @@
 # AQUANAUTIX — Central de contexto
 
-**Última revisão estructural:** 11 Jun 2026 — Tab Comunidade (7 tabs), GPS MIUI + pull-to-refresh, perfil Ghost, Início com coords reais.
+**Última revisão estructural:** 16 Jun 2026 — Oráculo mockup Decisão + pack conversão PRO; tab Comunidade (7 tabs); GPS MIUI + pull-to-refresh.
 
 ## Estrutura do repositório (mono-repo)
 
@@ -51,8 +51,8 @@ AQUANAUTIX/
 
 - **`lib/main.dart` / `app.dart`:** bootstrap Supabase, RevenueCat, analytics, tema, `flutter_localizations` e locale derivado de GPS (PT/ES).
 - **Navegação:** `AquanautixHome` com **7 tabs lazy** — Início · Oráculo · Mapa · Vision · Log · Perfil · **Comunidade** (via `HomeTabIndex`; índice 6 = `communityTabIndex`).
-- **Ecrãs:** `home` (7 tabs lazy `_tabCache`; Início com WeatherCard, pull-to-refresh GPS, spots→mapa, comunidade→tab COMUN.), `comunidade` (feed Ghost + sheet perfil), `oraculo` (Decisão, **OracleConditionsFold**, strip Comunidade → tab 6, Nominatim, GPS inline), `mapa` (`flutter_map`), `vision`, `logbook`, `perfil`, `paywall`, `splash`, login/password.
-- **`lib/screens/widgets/`:** `aqx_pressable.dart` (botões 3D neon/glass + `AqxMeteoRevealButton` ABRIR), `oracle_decision_card.dart`, `oracle_fishing_metrics_grid.dart`, `oracle_conditions_fold.dart` (card unificado condições 12h), `oracle_timeline_24h.dart`, `oracle_community_strip.dart`, `location_access_sheet.dart`, `oracle_weather_details_grid.dart` (16 cartões 3D; marés 2D; correntes).
+- **Ecrãs:** `home` (7 tabs lazy `_tabCache`; Início com WeatherCard, pull-to-refresh GPS, spots→mapa, comunidade→tab COMUN.), `comunidade` (feed Ghost + sheet perfil), `oraculo` (**OracleDecisaoFold** mockup — hero pescador, linha decisão, faixa PRO sticky, drawer trial, GHOST cards, spot PRO; **OracleConditionsFold** colapsável; strip Comunidade → tab 6; Nominatim; GPS inline), `mapa` (`flutter_map`), `vision`, `logbook`, `perfil`, `paywall`, `splash`, login/password.
+- **`lib/screens/widgets/` (Oráculo):** `oracle_decisao_fold.dart`, `oracle_hero_decision.dart`, `oracle_conversion_pack.dart` (decision line + sticky PRO + drawer), `oracle_mockup_header.dart`, `oracle_community_photo_row.dart`, `oracle_pro_spot_teaser.dart`, `oracle_conditions_collapsible.dart`, `oracle_conditions_fold.dart`, `oracle_decision_card.dart`, `oracle_fishing_metrics_grid.dart`, `oracle_timeline_24h.dart`, `oracle_community_strip.dart`, `oracle_mini_map.dart`, `oracle_weather_details_grid.dart`, `aqx_pressable.dart`, `location_access_sheet.dart`.
 - **`lib/core/location/`:** `gps_access.dart` — cache memória, single-flight, `tryGetFix`/`tryGetFixQuick`, `forceRefresh`, `AndroidSettings(forceLocationManager)` (MIUI); `gps_bootstrap.dart` — permissão no arranque + `refreshFix` em background.
 - **`lib/screens/comunidade.dart` + `lib/features/community/`:** tab **COMUN.** — feed Ghost, sheet perfil público (`community_ghost_profile_sheet.dart`, `community_public_profile.dart`); tap no Início → `pendingCommunityProfile` + tab Comunidade.
 - **`lib/core/tides/`:** `oracle_hourly_score.dart` — score horário solunar+nuvens+chuva (timeline + Início).
@@ -62,7 +62,8 @@ AQUANAUTIX/
 - Design system Midnight Deep Sea (`screens/_shared.dart`).
 - **`lib/features/home/`:** arquitectura feature-first (data/domain/presentation); `WeatherData` com `solunarScore`, `windDir`, `pressure`, `hasTide`; `HomeRepositoryImpl.loadDashboard(forceRefresh)` — obtém GPS dentro do load, invalida Oráculo no refresh, `knownCoords` no fetch; pull-to-refresh: GPS primeiro (12s) → invalidate → reload; spots em `assets/marketing/spots/` (**Cabo Espichel**, Peniche, Sesimbra) com **lat/lon** e tap → `pendingMapFocus`; `CommunityActivityCard` clicável → perfil Ghost.
 - **`lib/core/widgets/aqx_ghost_mode_badge.dart`:** badge Ghost (hex ciano + pill âmbar) — substitui 👻 em Oráculo, Logbook, Mapa, Vision, comunidade.
-- **`lib/screens/widgets/oracle_mini_map.dart`:** mini-mapa ~140px no Oráculo (GPS/planeamento + CTA VER MAPA).
+- **`assets/marketing/catches/`** — dourada, robalo, sargo; **`oracle_hero_pescador.jpg`** (hero Oráculo mockup).
+- **`lib/screens/widgets/oracle_mini_map.dart`:** mini-mapa no hero Oráculo (GPS/planeamento + CTA VER MAPA; blur FREE via `oracle_hero_decision.dart`).
 - **`lib/core/l10n/aqx_l10n.dart` + `app_locale_store.dart`:** login **PT/ES/EN** (Fase 1); resto da app PT/ES; `setLocale` bloqueia override GPS.
 - **`lib/core/supabase_bootstrap.dart`:** `isSupabaseReady` / `supabaseClientOrNull` — evita crash `Supabase.instance` antes de init.
 - Pendente: monetização RC estável em produção, gates PRO/Elite completos; push Janela de Ouro (EM BREVE na UI).
@@ -229,6 +230,30 @@ AQUANAUTIX/
 **Outros**
 - `logbook.dart` — fix `pendingTab` com post-frame callback
 - `perfil.dart` — `GpsBootstrap.reset()` no logout
+
+### Sessão 16 Jun 2026
+
+**Oráculo — layout mockup Decisão (`98e1952`)**
+- **`OracleDecisaoFold`** — ordem mockup `Imagens/oraculo-decisao-mockup-full.png`: hero fullwidth + score pulse + janela âmbar + mini-mapa.
+- **`oracle_hero_decision.dart`** — asset `assets/marketing/catches/oracle_hero_pescador.jpg`; CTAs IR PESCAR / REGISTAR CAPTURA; espécie alvo chips + isco/cana.
+- **`oracle_community_photo_row.dart`** — GHOST 2 cards lado a lado; **`oracle_pro_spot_teaser.dart`** — card spot PRO bloqueado.
+- **`oracle_conditions_collapsible.dart`** — condições 12h colapsáveis abaixo do fold.
+
+**Oráculo — pack conversão PRO (`34b4e38`)**
+- **`oracle_conversion_pack.dart`** — `OracleDecisionCopy.line()`, `OracleDecisionLine`, `OracleProStickyStrip`, `showOracleProUnlockSheet()` → PaywallScreen.
+- Linha decisão («Vale ir pescar agora — janela fecha às X»); faixa sticky PRO; drawer «PRO 3 dias grátis →».
+- Mini-mapa com blur + cadeado FREE; CTAs «Comparar 3 sítios (PRO)» / «Alertar janela (PRO) · EM BREVE».
+- Gancho comunidade «X capturas perto · PRO vê zona 5 km»; card spot PRO tap → drawer.
+
+**Segurança + repo (`cc359ab`, `63a674e`)**
+- `.gitignore` reforçado (PAT, local_secrets); pre-commit bloqueia `ghp_` / `github_pat_`.
+- Branch protection ruleset; `Imagens/` gitignored (screenshots locais).
+
+**Supabase (`20260616174757_storage_no_public_listing.sql`)**
+- Remove listagem pública `storage.objects` nos buckets catch-photos / community-photos; `getPublicUrl()` mantém-se.
+
+**Deploy MIUI (Xiaomi `WWZLYDXWYXT8PV5D`)**
+- Workaround: `adb push` + `pm install -r -t` + `run_dev.ps1 --use-application-binary=...`.
 
 ## Próximos passos (sugestão)
 

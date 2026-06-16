@@ -1,7 +1,7 @@
 # AQUANAUTIX — Fluxo de sincronização e segurança
 
 > **Objectivo:** nada se perde — código, backend, docs e Git alinhados.  
-> **Última revisão:** 11 Jun 2026 · commit de referência `0ec74ef`
+> **Última revisão:** 16 Jun 2026 · commit de referência `34b4e38`
 
 ---
 
@@ -118,7 +118,44 @@ git push origin main
 
 ---
 
-## 6. Definition of Done (sessão)
+## 6. Branch Protection — Fluxo de trabalho (GitHub Ruleset)
+
+O branch `main` tem um **Branch Ruleset** activo no GitHub com as seguintes regras:
+
+| Regra | Estado |
+|-------|--------|
+| Restringir exclusões | ✅ Activo |
+| Bloquear force push | ✅ Activo |
+| Exigir histórico linear | ✅ Activo |
+| Exigir PR antes de merge | ✅ Activo |
+
+### Fluxo obrigatório (push directo para `main` bloqueado)
+
+```powershell
+# 1. Criar branch para a feature
+git checkout -b feature/nome-da-feature
+
+# 2. Trabalhar e commitar
+git add lib/ supabase/ *.md
+git commit -m "feat(escopo): descrição"
+
+# 3. Push do branch
+git push origin feature/nome-da-feature
+
+# 4. Criar PR no GitHub → merge → main
+# (O agente pode criar PR via gh CLI se pedido)
+```
+
+### Excepção: bypass autorizado
+
+O proprietário do repositório tem permissão de bypass — em emergências pode usar:
+```powershell
+git push origin main  # só funciona para contas com bypass no Ruleset
+```
+
+---
+
+## 7. Definition of Done (sessão)
 
 Uma sessão está **fechada** quando:
 
@@ -130,7 +167,7 @@ Uma sessão está **fechada** quando:
 
 ---
 
-## 7. O que fica de fora (manual / externo)
+## 8. O que fica de fora (manual / externo)
 
 | Item | Onde | Notas |
 |------|------|-------|
@@ -142,7 +179,7 @@ Uma sessão está **fechada** quando:
 
 ---
 
-## 8. Referências
+## 9. Referências
 
 - `ECOSYSTEM.md` — serviços e matriz sync
 - `HANDOFF.md` — prompt novos chats

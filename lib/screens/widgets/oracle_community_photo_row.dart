@@ -12,12 +12,16 @@ class OracleCommunityPhotoRow extends StatelessWidget {
     required this.onViewCommunity,
     this.es = false,
     this.title = 'GHOST ATIVIDADE NA ZONA',
+    this.proHint,
+    this.onProHintTap,
   });
 
   final List<CommunityPost> posts;
   final VoidCallback onViewCommunity;
   final bool es;
   final String title;
+  final String? proHint;
+  final VoidCallback? onProHintTap;
 
   String _speciesLabel(String code) {
     switch (code.toUpperCase()) {
@@ -63,6 +67,16 @@ class OracleCommunityPhotoRow extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(title, style: mono(10, c: kCyan, ls: 0.9)),
+        if (proHint != null && onProHintTap != null) ...[
+          const SizedBox(height: 4),
+          GestureDetector(
+            onTap: onProHintTap,
+            child: Text(
+              proHint!,
+              style: ibm(11, c: kAmber, fw: FontWeight.w600),
+            ),
+          ),
+        ],
         const SizedBox(height: 10),
         if (preview.isEmpty)
           Text(
