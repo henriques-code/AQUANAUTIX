@@ -73,3 +73,10 @@ desktop.ini
 
 # AI session exports (local only)
 context_export.txt
+
+# Imagens / screenshots locais (nunca versionar)
+Imagens/
+
+# Notas de trabalho locais (ficheiros .txt soltos na raiz)
+*.txt
+!README*.txt
