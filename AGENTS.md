@@ -34,7 +34,7 @@ ffmpeg -y -f lavfi -i color=c=black:s=64x64:d=0.5 -c:v libx264 -pix_fmt yuv420p 
 
 ### Variáveis / `.env` / secrets Cloud
 
-Chaves via `--dart-define` (paridade Windows `tools/run_dev.ps1` ↔ Linux `tools/run_dev.sh`). O `.env` na raiz **não** está versionado.
+Chaves via `--dart-define` (paridade Windows `tools/run_dev.ps1` ↔ Linux `tools/run_dev.sh`). `.env` na raiz **não** está versionado. Sem Supabase: `canUseSupabase` é `false` — modo convidado com dados locais/demo; usar `supabaseClientOrNull` / `supabaseAuthStateChangesOrNull` (nunca `Supabase.instance` directo).
 
 **Fluxo recomendado na Cloud:**
 
@@ -67,7 +67,7 @@ Usar sessões com nomes descritivos, por exemplo:
 ### Hello world (aceitação mínima)
 
 1. **Site:** abrir `http://127.0.0.1:8080/#oraculo` → score solunar (módulo `calcularOraculo()`).
-2. **App:** com secrets + `./tools/run_dev.sh -d chrome` → splash → login ou convidado → **Início** + tab **Oráculo** / **Mapa**.
+2. **App:** `./tools/run_dev.sh -d chrome` (com secrets) ou convidado sem `.env` → **Início** + tabs Oráculo/Mapa.
 
 ### Notas
 

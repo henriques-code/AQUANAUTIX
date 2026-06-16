@@ -14,7 +14,13 @@ class CommunityRepository {
     community_reactions(user_id)
   ''';
 
-  SupabaseClient get _db => supabaseClientOrNull!;
+  SupabaseClient get _db {
+    final client = supabaseClientOrNull;
+    if (client == null) {
+      throw StateError('Supabase não inicializado');
+    }
+    return client;
+  }
 
   Future<List<CommunityPost>> fetchFeed({
     String? country,

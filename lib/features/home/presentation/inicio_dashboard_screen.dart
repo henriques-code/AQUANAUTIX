@@ -63,8 +63,9 @@ class _InicioDashboardScreenState extends State<InicioDashboardScreen>
     WidgetsBinding.instance.addPostFrameCallback((_) {
       unawaited(_startGpsFlow());
     });
-    if (isSupabaseReady) {
-      _authSub = Supabase.instance.client.auth.onAuthStateChange.listen((event) {
+    final authStream = supabaseAuthStateChangesOrNull;
+    if (authStream != null) {
+      _authSub = authStream.listen((event) {
         if (event.event == AuthChangeEvent.signedIn) {
           GpsBootstrap.reset();
         }

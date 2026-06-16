@@ -31,7 +31,7 @@ class PasswordRecoveryService {
       throw PasswordRecoveryException(validation);
     }
 
-    if (!isSupabaseReady) {
+    if (!canUseSupabase) {
       throw const PasswordRecoveryException(
         'Supabase indisponível. Verifica ligação ou entra como convidado.',
       );
