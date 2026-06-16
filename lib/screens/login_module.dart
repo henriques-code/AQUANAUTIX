@@ -61,7 +61,7 @@ class _LoginModuleScreenState extends State<LoginModuleScreen> {
       }
     });
 
-    if (!isSupabaseReady || !remember) return;
+    if (!canUseSupabase) return;
     final session = supabaseClientOrNull?.auth.currentSession;
     if (session != null && mounted) {
       Navigator.pushReplacement(
@@ -268,7 +268,7 @@ class _LoginModuleScreenState extends State<LoginModuleScreen> {
                         await LoginSessionStore.setRememberSession(next);
                         if (!next) {
                           await LoginSessionStore.setSavedEmail(null);
-                          if (isSupabaseReady) {
+                          if (canUseSupabase) {
                             await supabaseClientOrNull?.auth.signOut();
                           }
                         }

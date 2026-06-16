@@ -31,7 +31,7 @@ class _ComunidadeScreenState extends State<ComunidadeScreen> {
   void initState() {
     super.initState();
     HomeTabIndex.pendingCommunityProfile.addListener(_applyPendingCommunityProfile);
-    if (isSupabaseConfigured) {
+    if (canUseSupabase) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
         final ctx = FishingContextStore.instance.value.value;
@@ -168,7 +168,7 @@ class _ComunidadeScreenState extends State<ComunidadeScreen> {
   }
 
   Widget _buildPostCard(int idx, CommunityPost post, AqxL10n t, CommunityState state) {
-    final isLive = isSupabaseConfigured && state.posts.isNotEmpty;
+    final isLive = canUseSupabase && state.posts.isNotEmpty;
     final liked = isLive ? post.likedByMe : (_feedLikes[idx] ?? false);
     final likeCount =
         isLive ? post.likesCount : post.likesCount + (liked ? 1 : 0);

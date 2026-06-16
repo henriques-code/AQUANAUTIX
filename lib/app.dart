@@ -22,8 +22,10 @@ class _AquanautixAppState extends State<AquanautixApp> {
   @override
   void initState() {
     super.initState();
-    if (!isSupabaseReady) return;
-    _authSub = Supabase.instance.client.auth.onAuthStateChange.listen((data) {
+    if (!canUseSupabase) return;
+    final authStream = supabaseAuthStateChangesOrNull;
+    if (authStream == null) return;
+    _authSub = authStream.listen((data) {
       if (data.event == AuthChangeEvent.passwordRecovery) {
         _openResetIfNeeded();
       }
