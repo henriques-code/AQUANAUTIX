@@ -112,14 +112,29 @@ Tabs **lazy** (`_tabCache` em `home.dart`) — uma tab montada de cada vez (fix 
 - `.env` na raiz + opcional `tools/local_secrets.ps1`
 
 ### Comandos
+
+**Windows (dispositivo físico recomendado):**
 ```powershell
 cd "C:\Users\Joaop\OneDrive\Documentos\AQUANAUTIX"
 
 flutter pub get
 flutter analyze
 
-# Dispositivo teste Xiaomi
+# Dispositivo teste Xiaomi — lê .env → --dart-define
 .\tools\run_dev.ps1 -d WWZLYDXWYXT8PV5D
+```
+
+**Linux / Cursor Cloud:**
+```bash
+export PATH="$HOME/flutter/bin:$PATH"
+flutter pub get
+
+# Secrets Cursor → .env (só se .env não existir)
+./tools/bootstrap_env_from_secrets.sh
+./tools/verify_env.sh
+
+# Web na Cloud (paridade com run_dev.ps1)
+./tools/run_dev.sh -d chrome
 ```
 
 ### Supabase (backend)
