@@ -1,6 +1,15 @@
 # Secrets
 .env
 .env.*
+tools/local_secrets.ps1
+# Tokens/credenciais exportados acidentalmente (ex.: GitHub PAT ghp_)
+*Token*.txt
+*token*.txt
+*ghp_*.txt
+*github_pat_*.txt
+*.pem
+*.p12
+credentials.json
 
 # Flutter build outputs
 build/

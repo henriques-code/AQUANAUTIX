@@ -22,7 +22,15 @@ $blockedPathPatterns = @(
     'key.properties',
     '.keystore',
     '.jks',
-    'androidkey.properties'
+    'androidkey.properties',
+    'credentials.json'
+)
+
+$blockedFileNamePatterns = @(
+    '(?i)ghp_',
+    '(?i)github_pat_',
+    '(?i)token.*git',
+    '(?i)git.*token'
 )
 
 foreach ($f in $staged) {
@@ -40,9 +48,18 @@ foreach ($f in $staged) {
             break
         }
     }
+
+    foreach ($namePat in $blockedFileNamePatterns) {
+        if ($base -match $namePat) {
+            Write-Block "nome de ficheiro sensivel staged: $f (padrao: $namePat)"
+            break
+        }
+    }
 }
 
 $secretPatterns = @(
+    @{ Label = 'GitHub PAT (ghp_)';        Regex = 'ghp_[A-Za-z0-9]{20,}' },
+    @{ Label = 'GitHub PAT (github_pat_)'; Regex = 'github_pat_[A-Za-z0-9_]{20,}' },
     @{ Label = 'OpenAI secret (sk-)';       Regex = 'sk-proj-[A-Za-z0-9_-]{10,}' },
     @{ Label = 'OpenAI secret (sk-)';       Regex = 'sk-[A-Za-z0-9]{20,}' },
     @{ Label = 'Supabase CLI token (sbp_)'; Regex = 'sbp_[A-Za-z0-9]{10,}' },

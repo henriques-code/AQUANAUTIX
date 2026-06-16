@@ -14,11 +14,18 @@ Write-Host "=== AQUANAUTIX sync_check ===" -ForegroundColor Cyan
 Write-Host ""
 Write-Host "[1/4] Seguranca (staging area)..." -ForegroundColor Yellow
 $staged = git diff --cached --name-only 2>$null
-$blocked = @(".env", "local_secrets.ps1", "google-services.json", "key.properties")
+$blocked = @(".env", "local_secrets.ps1", "google-services.json", "key.properties", "credentials.json")
+$blockedNamePatterns = @("ghp_", "github_pat_", "Token Git", "token git")
 foreach ($f in $staged) {
     foreach ($b in $blocked) {
         if ($f -like "*$b*") {
             Write-Host "  BLOQUEADO: $f parece conter segredos!" -ForegroundColor Red
+            $fail = $true
+        }
+    }
+    foreach ($np in $blockedNamePatterns) {
+        if ($f -like "*$np*") {
+            Write-Host "  BLOQUEADO: $f (nome sensivel: $np)" -ForegroundColor Red
             $fail = $true
         }
     }
