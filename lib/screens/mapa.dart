@@ -656,6 +656,46 @@ class _MapaScreenState extends State<MapaScreen> {
                   ),
                 ),
                 const SizedBox(height: 10),
+                // ── P4 — Banner FOMO spots bloqueados ─────────
+                Builder(builder: (ctx) {
+                  final lockedCount = _filteredSpots
+                      .where((s) => _isSpotLocked(
+                            tier: s.tierLabel,
+                            elite: s.elite,
+                          ))
+                      .length;
+                  if (lockedCount == 0) return const SizedBox.shrink();
+                  return GestureDetector(
+                    onTap: () =>
+                        PaywallScreen.open(ctx, source: 'mapa_fomo_banner'),
+                    child: Container(
+                      margin: const EdgeInsets.fromLTRB(0, 0, 0, 10),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 14, vertical: 10),
+                      decoration: BoxDecoration(
+                        color: kAmber.withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(10),
+                        border:
+                            Border.all(color: kAmber.withValues(alpha: 0.35)),
+                      ),
+                      child: Row(children: [
+                        const Icon(Icons.lock_rounded,
+                            size: 13, color: kAmber),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            '$lockedCount spot${lockedCount > 1 ? "s" : ""} PRO/ELITE — desbloqueia com PRO',
+                            style:
+                                ibm(11, c: kAmber, fw: FontWeight.w600),
+                          ),
+                        ),
+                        Text('PRO →',
+                            style: ibm(11,
+                                c: kAmber, fw: FontWeight.w700)),
+                      ]),
+                    ),
+                  );
+                }),
                 if (_loadingSpots && _spots.isEmpty)
                   Padding(
                     padding: const EdgeInsets.symmetric(vertical: 12),
@@ -1332,27 +1372,49 @@ class _MapaScreenState extends State<MapaScreen> {
           child: Stack(
             clipBehavior: Clip.none,
             children: [
-              CustomPaint(
-                size: const Size(40, 47),
-                painter: s.elite
-                    ? const AqxPinElite()
-                    : (s.tierLabel == 'PRO'
-                        ? const AqxPinPro()
-                        : const AqxPinFree()),
-              ),
+              // Pin desfocado + opaco quando bloqueado (P4)
+              if (locked)
+                ImageFiltered(
+                  imageFilter: ImageFilter.blur(sigmaX: 2.0, sigmaY: 2.0),
+                  child: Opacity(
+                    opacity: 0.55,
+                    child: CustomPaint(
+                      size: const Size(40, 47),
+                      painter: s.elite
+                          ? const AqxPinElite()
+                          : const AqxPinPro(),
+                    ),
+                  ),
+                )
+              else
+                CustomPaint(
+                  size: const Size(40, 47),
+                  painter: s.elite
+                      ? const AqxPinElite()
+                      : (s.tierLabel == 'PRO'
+                          ? const AqxPinPro()
+                          : const AqxPinFree()),
+                ),
+              // Cadeado — sempre nítido em cima do pin (P4)
               if (locked)
                 Positioned(
                   right: -2,
                   top: -2,
                   child: Container(
-                    width: 14,
-                    height: 14,
+                    width: 16,
+                    height: 16,
                     decoration: BoxDecoration(
                       color: kCard,
                       shape: BoxShape.circle,
-                      border: Border.all(color: pinColor.withValues(alpha: 0.65)),
+                      border: Border.all(color: pinColor.withValues(alpha: 0.8)),
+                      boxShadow: [
+                        BoxShadow(
+                          color: pinColor.withValues(alpha: 0.35),
+                          blurRadius: 4,
+                        ),
+                      ],
                     ),
-                    child: Icon(Icons.lock_rounded, size: 9, color: pinColor),
+                    child: Icon(Icons.lock_rounded, size: 10, color: pinColor),
                   ),
                 ),
             ],
