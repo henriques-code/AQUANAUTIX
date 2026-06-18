@@ -175,6 +175,7 @@ class _MapaScreenState extends State<MapaScreen> {
     }
   }
 
+
   Future<void> _loadSpots() async {
     if (_loadingSpots) return;
     setState(() => _loadingSpots = true);
