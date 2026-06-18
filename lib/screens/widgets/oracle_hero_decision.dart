@@ -663,8 +663,8 @@ class _ProChipButton extends StatelessWidget {
   }
 }
 
-/// Hero rio — Barragem de Alqueva; costa — mockup pescador.
+/// Hero rio — pescador AQUANAUTIX + achigã em rio PT; costa — mockup pescador.
 String oracleHeroAssetForSpecies(String code, {required bool isRio}) {
-  if (isRio) return 'assets/marketing/spots/alqueva.jpg';
+  if (isRio) return 'assets/marketing/catches/oracle_hero_rio_achiga.jpg';
   return kOracleMockupHeroAsset;
 }

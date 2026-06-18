@@ -36,6 +36,7 @@ flutter:
   uses-material-design: true
   assets:
     - assets/data/species_ibero.json
+    - assets/data/fishing_regulations_pt_es.geojson
     - assets/robalo_scanner.png
     - assets/onboarding/
     - assets/marketing/spots/

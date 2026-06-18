@@ -2,7 +2,40 @@
 
 class FishingSpot {
   static const _defaultPhoto =
-      'https://images.unsplash.com/photo-1505118380757-91f5f5632de0?w=80&q=70&auto=format';
+      'assets/marketing/catches/robalo.jpg';
+
+  /// Fotos reais — assets locais (costa) + Wikimedia (rio/mar).
+  static const Map<String, String> _speciesPhotos = {
+    'robalo': 'assets/marketing/catches/robalo.jpg',
+    'dourada': 'assets/marketing/catches/dourada.jpg',
+    'sargo': 'assets/marketing/catches/sargo.jpg',
+    'corvina':
+        'https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/Argyrosomus_regius_aquarium.jpg/640px-Argyrosomus_regius_aquarium.jpg',
+    'achiga':
+        'https://upload.wikimedia.org/wikipedia/commons/thumb/d/df/Micropterus_salmoides.jpg/640px-Micropterus_salmoides.jpg',
+    'achigã':
+        'https://upload.wikimedia.org/wikipedia/commons/thumb/d/df/Micropterus_salmoides.jpg/640px-Micropterus_salmoides.jpg',
+    'carpa':
+        'https://upload.wikimedia.org/wikipedia/commons/thumb/f/f9/Common_carp_Cyprinus_carpio.jpg/640px-Common_carp_Cyprinus_carpio.jpg',
+    'barbo':
+        'https://upload.wikimedia.org/wikipedia/commons/thumb/d/d8/Luciobarbus_bocagei.jpg/640px-Luciobarbus_bocagei.jpg',
+    'truta':
+        'https://upload.wikimedia.org/wikipedia/commons/thumb/0/0f/Salmo_trutta_marmorata.jpg/640px-Salmo_trutta_marmorata.jpg',
+    'linguado':
+        'https://upload.wikimedia.org/wikipedia/commons/thumb/0/01/Solea_solea_Pleschen.jpg/640px-Solea_solea_Pleschen.jpg',
+    'enguia':
+        'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b8/Anguilla_anguilla.jpg/640px-Anguilla_anguilla.jpg',
+    'lucio':
+        'https://upload.wikimedia.org/wikipedia/commons/thumb/e/ec/Esox_lucius_pik.jpg/640px-Esox_lucius_pik.jpg',
+    'lúcio':
+        'https://upload.wikimedia.org/wikipedia/commons/thumb/e/ec/Esox_lucius_pik.jpg/640px-Esox_lucius_pik.jpg',
+  };
+
+  static String _speciesKey(String name) =>
+      name.toLowerCase().trim().replaceAll('ú', 'u').replaceAll('í', 'i');
+
+  static String? photoForSpecies(String speciesName) =>
+      _speciesPhotos[_speciesKey(speciesName)];
 
   final String id;
   final String name;
@@ -63,7 +96,16 @@ class FishingSpot {
     return country;
   }
 
-  String get photo => photos.isNotEmpty ? photos.first : _defaultPhoto;
+  String get photo {
+    for (final sp in species) {
+      final fromSpecies = photoForSpecies(sp);
+      if (fromSpecies != null) return fromSpecies;
+    }
+    if (photos.isNotEmpty && !photos.first.contains('unsplash')) {
+      return photos.first;
+    }
+    return _defaultPhoto;
+  }
 
   String get primarySpecies =>
       species.isNotEmpty ? species.first.toUpperCase() : 'PEIXE';

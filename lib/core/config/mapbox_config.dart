@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
 
 // Token via --dart-define=MAPBOX_ACCESS_TOKEN=pk.ey... — nunca commitar.
@@ -21,8 +22,9 @@ const mapboxInitialZoom = 7.0;
 
 bool get isMapboxConfigured => _mapboxToken.isNotEmpty;
 
-/// Regista o token Mapbox globalmente. Síncrono; sem-op se token ausente.
+/// Regista o token Mapbox globalmente. Síncrono; sem-op se token ausente ou plataforma web.
 void initMapboxIfConfigured() {
+  if (kIsWeb) return;
   if (!isMapboxConfigured) return;
   MapboxOptions.setAccessToken(_mapboxToken);
 }
