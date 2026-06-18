@@ -30,6 +30,8 @@ import '../core/tides/oracle_data_service.dart';
 import '../core/catch_photos/catch_photo_model.dart';
 import '../core/catch_photos/catch_photo_repository.dart';
 import '../core/catch_photos/catch_photos_store.dart';
+import '../core/spots/fishing_spot.dart';
+import '../core/spots/fishing_spot_repository.dart';
 import '../core/supabase_bootstrap.dart';
 
 // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
@@ -72,6 +74,9 @@ class _MapaScreenState extends State<MapaScreen> {
   // ── Fotos geolocalizadas de capturas ────────────────────
   late final CatchPhotosStore _catchStore;
   final CatchPhotoRepository _catchPhotoRepo = CatchPhotoRepository();
+  final FishingSpotRepository _spotRepo = FishingSpotRepository();
+  List<FishingSpot> _spots = [];
+  bool _loadingSpots = false;
   List<CatchPhoto> _catchPhotos = [];
   bool _loadingCatchPhotos = false;
   bool _showCatchPhotos = true;
@@ -80,14 +85,6 @@ class _MapaScreenState extends State<MapaScreen> {
   final _mapController = MapController();
   final Map<String, Uint8List> _spotReferencePhotos = {};
   MapFocusRequest? _focusPin;
-
-  // Dados dos spots com coordenadas reais PT/ES (bloqueio via SubscriptionGate).
-  static const _spots = [
-    (name: 'Praia da Comporta', local: 'Setúbal · PRAIA', tier: 'FREE', score: 71, lat: 38.374, lon: -8.776, elite: false, region: 'SETUBAL', species: 'DOURADA', photo: 'https://images.unsplash.com/photo-1505118380757-91f5f5632de0?w=80&q=70&auto=format'),
-    (name: 'Cabo Espichel N.', local: 'Sesimbra · ROCHA', tier: 'PRO', score: 84, lat: 38.4198, lon: -9.2385, elite: false, region: 'SETUBAL', species: 'ROBALO', photo: 'https://images.unsplash.com/photo-1544979590-04bcee11af7d?w=80&q=70&auto=format'),
-    (name: 'Pedra Branca', local: 'Ericeira · ROCHA', tier: 'PRO', score: 68, lat: 38.970, lon: -9.420, elite: false, region: 'MAFRA', species: 'ROBALO', photo: 'https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=80&q=70&auto=format'),
-    (name: 'Elite #7 · Sagres', local: 'Algarve · ROCHA', tier: 'ELITE', score: 92, lat: 37.013, lon: -8.943, elite: true, region: 'CASCAIS', species: 'CORVINA', photo: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=80&q=70&auto=format'),
-  ];
 
   static const _baitShops = [
     (name: 'Bait Sesimbra', lat: 38.443, lon: -9.100, mapsQuery: '38.443,-9.100', photoUrl: 'https://images.unsplash.com/photo-1516939884455-1445c8652f83?w=160&q=70&auto=format', isOpen: true),
@@ -113,7 +110,39 @@ class _MapaScreenState extends State<MapaScreen> {
       if (!mounted) return;
       _applyPendingMapFocus();
       unawaited(_loadCatchPhotos());
+      unawaited(_loadSpots());
     });
+  }
+
+  Future<void> _loadSpots() async {
+    if (_loadingSpots) return;
+    setState(() => _loadingSpots = true);
+    try {
+      double lat = 39.5;
+      double lon = -8.5;
+      try {
+        final pos = await Geolocator.getLastKnownPosition();
+        if (pos != null) {
+          lat = pos.latitude;
+          lon = pos.longitude;
+        } else {
+          final c = _mapController.camera.center;
+          lat = c.latitude;
+          lon = c.longitude;
+        }
+      } catch (_) {}
+      final spots = await _spotRepo.fetchNearby(
+        lat: lat,
+        lon: lon,
+        radiusKm: 200,
+      );
+      if (!mounted) return;
+      setState(() => _spots = spots);
+    } catch (e) {
+      debugPrint('FishingSpots load error: $e');
+    } finally {
+      if (mounted) setState(() => _loadingSpots = false);
+    }
   }
 
   void _onSubscriptionChanged() {
@@ -415,51 +444,39 @@ class _MapaScreenState extends State<MapaScreen> {
               const SizedBox(height: 10),
 
               if (!_mostrarLojas) ...[
-                _spotRow(
-                  'Praia da Comporta',
-                  'Setúbal · PRAIA',
-                  'FREE',
-                  null,
-                  '71',
-                  bloqueado: _isSpotLocked(tier: 'FREE', elite: false),
-                  species: 'DOURADA',
-                  photoUrl: 'https://images.unsplash.com/photo-1505118380757-91f5f5632de0?w=80&q=70&auto=format',
-                  onTap: () => _setContext('SETUBAL', 'DOURADA', spotName: 'Praia da Comporta'),
-                ),
-                _spotRow(
-                  'Cabo Espichel N.',
-                  'Sesimbra · ROCHA',
-                  'PRO',
-                  'GHOST',
-                  '84',
-                  bloqueado: _isSpotLocked(tier: 'PRO', elite: false),
-                  species: 'ROBALO',
-                  photoUrl: 'https://images.unsplash.com/photo-1544979590-04bcee11af7d?w=80&q=70&auto=format',
-                  onTap: () => _setContext('SETUBAL', 'ROBALO', spotName: 'Cabo Espichel N.'),
-                ),
-                _spotRow(
-                  'Pedra Branca',
-                  'Ericeira · ROCHA',
-                  'PRO',
-                  null,
-                  '68',
-                  bloqueado: _isSpotLocked(tier: 'PRO', elite: false),
-                  species: 'ROBALO',
-                  photoUrl: 'https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=80&q=70&auto=format',
-                  onTap: () => _setContext('MAFRA', 'ROBALO', spotName: 'Pedra Branca'),
-                ),
-                _spotRow(
-                  'Elite #7 · Sagres',
-                  'Algarve · ROCHA',
-                  'ELITE',
-                  'GHOST',
-                  '92',
-                  bloqueado: _isSpotLocked(tier: 'ELITE', elite: true),
-                  elite: true,
-                  species: 'CORVINA',
-                  photoUrl: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=80&q=70&auto=format',
-                  onTap: () => _setContext('CASCAIS', 'CORVINA', spotName: 'Elite #7'),
-                ),
+                if (_loadingSpots && _spots.isEmpty)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    child: Center(
+                      child: SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: kCyan.withValues(alpha: 0.7),
+                        ),
+                      ),
+                    ),
+                  )
+                else
+                  ..._spots.map(
+                    (s) => _spotRow(
+                      s.name,
+                      s.local,
+                      s.tierLabel,
+                      s.elite ? 'GHOST' : null,
+                      s.score.toString(),
+                      bloqueado: _isSpotLocked(tier: s.tierLabel, elite: s.elite),
+                      elite: s.elite,
+                      species: s.primarySpecies,
+                      photoUrl: s.photo,
+                      onTap: () => _setContext(
+                        s.regionKey,
+                        s.primarySpecies,
+                        spotName: s.name,
+                      ),
+                    ),
+                  ),
                 const SizedBox(height: 8),
               ] else ...[
                 _lojaRow(
@@ -646,14 +663,16 @@ class _MapaScreenState extends State<MapaScreen> {
 
   Future<void> _ghostOrPaywall() async {
     HapticFeedback.mediumImpact();
-    if (SubscriptionStore.instance.value.value.hasProEntitlement) {
+    if (SubscriptionGate.canAccessProFeatures(
+      SubscriptionStore.instance.value.value,
+    )) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Ghost Mode activo', style: ibm(13))),
       );
       return;
     }
-    await PaywallScreen.open(context, source: 'mapa_ghost_mode');
+    await SubscriptionGate.ensureProAccess(context, source: 'mapa_ghost_mode');
   }
 
   /// Pin de destaque ao abrir mapa desde Início (Spots em Destaque) ou Oráculo.
@@ -703,27 +722,29 @@ class _MapaScreenState extends State<MapaScreen> {
   /// Comunidade curada: FREE amarelo, PRO azulão, ELITE âmbar.
   List<Marker> _buildCommunitySpotMarkers() {
     return _spots.map((s) {
-      final locked = _isSpotLocked(tier: s.tier, elite: s.elite);
+      final locked = _isSpotLocked(tier: s.tierLabel, elite: s.elite);
       final Color pinColor = s.elite
           ? kAmber
-          : (s.tier == 'PRO' ? _pinProBlue : _pinCommunity);
+          : (s.tierLabel == 'PRO' ? _pinProBlue : _pinCommunity);
       return Marker(
         point: LatLng(s.lat, s.lon),
         width: 40,
         height: 47,
         child: GestureDetector(
           onTap: () {
-            if (!locked) _setContext(s.region, s.species, spotName: s.name);
+            if (!locked) {
+              _setContext(s.regionKey, s.primarySpecies, spotName: s.name);
+            }
             _showSpotDetail(
               ctx: context,
               name: s.name,
               local: s.local,
               score: s.score.toString(),
-              tier: s.tier,
+              tier: s.tierLabel,
               bloqueado: locked,
               elite: s.elite,
               photoUrl: s.photo,
-              species: s.species,
+              species: s.primarySpecies,
               onTap: locked ? null : widget.onSpotOpensOracle,
             );
           },
@@ -734,7 +755,7 @@ class _MapaScreenState extends State<MapaScreen> {
                 size: const Size(40, 47),
                 painter: s.elite
                     ? const AqxPinElite()
-                    : (s.tier == 'PRO'
+                    : (s.tierLabel == 'PRO'
                         ? const AqxPinPro()
                         : const AqxPinFree()),
               ),

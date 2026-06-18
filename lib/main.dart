@@ -13,6 +13,7 @@ import 'core/state/subscription_store.dart';
 import 'core/services/revenue_cat_service.dart';
 import 'core/monetization/subscription_auth_bridge.dart';
 import 'core/config/mapbox_config.dart';
+import 'core/species/species_catalog.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -24,6 +25,7 @@ Future<void> main() async {
   );
   await FishingContextStore.instance.init();
   await AppLocaleStore.instance.init();
+  unawaited(SpeciesCatalog.instance.ensureLoaded());
   try {
     await RevenueCatService.instance.configure();
   } catch (_) {

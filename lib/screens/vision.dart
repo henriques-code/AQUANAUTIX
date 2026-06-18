@@ -6,8 +6,8 @@ import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '_shared.dart';
-import 'paywall.dart';
 import '../core/config/openai_config.dart';
+import '../core/monetization/subscription_gate.dart';
 import '../core/state/subscription_store.dart';
 import '../core/species/species_catalog.dart';
 import '../core/species/species_compliance.dart';
@@ -99,7 +99,10 @@ class _VisionScreenState extends State<VisionScreen>
     }
 
     if (mounted) {
-      await PaywallScreen.open(context, source: 'vision_free_limit');
+      await SubscriptionGate.ensureProAccess(
+        context,
+        source: 'vision_free_limit',
+      );
     }
     return false;
   }

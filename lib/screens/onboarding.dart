@@ -1,4 +1,5 @@
 import 'dart:math' as math;
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -6,6 +7,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '_shared.dart';
 import '../core/widgets/aquanautix_pins.dart';
+import '../core/services/analytics_service.dart';
 
 // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 // ONBOARDING v2 — AQUANAUTIX · Apresentação Premium
@@ -65,6 +67,12 @@ class _OnboardingScreenState extends State<OnboardingScreen>
   Future<void> _finish() async {
     HapticFeedback.mediumImpact();
     await OnboardingScreen.markDone();
+    unawaited(
+      AnalyticsService.instance.track(
+        AnalyticsEvents.onboardingComplete,
+        params: const {'version': 'v2', 'slides': 6},
+      ),
+    );
     widget.onDone();
   }
 
