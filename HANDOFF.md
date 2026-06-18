@@ -1,7 +1,7 @@
 # AQUANAUTIX — Handoff para novo chat
 
 > Copia este ficheiro (ou a secção «Prompt rápido») para iniciar um chat Cursor/Claude com contexto completo.
-> **Última actualização:** 16 Jun 2026 · commit `49107bf` · branch `main` = `origin/main` (PR #5 merged)
+> **Última actualização:** 18 Jun 2026 · branches `feat/mapa-camadas-v1` + `feat/oracle-p3-bait-technique` · PRs pendentes merge → main
 
 ---
 
@@ -10,11 +10,11 @@
 ```
 És o engenheiro principal da app Flutter AQUANAUTIX (mono-repo). Responde em português de Portugal. Diagnóstico antes de mudanças grandes. Diff mínimo.
 
-Repo: C:\Users\Joaop\OneDrive\Documentos\AQUANAUTIX · branch main · último commit 49107bf
+Repo: C:\Users\Joaop\OneDrive\Documentos\AQUANAUTIX · branch feat/oracle-p3-bait-technique · último commit 4f355b7
 
 ESCOPO
 - App Flutter (lib/, pubspec, android/, assets/): ✅ foco principal
-- Supabase (supabase/migrations/): ✅ 9 migrations versionadas; pendente db push remoto · rate limits · Edge Functions
+- Supabase (supabase/migrations/): ✅ 13 migrations aplicadas (fishing_spots + bait_shops com PostGIS + seed PT/ES)
 - Site V2/: ❌ NÃO MEXER sem AUTORIZO explícito (produção aquanautix.vercel.app)
 - Design/UI: ❌ NÃO MEXER sem AUTORIZO explícito
 - Secrets: .env + tools/local_secrets.ps1 (nunca commitar sk_, ghp_, sbp_)
@@ -22,7 +22,9 @@ ESCOPO
 STACK (verificar no código — não confiar só neste prompt)
 - lib/screens/ + lib/core/ + lib/features/home/ + lib/features/community/
 - Mapa: flutter_map (ArcGIS/OSM/OpenSeaMap) — Mapbox SDK só bootstrap token, NÃO rendering (MIUI)
+  → Camadas V1: batimetria GEBCO, regulamentos GeoJSON, heatmap comunidade, filtro espécies, lojas dinâmicas
 - Oráculo: Open-Meteo + Nominatim em lib/core/tides/ · pesquisa local (planeamento) OK
+  → Card ISCO+TÉCNICA: BaitTechniqueService (10 espécies, confiança por mês/habitat/maré)
 - Auth: Supabase + Google Sign-In (com.aquanautix.app)
 - Monetização: RevenueCat parcial · trial 3 dias PRO local (SubscriptionStore)
 
@@ -45,6 +47,7 @@ ORÁCULO (lib/screens/oraculo.dart) — estado actual Jun 2026
 - OracleDecisaoFold: hero oracle_hero_pescador.jpg · score pulse · janela âmbar · mini-mapa
 - oracle_conversion_pack.dart: linha decisão · faixa PRO sticky · drawer «PRO 3 dias grátis» → PaywallScreen
 - Espécie alvo chips · CTAs IR PESCAR / REGISTAR CAPTURA · GHOST 2 cards · card spot PRO
+- Card ISCO+TÉCNICA (P3): entre DecisaoFold e ConditionsFold; usa BaitTechniqueService; oculto se espécie vazia
 - OracleConditionsFold colapsável (meteorologia 16 cartões abaixo)
 - Mini-mapa blur + cadeado FREE · CTAs «Comparar 3 sítios (PRO)» / «Alertar janela (PRO) · EM BREVE»
 - Widgets: oracle_decisao_fold, oracle_hero_decision, oracle_conversion_pack, oracle_pro_spot_teaser, oracle_community_photo_row, oracle_conditions_collapsible, oracle_conditions_fold, oracle_weather_details_grid
@@ -53,18 +56,18 @@ ORÁCULO (lib/screens/oraculo.dart) — estado actual Jun 2026
 SUPABASE
 - Projecto: ycmvqokcfzxkpinvcyhk.supabase.co
 - Guia: supabase/README_setup.md
-- Deploy: supabase link --project-ref ycmvqokcfzxkpinvcyhk && supabase db push
-- Nova migration local: 20260616174757_storage_no_public_listing.sql (sem listagem pública buckets)
+- 13 migrations aplicadas local=remoto (verificado sync_check.ps1 18 Jun 2026)
+- Tabelas novas: fishing_spots (PostGIS, RLS FREE/PRO/ELITE, 5 spots seed), bait_shops (PostGIS, RLS pública, 55 lojas PT/ES)
 
 DOCS: AQUANAUTIX_CONTEXT.md · CLAUDE.md · README.md · ECOSYSTEM.md · SYNC_WORKFLOW.md · HANDOFF.md
 BACKLOG PRODUTO: .cursor/rules/proximos-movimentos.mdc (P1–P17)
 
 PENDENTE P0/P1
-1. RevenueCat — produtos PRO/ELITE no dashboard + gates reais
-2. supabase db push (9 migrations)
-3. Onboarding — ligar onboarding.dart ao arranque (1.ª vez)
-4. Push Janela de Ouro (P5) — backend; UI já tem EM BREVE
-5. Sprint C — manifest spots · renomear cabo_da_roca.jpg → cabo_espichel.jpg
+1. Merge PRs → main: feat/mapa-camadas-v1 + feat/oracle-p3-bait-technique (ambos em review no GitHub)
+2. RevenueCat — produtos PRO/ELITE no dashboard + gates reais
+3. P4 Blur Mapa — spots PRO/ELITE desfocados + cadeado (FOMO visual FREE→PRO)
+4. Onboarding — ligar onboarding.dart ao arranque (1.ª vez)
+5. Push Janela de Ouro (P5) — backend; UI já tem EM BREVE
 
 TAREFA DESTE CHAT:
 [DESCREVER AQUI]
@@ -74,15 +77,13 @@ TAREFA DESTE CHAT:
 
 ## Commits recentes (referência)
 
-| Commit | Descrição |
-|--------|-----------|
-| `49107bf` | feat(oraculo): mockup Decisão + pack PRO + docs + security (PR #5 squash merge) |
-| `98e1952` | feat(oraculo): layout mockup Decisão — hero pescador, fold CTAs |
-| `cc359ab` | chore(security): gitignore + pre-commit contra PAT GitHub |
-| `7773a3c` | feat(home): tap username comunidade (base navegação) |
-| `e7a276b` | fix(home): GPS Início, maré MSL, spots→mapa, Cabo Espichel |
-| `b571b12` | feat(i18n): selector PT/ES/EN no login |
-| `8cdeb64` | feat(app): Ghost badge, mini-mapa Oráculo, fixes MIUI |
+| Commit | Branch | Descrição |
+|--------|--------|-----------|
+| `4f355b7` | feat/oracle-p3-bait-technique | feat(mapa): P7 lojas de isco dinâmicas via Supabase |
+| `f0674ae` | feat/oracle-p3-bait-technique | feat(oraculo): P3 card isco+técnica por espécie alvo |
+| `1bfbe09` | feat/mapa-camadas-v1 | feat(mapa): camadas V1 — batimetria, regulamentos, heatmap, filtro espécies |
+| `0c72e84` | feat/fishing-spots-oracle-rig | feat: fishing spots Supabase, rig Oracle P3 e polish monetização/UI |
+| `49107bf` | main | feat(oraculo): mockup Decisão + pack PRO + docs + security (PR #5) |
 
 ---
 
@@ -115,21 +116,24 @@ TAREFA DESTE CHAT:
 | Oráculo | `lib/screens/oraculo.dart`, `widgets/oracle_decisao_fold.dart`, `oracle_conversion_pack.dart`, `oracle_hero_decision.dart`, `oracle_conditions_fold.dart`, `oracle_weather_details_grid.dart` |
 | GPS | `lib/core/location/gps_access.dart`, `gps_bootstrap.dart`, `widgets/location_access_sheet.dart` |
 | Dados | `lib/core/tides/oracle_data_service.dart`, `oracle_hourly_score.dart` |
-| Mapa | `lib/screens/mapa.dart` |
+| Mapa | `lib/screens/mapa.dart`, `lib/core/spots/fishing_spot*.dart`, `lib/core/spots/bait_shop*.dart`, `lib/core/regulations/fishing_regulation_zone.dart`, `lib/core/community/community_heatmap_repository.dart` |
+| Oráculo P3 | `lib/core/fishing/bait_technique_service.dart` |
 | Supabase app | `lib/core/supabase_bootstrap.dart`, `community/`, `catch_photos/` |
-| Supabase repo | `supabase/migrations/` (9 ficheiros), `supabase/README_setup.md` |
+| Supabase repo | `supabase/migrations/` (13 ficheiros), `supabase/README_setup.md` |
+| Assets dados | `assets/data/fishing_regulations_pt_es.geojson` |
 
 ---
 
-## Sincronização ecossistema (16 Jun 2026)
+## Sincronização ecossistema (18 Jun 2026)
 
 | Componente | Estado |
 |------------|--------|
-| App Flutter `lib/` | ✅ `49107bf` |
-| GitHub `main` | ✅ PR #5 merged · squash |
-| Docs (CONTEXT, CLAUDE, HANDOFF, ECOSYSTEM, README) | ✅ alinhados nesta revisão |
+| App Flutter `lib/` | ✅ `4f355b7` (feat/oracle-p3-bait-technique) |
+| GitHub branches | ✅ feat/mapa-camadas-v1 + feat/oracle-p3-bait-technique pushed |
+| GitHub `main` | ⚠️ 2 PRs pendentes de merge (mapa-camadas-v1 + oracle-p3-bait-technique) |
+| Docs (CONTEXT, HANDOFF) | ✅ actualizados 18 Jun 2026 |
 | Site V2 produção | ⏸️ Sem alterações (AUTORIZO) |
-| Supabase remoto | ⚠️ Correr `supabase db push` (9 migrations; nova: storage no public listing) |
+| Supabase remoto | ✅ 13 migrations local=remoto · fishing_spots + bait_shops aplicados |
 | Edge Functions | ❌ Não versionadas no repo |
 | RevenueCat / Lojas | 🔄 Parcial |
 
@@ -161,11 +165,11 @@ adb shell pm install -r -t /data/local/tmp/app-debug.apk
 
 ## Backlog prioritário (produto)
 
-1. **P0 RevenueCat** — produtos PRO/ELITE + gates reais (`REVENUECAT_SETUP.md`)
-2. **Supabase remoto** — `db push`; rate limits + Edge Functions no repo
-3. **Onboarding** — ligar `onboarding.dart` ao arranque (primeira vez)
-4. **P5 Push Janela de Ouro** — backend + permissões (UI EM BREVE)
-5. **Sprint C** — manifest spots, renomear `cabo_da_roca.jpg` → `cabo_espichel.jpg`
+1. **Merge PRs** — feat/mapa-camadas-v1 + feat/oracle-p3-bait-technique → main
+2. **P4 Blur Mapa** — spots PRO/ELITE desfocados + cadeado FREE (FOMO visual)
+3. **P0 RevenueCat** — produtos PRO/ELITE + gates reais (`REVENUECAT_SETUP.md`)
+4. **Onboarding** — ligar `onboarding.dart` ao arranque (primeira vez)
+5. **P5 Push Janela de Ouro** — backend + permissões (UI EM BREVE)
 6. Domínio `aquanautix.app` → Vercel
 
 Ver lista completa: `.cursor/rules/proximos-movimentos.mdc`
