@@ -32,6 +32,8 @@ import '../core/catch_photos/catch_photo_repository.dart';
 import '../core/catch_photos/catch_photos_store.dart';
 import '../core/spots/fishing_spot.dart';
 import '../core/spots/fishing_spot_repository.dart';
+import '../core/spots/bait_shop.dart';
+import '../core/spots/bait_shop_repository.dart';
 import '../core/regulations/fishing_regulation_zone.dart';
 import '../core/community/community_heatmap_repository.dart';
 import '../core/supabase_bootstrap.dart';
@@ -96,9 +98,12 @@ class _MapaScreenState extends State<MapaScreen> {
   late final CatchPhotosStore _catchStore;
   final CatchPhotoRepository _catchPhotoRepo = CatchPhotoRepository();
   final FishingSpotRepository _spotRepo = FishingSpotRepository();
+  final BaitShopRepository _baitShopRepo = BaitShopRepository();
   List<FishingSpot> _spots = [];
+  List<BaitShop> _baitShops = [];
   List<String> _selectedSpecies = [];
   bool _loadingSpots = false;
+  bool _loadingBaitShops = false;
   List<CatchPhoto> _catchPhotos = [];
   bool _loadingCatchPhotos = false;
   bool _showCatchPhotos = true;
@@ -116,15 +121,6 @@ class _MapaScreenState extends State<MapaScreen> {
   final _mapController = MapController();
   final Map<String, Uint8List> _spotReferencePhotos = {};
   MapFocusRequest? _focusPin;
-
-  static const _baitShops = [
-    (name: 'Bait Sesimbra', lat: 38.443, lon: -9.100, mapsQuery: '38.443,-9.100', photoUrl: 'https://images.unsplash.com/photo-1516939884455-1445c8652f83?w=160&q=70&auto=format', isOpen: true),
-    (name: 'Iscos Comporta', lat: 38.372, lon: -8.781, mapsQuery: '38.372,-8.781', photoUrl: 'https://images.unsplash.com/photo-1556740749-887f6717d7e4?w=160&q=70&auto=format', isOpen: true),
-    (name: 'Ericeira Bait', lat: 38.969, lon: -9.418, mapsQuery: '38.969,-9.418', photoUrl: 'https://images.unsplash.com/photo-1520607162513-77705c0f0d4a?w=160&q=70&auto=format', isOpen: true),
-    (name: 'Sagres Tackle', lat: 37.011, lon: -8.948, mapsQuery: '37.011,-8.948', photoUrl: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=160&q=70&auto=format', isOpen: true),
-    (name: 'Vigo Mar Shop', lat: 42.226, lon: -8.734, mapsQuery: '42.226,-8.734', photoUrl: 'https://images.unsplash.com/photo-1505118380757-91f5f5632de0?w=160&q=70&auto=format', isOpen: false),
-    (name: 'A Coruña Bait', lat: 43.370, lon: -8.398, mapsQuery: '43.370,-8.398', photoUrl: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=160&q=70&auto=format', isOpen: true),
-  ];
 
   @override
   void initState() {
@@ -144,7 +140,39 @@ class _MapaScreenState extends State<MapaScreen> {
       _applyPendingMapFocus();
       unawaited(_loadCatchPhotos());
       unawaited(_loadSpots());
+      unawaited(_loadBaitShops());
     });
+  }
+
+  Future<void> _loadBaitShops() async {
+    if (_loadingBaitShops) return;
+    setState(() => _loadingBaitShops = true);
+    try {
+      double lat = 39.5;
+      double lon = -8.5;
+      try {
+        final pos = await Geolocator.getLastKnownPosition();
+        if (pos != null) {
+          lat = pos.latitude;
+          lon = pos.longitude;
+        } else {
+          final c = _mapController.camera.center;
+          lat = c.latitude;
+          lon = c.longitude;
+        }
+      } catch (_) {}
+      final shops = await _baitShopRepo.fetchNearby(
+        lat: lat,
+        lon: lon,
+        radiusKm: 200,
+      );
+      if (!mounted) return;
+      setState(() => _baitShops = shops);
+    } catch (e) {
+      debugPrint('BaitShops load error: $e');
+    } finally {
+      if (mounted) setState(() => _loadingBaitShops = false);
+    }
   }
 
   Future<void> _loadSpots() async {
@@ -378,7 +406,7 @@ class _MapaScreenState extends State<MapaScreen> {
     await p.setString(_prefsKeySavedSpotPhotos, jsonEncode(list));
   }
 
-  List<({String name, double lat, double lon, String mapsQuery, String photoUrl, bool isOpen})> _nearbyBaitShops() {
+  List<BaitShop> _nearbyBaitShops() {
     final distance = const Distance();
     return _baitShops.where((shop) {
       if (!shop.isOpen) return false;
@@ -391,6 +419,34 @@ class _MapaScreenState extends State<MapaScreen> {
         return km <= 5.0;
       });
     }).toList();
+  }
+
+  LatLng _mapCenterOrDefault() {
+    try {
+      return _mapController.camera.center;
+    } catch (_) {
+      return const LatLng(39.5, -8.5);
+    }
+  }
+
+  List<({BaitShop shop, double km})> _baitShopsForSheet({int limit = 15}) {
+    final center = _mapCenterOrDefault();
+    const distance = Distance();
+    final ranked = _baitShops
+        .map(
+          (shop) => (
+            shop: shop,
+            km: distance.as(
+              LengthUnit.Kilometer,
+              center,
+              LatLng(shop.lat, shop.lon),
+            ),
+          ),
+        )
+        .where((e) => e.km <= 80)
+        .toList()
+      ..sort((a, b) => a.km.compareTo(b.km));
+    return ranked.take(limit).toList();
   }
 
   @override
@@ -634,33 +690,42 @@ class _MapaScreenState extends State<MapaScreen> {
                   ),
                 const SizedBox(height: 8),
               ] else ...[
-                _lojaRow(
-                  'Pesca Atlântica',
-                  'Sesimbra',
-                  '1.2km',
-                  '4.7',
-                  'ABERTO · até 19h',
-                  photoUrl: 'https://images.unsplash.com/photo-1516939884455-1445c8652f83?w=120&q=70&auto=format',
-                  mapsQuery: '38.4445,-9.1028',
-                ),
-                _lojaRow(
-                  'Isco & Cia',
-                  'Almada',
-                  '2.8km',
-                  '4.3',
-                  'ABERTO · até 20h',
-                  photoUrl: 'https://images.unsplash.com/photo-1556740749-887f6717d7e4?w=120&q=70&auto=format',
-                  mapsQuery: '38.6803,-9.1568',
-                ),
-                _lojaRow(
-                  'Náutica Sul',
-                  'Seixal',
-                  '3.5km',
-                  '4.9',
-                  'Fecha em 45min',
-                  photoUrl: 'https://images.unsplash.com/photo-1520607162513-77705c0f0d4a?w=120&q=70&auto=format',
-                  mapsQuery: '38.6427,-9.1037',
-                ),
+                if (_loadingBaitShops && _baitShops.isEmpty)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    child: Center(
+                      child: SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: kCyan.withValues(alpha: 0.7),
+                        ),
+                      ),
+                    ),
+                  )
+                else if (_baitShopsForSheet().isEmpty)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    child: Text(
+                      t.es
+                          ? 'Sin tiendas de cebo cerca'
+                          : 'Sem lojas de isco perto',
+                      style: ibm(12, c: kHint),
+                    ),
+                  )
+                else
+                  ..._baitShopsForSheet().map(
+                    (e) => _lojaRow(
+                      e.shop.name,
+                      e.shop.localLabel,
+                      '${e.km.toStringAsFixed(1)}km',
+                      '4.5',
+                      e.shop.hours ?? (t.es ? 'ABIERTO' : 'ABERTO'),
+                      photoUrl: e.shop.photoUrl,
+                      mapsQuery: e.shop.mapsQuery,
+                    ),
+                  ),
                 const SizedBox(height: 8),
               ],
               ValueListenableBuilder<FishingContext>(
@@ -1589,7 +1654,7 @@ class _MapaScreenState extends State<MapaScreen> {
     )).toList();
   }
 
-  void _showBaitShopPinDetail(({String name, double lat, double lon, String mapsQuery, String photoUrl, bool isOpen}) shop) {
+  void _showBaitShopPinDetail(BaitShop shop) {
     final t = aqxL10nOf(context);
     showModalBottomSheet<void>(
       context: context,
@@ -1606,6 +1671,17 @@ class _MapaScreenState extends State<MapaScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(shop.name, style: orb(16, fw: FontWeight.w800)),
+              if (shop.address != null && shop.address!.isNotEmpty) ...[
+                const SizedBox(height: 4),
+                Text(shop.address!, style: ibm(12, c: kHint)),
+              ],
+              if (shop.speciality.isNotEmpty) ...[
+                const SizedBox(height: 6),
+                Text(
+                  shop.speciality.join(' · '),
+                  style: mono(9, c: kCyan),
+                ),
+              ],
               const SizedBox(height: 8),
               ClipRRect(
                 borderRadius: BorderRadius.circular(10),
