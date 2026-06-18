@@ -20,6 +20,7 @@ import '../core/tides/weather_details_snapshot.dart';
 import '../core/community/community_demo_posts.dart';
 import '../core/community/community_store.dart';
 import '../core/monetization/subscription_gate.dart';
+import '../core/fishing/bait_technique_service.dart';
 import '../core/species/oracle_rig_recommendation.dart';
 import '../core/location/gps_access.dart';
 import '../core/state/logbook_tab_index.dart';
@@ -681,6 +682,43 @@ class _OraculoScreenState extends State<OraculoScreen>
     );
   }
 
+  Widget _buildBaitTechniqueCard(BaitRecommendation rec, AqxL10n t) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: cardBox,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('ISCO + TÉCNICA', style: mono(10, ls: 1.1)),
+          const SizedBox(height: 8),
+          RichText(
+            text: TextSpan(
+              style: ibm(13, c: Colors.white),
+              children: [
+                TextSpan(
+                  text: t.es ? 'Cebo: ' : 'Isco: ',
+                  style: ibm(13, c: kHint),
+                ),
+                TextSpan(
+                  text: rec.bait,
+                  style: ibm(13, fw: FontWeight.w700, c: Colors.white),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            '${t.es ? 'Técnica' : 'Técnica'}: ${rec.technique} · ${rec.rodType}',
+            style: ibm(12, fw: FontWeight.w600),
+          ),
+          const SizedBox(height: 4),
+          Text(rec.techniqueDesc, style: ibm(11, c: kHint)),
+        ],
+      ),
+    );
+  }
+
   Widget _inlineDataBanner({
     required String message,
     required AqxL10n t,
@@ -768,6 +806,29 @@ class _OraculoScreenState extends State<OraculoScreen>
           FadeTransition(
             opacity: _fade,
             child: _buildDecisaoFold(context, t, d),
+          ),
+
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+            child: FadeTransition(
+              opacity: _fade,
+              child: ValueListenableBuilder<FishingContext>(
+                valueListenable: FishingContextStore.instance.value,
+                builder: (context, fishingCtx, _) {
+                  final speciesCode = fishingCtx.species.trim();
+                  if (speciesCode.isEmpty) return const SizedBox.shrink();
+                  final rec = BaitTechniqueService.recommend(
+                    targetSpecies: _speciesUiLabel(speciesCode),
+                    isRio: _rioMode,
+                    month: DateTime.now().month,
+                    tideState: _rioMode
+                        ? ''
+                        : (_costaBundle?.tideTrendPt ?? ''),
+                  );
+                  return _buildBaitTechniqueCard(rec, t);
+                },
+              ),
+            ),
           ),
 
           Padding(

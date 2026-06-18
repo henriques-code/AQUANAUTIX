@@ -1,6 +1,6 @@
 # AQUANAUTIX — Central de contexto
 
-**Última revisão estructural:** 16 Jun 2026 — Oráculo mockup Decisão + pack conversão PRO; tab Comunidade (7 tabs); GPS MIUI + pull-to-refresh.
+**Última revisão estructural:** 18 Jun 2026 — Mapa V1 camadas (batimetria, regulamentos, heatmap, filtro espécies, lojas dinâmicas); P3 isco+técnica no Oráculo; fishing_spots + bait_shops no Supabase.
 
 ## Estrutura do repositório (mono-repo)
 
@@ -53,12 +53,17 @@ AQUANAUTIX/
 - **Navegação:** `AquanautixHome` com **7 tabs lazy** — Início · Oráculo · Mapa · Vision · Log · Perfil · **Comunidade** (via `HomeTabIndex`; índice 6 = `communityTabIndex`).
 - **Ecrãs:** `home` (7 tabs lazy `_tabCache`; Início com WeatherCard, pull-to-refresh GPS, spots→mapa, comunidade→tab COMUN.), `comunidade` (feed Ghost + sheet perfil), `oraculo` (**OracleDecisaoFold** mockup — hero pescador, linha decisão, faixa PRO sticky, drawer trial, GHOST cards, spot PRO; **OracleConditionsFold** colapsável; strip Comunidade → tab 6; Nominatim; GPS inline), `mapa` (`flutter_map`), `vision`, `logbook`, `perfil`, `paywall`, `splash`, login/password.
 - **`lib/screens/widgets/` (Oráculo):** `oracle_decisao_fold.dart`, `oracle_hero_decision.dart`, `oracle_conversion_pack.dart` (decision line + sticky PRO + drawer), `oracle_mockup_header.dart`, `oracle_community_photo_row.dart`, `oracle_pro_spot_teaser.dart`, `oracle_conditions_collapsible.dart`, `oracle_conditions_fold.dart`, `oracle_decision_card.dart`, `oracle_fishing_metrics_grid.dart`, `oracle_timeline_24h.dart`, `oracle_community_strip.dart`, `oracle_mini_map.dart`, `oracle_weather_details_grid.dart`, `aqx_pressable.dart`, `location_access_sheet.dart`.
+- **`lib/core/fishing/bait_technique_service.dart`** — `BaitRecommendation` (bait, rodType, technique, techniqueDesc, confidence) + `BaitTechniqueService.recommend()` para 10 espécies ibéricas; confiança ajustada por mês, habitat e maré.
+- **`lib/core/spots/fishing_spot.dart` + `fishing_spot_repository.dart`** — modelo `FishingSpot` com PostGIS, `fetchNearby`, `fetchBySpecies`, fallback offline.
+- **`lib/core/spots/bait_shop.dart` + `bait_shop_repository.dart`** — modelo `BaitShop` com `isOpen`, `photoUrl`, `mapsQuery`; `fetchNearby` via Supabase + fallback 10 lojas.
+- **`lib/core/regulations/fishing_regulation_zone.dart`** — modelo GeoJSON para zonas regulamentadas (proibido/licença_especial/defeso_temp).
+- **`lib/core/community/community_heatmap_repository.dart`** — agrega capturas Ghost por geohash ~5 km; fallback demo.
 - **`lib/core/location/`:** `gps_access.dart` — cache memória, single-flight, `tryGetFix`/`tryGetFixQuick`, `forceRefresh`, `AndroidSettings(forceLocationManager)` (MIUI); `gps_bootstrap.dart` — permissão no arranque + `refreshFix` em background.
 - **`lib/screens/comunidade.dart` + `lib/features/community/`:** tab **COMUN.** — feed Ghost, sheet perfil público (`community_ghost_profile_sheet.dart`, `community_public_profile.dart`); tap no Início → `pendingCommunityProfile` + tab Comunidade.
 - **`lib/core/tides/`:** `oracle_hourly_score.dart` — score horário solunar+nuvens+chuva (timeline + Início).
 - **`lib/core/community/`:** `community_demo_posts.dart` — feed Ghost offline quando Supabase vazio.
 - **`lib/core`:** `OracleDataService` + tides/Nominatim, `supabase_bootstrap.dart`, `community/`, `catch_photos/`, espécies/compliance, vision, estado (`logbook_tab_index`, `home_tab_index`).
-- **`supabase/`:** migrations Postgres (insights, comunidade Ghost, catch_photos PostGIS) — ver `supabase/README_setup.md`.
+- **`supabase/`:** 13 migrations aplicadas (insights, comunidade Ghost, catch_photos PostGIS, **fishing_spots** + **bait_shops** com PostGIS + RLS tier FREE/PRO/ELITE, 55 lojas seed PT/ES, 5 spots seed) — ver `supabase/README_setup.md`.
 - Design system Midnight Deep Sea (`screens/_shared.dart`).
 - **`lib/features/home/`:** arquitectura feature-first (data/domain/presentation); `WeatherData` com `solunarScore`, `windDir`, `pressure`, `hasTide`; `HomeRepositoryImpl.loadDashboard(forceRefresh)` — obtém GPS dentro do load, invalida Oráculo no refresh, `knownCoords` no fetch; pull-to-refresh: GPS primeiro (12s) → invalidate → reload; spots em `assets/marketing/spots/` (**Cabo Espichel**, Peniche, Sesimbra) com **lat/lon** e tap → `pendingMapFocus`; `CommunityActivityCard` clicável → perfil Ghost.
 - **`lib/core/widgets/aqx_ghost_mode_badge.dart`:** badge Ghost (hex ciano + pill âmbar) — substitui 👻 em Oráculo, Logbook, Mapa, Vision, comunidade.
@@ -231,6 +236,29 @@ AQUANAUTIX/
 - `logbook.dart` — fix `pendingTab` com post-frame callback
 - `perfil.dart` — `GpsBootstrap.reset()` no logout
 
+### Sessão 18 Jun 2026
+
+**Mapa V1 — Camadas de informação (`1bfbe09`, `feat/mapa-camadas-v1`)**
+- **Fishing Spots Supabase:** `fishing_spots` table com PostGIS, RLS FREE/PRO/ELITE, 5 spots seed PT/ES; `FishingSpotRepository` com `fetchNearby`/`fetchBySpecies` e fallback offline.
+- **P2 Batimetria GEBCO:** `TileLayer` WMS GEBCO (opacidade 55%) no modo COSTA; toggle no sheet de camadas; `SnackBar` em modo RIO.
+- **P3 Regulamentos PT+ES:** `PolygonLayer` com GeoJSON `fishing_regulations_pt_es.geojson`; tap em polígono → `BottomSheet` com detalhes e link DGRM/MITERD; cores distintas por tipo (proibido=vermelho, licença_especial=âmbar, defeso_temp=laranja).
+- **P4 Heatmap Comunidade:** `CommunityHeatmapRepository`; `MarkerLayer` com círculos translúcidos (raio ∝ catchCount); ciano PRO / branco FREE; tap → tab Comunidade.
+- **P5 Filtro Espécies:** `FilterChip` horizontal no sheet de spots; `_filteredSpots` filtra pins e lista; fotos reais por espécie (assets locais + Wikimedia); lojas próximas respeitam filtro.
+- **Fix web:** `mapbox_config.dart` guarda `kIsWeb` para evitar crash `bool.fromEnvironment` no Chrome.
+
+**P3 Isco+Técnica no Oráculo (`f0674ae`, `feat/oracle-p3-bait-technique`)**
+- `BaitTechniqueService.recommend()` — 10 espécies, confiança ajustada por mês/habitat/maré.
+- Card «ISCO + TÉCNICA» no `oraculo.dart` entre `OracleDecisaoFold` e `OracleConditionsFold`; oculto se espécie não definida.
+
+**P7 Lojas de Isco Dinâmicas (`4f355b7`, `feat/oracle-p3-bait-technique`)**
+- `bait_shops` table Supabase (PostGIS + RLS + 55 lojas seed PT/ES); `BaitShop` + `BaitShopRepository`; `_loadBaitShops()` no arranque do mapa; pins verdes dinâmicos; sheet top 15 por distância.
+- Migration `20260617000001_bait_shops.sql` aplicada ao remoto.
+
+**Estado branches (18 Jun 2026)**
+- `feat/mapa-camadas-v1` — pushed, PR pendente merge → main
+- `feat/oracle-p3-bait-technique` — pushed, inclui P3+P7, PR pendente merge → main
+- `main` local — 2 commits à frente de `origin/main` (aguarda PRs)
+
 ### Sessão 16 Jun 2026
 
 **Oráculo — layout mockup Decisão (`98e1952`)**
@@ -257,11 +285,12 @@ AQUANAUTIX/
 
 ## Próximos passos (sugestão)
 
-1. **RevenueCat** — configurar produtos PRO/ELITE no dashboard e testar gates
-2. **Onboarding Flutter** — ligar `onboarding.dart` ao fluxo de arranque (só na primeira vez)
-3. **Google Sign-In** — testar em dispositivo com SHA-1 registado; confirmar login end-to-end
-4. **Formspree** — endpoint `formspree.io/f/…` no site
-5. **Domínio** `aquanautix.app`
+1. **Merge PRs** — `feat/mapa-camadas-v1` e `feat/oracle-p3-bait-technique` → main via GitHub
+2. **RevenueCat** — configurar produtos PRO/ELITE no dashboard e testar gates
+3. **Onboarding Flutter** — ligar `onboarding.dart` ao fluxo de arranque (só na primeira vez)
+4. **P4 Blur Mapa** — spots PRO/ELITE desfocados + cadeado para utilizadores FREE
+5. **P5 Push Janela de Ouro** — backend + permissões (UI já tem EM BREVE)
+6. **Domínio** `aquanautix.app`
 
 ## Regras de trabalho
 
