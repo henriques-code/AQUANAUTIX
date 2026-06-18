@@ -15,6 +15,8 @@ class SpeciesCatalog {
   Map<String, SpeciesRecord> _byId = {};
   bool _loaded = false;
 
+  bool get isLoaded => _loaded;
+
   List<SpeciesRecord> get all => List.unmodifiable(_list);
 
   SpeciesRecord? byId(String id) => _byId[id];

@@ -1,3 +1,6 @@
+import 'package:flutter/material.dart';
+
+import '../../screens/paywall.dart';
 import '../state/subscription_store.dart';
 
 /// Regras centralizadas FREE / PRO / ELITE — uma fonte para gates na app.
@@ -22,4 +25,30 @@ class SubscriptionGate {
   static bool canAccessProFeatures(SubscriptionState sub) => sub.hasProEntitlement;
 
   static bool canAccessEliteFeatures(SubscriptionState sub) => sub.isElite;
+
+  /// Abre paywall se FREE sem trial; devolve true se o utilizador tem PRO após fechar.
+  static Future<bool> ensureProAccess(
+    BuildContext context, {
+    required String source,
+  }) async {
+    if (canAccessProFeatures(SubscriptionStore.instance.value.value)) {
+      return true;
+    }
+    await PaywallScreen.open(context, source: source);
+    if (!context.mounted) return false;
+    return canAccessProFeatures(SubscriptionStore.instance.value.value);
+  }
+
+  /// ELITE-only — paywall com source distinto.
+  static Future<bool> ensureEliteAccess(
+    BuildContext context, {
+    required String source,
+  }) async {
+    if (canAccessEliteFeatures(SubscriptionStore.instance.value.value)) {
+      return true;
+    }
+    await PaywallScreen.open(context, source: source);
+    if (!context.mounted) return false;
+    return canAccessEliteFeatures(SubscriptionStore.instance.value.value);
+  }
 }

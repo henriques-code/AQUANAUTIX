@@ -33,11 +33,9 @@ class OracleMockupHeader extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Icon(
-          isRioIcon
-              ? Icons.waves_rounded
-              : (locationFromGps
-                  ? Icons.location_on_rounded
-                  : Icons.place_outlined),
+          locationFromGps
+              ? Icons.location_on_rounded
+              : Icons.place_outlined,
           size: 22,
           color: kCyan,
         ),

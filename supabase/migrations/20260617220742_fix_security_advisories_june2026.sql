@@ -1,0 +1,3 @@
+-- Migration aplicada directamente via dashboard Supabase (fix de advisories de segurança).
+-- Conteúdo original não recuperável localmente; estado final gerido por migration seguinte.
+-- Esta entrada existe apenas para sincronizar o tracking entre local e remote.

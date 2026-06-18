@@ -1,0 +1,127 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Ria Formosa",
+        "country": "PT",
+        "tipo": "licenca_especial",
+        "rule_summary": "Pesca na Ria Formosa exige licença especial da DGRM e respeito pelas áreas de reserva biogenética. Vedada a pesca em zonas de reprodução sinalizadas.",
+        "contact_url": "https://www.dgrm.pt/documents/10180/1900396/Ria+Formosa"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [-7.96, 36.98],
+          [-7.52, 36.98],
+          [-7.48, 37.18],
+          [-7.55, 37.22],
+          [-7.92, 37.15],
+          [-7.96, 36.98]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Estuário do Tejo",
+        "country": "PT",
+        "tipo": "defeso_temp",
+        "rule_summary": "Defeso de espécies estuarinas de janeiro a março na zona do estuário. Consultar portaria anual DGRM para espécies e taludes abrangidos.",
+        "contact_url": "https://www.dgrm.pt/web/guest/defeso"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [-9.35, 38.58],
+          [-8.72, 38.58],
+          [-8.68, 38.88],
+          [-9.05, 38.92],
+          [-9.35, 38.78],
+          [-9.35, 38.58]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Arrábida — Reserva Marinha",
+        "country": "PT",
+        "tipo": "proibido",
+        "rule_summary": "Proibida a pesca com embarcação motorizada e atividades que perturbem habitats na Reserva Marinha da Arrábida. Pesca costeira sujeita a regulamento ICNF.",
+        "contact_url": "https://www.icnf.pt/portal/florestas/areas-protegidas/reserva-marinha-da-arrabida"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [-9.22, 38.42],
+          [-8.98, 38.42],
+          [-8.95, 38.54],
+          [-9.18, 38.56],
+          [-9.22, 38.42]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Delta del Ebro",
+        "country": "ES",
+        "tipo": "licenca_especial",
+        "rule_summary": "Parque Natural del Delta de l'Ebre: pesca regulada por MITERD. Licenças e zonas de reserva — proibido em núcleos de nidificação e lagunas protegidas.",
+        "contact_url": "https://www.parcdeltaebre.com/"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [0.48, 40.55],
+          [0.95, 40.55],
+          [0.98, 40.82],
+          [0.52, 40.85],
+          [0.48, 40.55]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Rio Minho — Concessão Valença–Monção",
+        "country": "PT",
+        "tipo": "licenca_especial",
+        "rule_summary": "Troço concessionado do Rio Minho entre Valença e Monção: pesca sujeita a licença de pesca continental e regras da concessão hidroeléctrica. Respeitar limites PT/ES.",
+        "contact_url": "https://www.dgrm.pt/web/guest/licencas-de-pesca"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [-8.66, 42.02],
+          [-8.30, 42.02],
+          [-8.30, 42.08],
+          [-8.66, 42.08],
+          [-8.66, 42.02]
+        ]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Reserva Natural das Berlengas",
+        "country": "PT",
+        "tipo": "proibido",
+        "rule_summary": "Reserva Natural das Berlengas: proibida a pesca em águas interiores da reserva e zonas de amortecimento. Atividade sujeita a autorização ICNF/DGRM.",
+        "contact_url": "https://www.icnf.pt/portal/florestas/areas-protegidas/reserva-natural-das-berlengas"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [-9.54, 39.35],
+          [-9.40, 39.35],
+          [-9.38, 39.43],
+          [-9.52, 39.44],
+          [-9.54, 39.35]
+        ]]
+      }
+    }
+  ]
+}

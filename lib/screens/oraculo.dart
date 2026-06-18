@@ -19,8 +19,11 @@ import '../core/tides/region_presets.dart';
 import '../core/tides/weather_details_snapshot.dart';
 import '../core/community/community_demo_posts.dart';
 import '../core/community/community_store.dart';
+import '../core/monetization/subscription_gate.dart';
+import '../core/species/oracle_rig_recommendation.dart';
 import '../core/location/gps_access.dart';
 import '../core/state/logbook_tab_index.dart';
+import '../core/state/subscription_store.dart';
 import '../core/supabase_bootstrap.dart';
 import '../core/tides/oracle_hourly_score.dart';
 import '../features/home/domain/entities/hourly_condition.dart';
@@ -82,19 +85,6 @@ class _MetricTile {
 class _Dia { final String d, s, i; const _Dia(this.d, this.s, this.i); }
 
 enum _LoadState { loading, ok, error }
-
-class _RigPlan {
-  final String bait;
-  final String rod;
-  final String technique;
-  final String distance;
-  const _RigPlan({
-    required this.bait,
-    required this.rod,
-    required this.technique,
-    required this.distance,
-  });
-}
 
 // ══════════════════════════════════════════════════════════
 // ECRÃ 01 — ORÁCULO
@@ -513,80 +503,6 @@ class _OraculoScreenState extends State<OraculoScreen>
     );
   }
 
-  _RigPlan _planForSpecies(
-    String code, {
-    required bool isRio,
-    required AqxL10n t,
-  }) {
-    switch (code.toUpperCase()) {
-      case 'SARGO':
-        return const _RigPlan(
-          bait: 'Caranguejo + Mexilhão',
-          rod: 'Rock 3–4m',
-          technique: 'Rocha / Float',
-          distance: '20–35m junto à pedra',
-        );
-      case 'DOURADA':
-        return const _RigPlan(
-          bait: 'Minhoca + Amêijoa',
-          rod: 'Surf 3.9m',
-          technique: 'Surfcasting',
-          distance: '60–90m fundo limpo',
-        );
-      case 'CORVINA':
-        return const _RigPlan(
-          bait: 'Rapala + Isco natural',
-          rod: 'Fundo 4m · 0.35mm',
-          technique: 'Fundo / Espera',
-          distance: 'Canal / rebentação',
-        );
-      case 'LINGUADO':
-        return const _RigPlan(
-          bait: 'Minhoca + Amêijoa',
-          rod: 'Surf 4m · 0.25mm',
-          technique: 'Fundo praia',
-          distance: '50–80m em areão',
-        );
-      case 'RAIA':
-        return const _RigPlan(
-          bait: 'Sardinha + Arenque',
-          rod: 'Surf pesado 4.2m',
-          technique: 'Fundo arenoso',
-          distance: '80m+',
-        );
-      case 'ACHIGA':
-        return const _RigPlan(
-          bait: 'Shad + Jig',
-          rod: 'Bait 7ft · 0.20mm',
-          technique: 'Spinning / Topwater',
-          distance: 'Margem estruturada',
-        );
-      case 'BARBO':
-        return const _RigPlan(
-          bait: 'Milho + Minhoca',
-          rod: 'Rio 3.6m · 0.22mm',
-          technique: 'Fundo rio / Float',
-          distance: 'Corrente lenta',
-        );
-      case 'ROBALO':
-      default:
-        if (isRio) {
-          return const _RigPlan(
-            bait: 'Milho + Minhoca',
-            rod: 'Rio 3.6m · 0.22mm',
-            technique: 'Fundo rio / Float',
-            distance: 'Corrente lenta',
-          );
-        }
-        return const _RigPlan(
-          bait: 'Minhoca + Shad 14cm',
-          rod: 'Rock 3.3m',
-          technique: 'Surfcasting',
-          distance: '40–60m do rochedo',
-        );
-    }
-  }
-
   /// Mesmos limiares que o índice no backend (80 / 65 / 45) — evita «MODERADA» vs «BOM».
   (String, Color) _fishActivityMeta(int score, AqxL10n t) {
     if (score >= 80) return (t.activityVeryHigh, kGreen);
@@ -648,10 +564,12 @@ class _OraculoScreenState extends State<OraculoScreen>
           valueListenable: FishingContextStore.instance.value,
           builder: (context, fishingCtx, _) {
             final species = fishingCtx.species;
-            final primaryPlan = _planForSpecies(
-              species,
+            final costa = _costaBundle;
+            final primaryPlan = OracleRigRecommendation.recommend(
+              speciesCode: species,
               isRio: _rioMode,
-              t: t,
+              tideTrendPt: costa?.tideTrendPt,
+              waterTempC: costa?.tempC,
             );
             final zoneCodes = _rioMode
                 ? const ['BARBO', 'ACHIGA']
@@ -725,7 +643,15 @@ class _OraculoScreenState extends State<OraculoScreen>
                 goFishLabel: t.es ? 'IR A PESCAR ->' : 'IR PESCAR ->',
                 registerLabel:
                     t.es ? 'REGISTRAR CAPTURA' : 'REGISTAR CAPTURA',
-                onComparePro: openPro,
+                onComparePro: () {
+                  if (SubscriptionGate.canAccessProFeatures(
+                    SubscriptionStore.instance.value.value,
+                  )) {
+                    _openPlaceSearch(t);
+                  } else {
+                    openPro();
+                  }
+                },
                 compareProLabel:
                     t.es ? 'Comparar 3 sitios (PRO)' : 'Comparar 3 sítios (PRO)',
                 onAlertPro: () {},

@@ -5,6 +5,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'screens/splash_screen.dart';
 import 'screens/reset_password_screen.dart';
 import 'core/state/app_locale_store.dart';
+import 'core/state/subscription_store.dart';
 import 'core/supabase_bootstrap.dart';
 
 class AquanautixApp extends StatefulWidget {
@@ -14,7 +15,7 @@ class AquanautixApp extends StatefulWidget {
   State<AquanautixApp> createState() => _AquanautixAppState();
 }
 
-class _AquanautixAppState extends State<AquanautixApp> {
+class _AquanautixAppState extends State<AquanautixApp> with WidgetsBindingObserver {
   final _navKey = GlobalKey<NavigatorState>();
   StreamSubscription<AuthState>? _authSub;
   bool _resetOpen = false;
@@ -22,6 +23,7 @@ class _AquanautixAppState extends State<AquanautixApp> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     if (!canUseSupabase) return;
     final authStream = supabaseAuthStateChangesOrNull;
     if (authStream == null) return;
@@ -34,8 +36,16 @@ class _AquanautixAppState extends State<AquanautixApp> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _authSub?.cancel();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      unawaited(SubscriptionStore.instance.syncFromRevenueCat());
+    }
   }
 
   void _openResetIfNeeded() {

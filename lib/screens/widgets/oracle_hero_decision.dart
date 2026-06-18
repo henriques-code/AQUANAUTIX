@@ -663,8 +663,8 @@ class _ProChipButton extends StatelessWidget {
   }
 }
 
-/// Hero costa — sempre foto do mockup.
+/// Hero rio — pescador AQUANAUTIX + achigã em rio PT; costa — mockup pescador.
 String oracleHeroAssetForSpecies(String code, {required bool isRio}) {
-  if (isRio) return 'assets/marketing/spots/sesimbra.jpg';
+  if (isRio) return 'assets/marketing/catches/oracle_hero_rio_achiga.jpg';
   return kOracleMockupHeroAsset;
 }

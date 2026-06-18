@@ -17,6 +17,8 @@ class SpeciesRecord {
     required this.vedaES,
     required this.isco,
     required this.tecnica,
+    this.cana = '',
+    this.mareMelhor = '',
     required this.habitat,
     required this.vedaAtiva,
     this.photoUrl = '',
@@ -35,6 +37,10 @@ class SpeciesRecord {
   final String vedaES;
   final List<String> isco;
   final List<String> tecnica;
+  /// Ex.: `Rock 3–4 m / 5–20 g` (schema v2).
+  final String cana;
+  /// Ex.: `enchente`, `vazante`, `qualquer`.
+  final String mareMelhor;
   /// `COSTA` ou `RIO`.
   final String habitat;
   final bool vedaAtiva;
@@ -89,6 +95,8 @@ class SpeciesRecord {
       vedaES: j['vedaES'] as String? ?? '',
       isco: _stringList(j['isco']),
       tecnica: _stringList(j['tecnica']),
+      cana: j['cana'] as String? ?? '',
+      mareMelhor: j['mareMelhor'] as String? ?? '',
       habitat: j['habitat'] as String? ?? 'COSTA',
       vedaAtiva: j['vedaAtiva'] as bool? ?? false,
       photoUrl: j['photoUrl'] as String? ?? '',

@@ -30,6 +30,10 @@ import '../core/tides/oracle_data_service.dart';
 import '../core/catch_photos/catch_photo_model.dart';
 import '../core/catch_photos/catch_photo_repository.dart';
 import '../core/catch_photos/catch_photos_store.dart';
+import '../core/spots/fishing_spot.dart';
+import '../core/spots/fishing_spot_repository.dart';
+import '../core/regulations/fishing_regulation_zone.dart';
+import '../core/community/community_heatmap_repository.dart';
 import '../core/supabase_bootstrap.dart';
 
 // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
@@ -58,6 +62,19 @@ class MapaScreen extends StatefulWidget {
 }
 
 class _MapaScreenState extends State<MapaScreen> {
+  static const _topSpecies = [
+    'Robalo',
+    'Dourada',
+    'Sargo',
+    'Corvina',
+    'Achigã',
+    'Carpa',
+    'Barbo',
+    'Truta',
+    'Linguado',
+    'Enguia',
+  ];
+
   /// Amarelo — spots FREE partilhados (comunidade / curados).
   static const _pinCommunity = Color(0xFFFFD600);
   /// Azulão — spots PRO (curadoria).
@@ -65,6 +82,12 @@ class _MapaScreenState extends State<MapaScreen> {
 
   static const _prefsKeySavedSpotPhotos = 'map_saved_spot_pins_v1';
   static const _prefsKeySeamarks = 'map_show_seamarks_v1';
+  static const _prefsKeyBathymetry = 'mapa_bathymetry';
+
+  static const _gebcoWmsUrlTemplate =
+      'https://wms.gebco.net/mapserv?bbox={bbox-epsg-3857}&service=WMS'
+      '&request=GetMap&srs=EPSG:3857&transparent=true&width=256&height=256'
+      '&layers=GEBCO_LATEST&format=image/png&version=1.1.1';
 
   bool _rioMode = false;
   bool _mostrarLojas = false;
@@ -72,22 +95,27 @@ class _MapaScreenState extends State<MapaScreen> {
   // ── Fotos geolocalizadas de capturas ────────────────────
   late final CatchPhotosStore _catchStore;
   final CatchPhotoRepository _catchPhotoRepo = CatchPhotoRepository();
+  final FishingSpotRepository _spotRepo = FishingSpotRepository();
+  List<FishingSpot> _spots = [];
+  List<String> _selectedSpecies = [];
+  bool _loadingSpots = false;
   List<CatchPhoto> _catchPhotos = [];
   bool _loadingCatchPhotos = false;
   bool _showCatchPhotos = true;
   bool _showSeamarks = true; // overlay marcas náuticas (OpenSeaMap)
+  bool _showBathymetry = false; // overlay GEBCO batimetria (só COSTA)
+  bool _showRegulations = false; // zonas DGRM / MITERD
+  bool _showCommunityHeat = false; // hotspots Ghost
+  List<HeatmapZone> _heatZones = [];
+  bool _loadingHeatZones = false;
+  final CommunityHeatmapRepository _heatmapRepo = CommunityHeatmapRepository();
+  List<FishingRegulationZone> _regulationZones = [];
+  final LayerHitNotifier<FishingRegulationZone> _regulationHitNotifier =
+      ValueNotifier(null);
   bool _sheetExpanded = false; // sheet spots aberto/fechado (começa fechado)
   final _mapController = MapController();
   final Map<String, Uint8List> _spotReferencePhotos = {};
   MapFocusRequest? _focusPin;
-
-  // Dados dos spots com coordenadas reais PT/ES (bloqueio via SubscriptionGate).
-  static const _spots = [
-    (name: 'Praia da Comporta', local: 'Setúbal · PRAIA', tier: 'FREE', score: 71, lat: 38.374, lon: -8.776, elite: false, region: 'SETUBAL', species: 'DOURADA', photo: 'https://images.unsplash.com/photo-1505118380757-91f5f5632de0?w=80&q=70&auto=format'),
-    (name: 'Cabo Espichel N.', local: 'Sesimbra · ROCHA', tier: 'PRO', score: 84, lat: 38.4198, lon: -9.2385, elite: false, region: 'SETUBAL', species: 'ROBALO', photo: 'https://images.unsplash.com/photo-1544979590-04bcee11af7d?w=80&q=70&auto=format'),
-    (name: 'Pedra Branca', local: 'Ericeira · ROCHA', tier: 'PRO', score: 68, lat: 38.970, lon: -9.420, elite: false, region: 'MAFRA', species: 'ROBALO', photo: 'https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=80&q=70&auto=format'),
-    (name: 'Elite #7 · Sagres', local: 'Algarve · ROCHA', tier: 'ELITE', score: 92, lat: 37.013, lon: -8.943, elite: true, region: 'CASCAIS', species: 'CORVINA', photo: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=80&q=70&auto=format'),
-  ];
 
   static const _baitShops = [
     (name: 'Bait Sesimbra', lat: 38.443, lon: -9.100, mapsQuery: '38.443,-9.100', photoUrl: 'https://images.unsplash.com/photo-1516939884455-1445c8652f83?w=160&q=70&auto=format', isOpen: true),
@@ -105,6 +133,8 @@ class _MapaScreenState extends State<MapaScreen> {
     FishingModeStore.instance.isRio.addListener(_onFishingModeChanged);
     unawaited(_loadSavedSpotPhotosFromPrefs());
     unawaited(_loadSeamarksPrefs());
+    unawaited(_loadBathymetryPrefs());
+    unawaited(_loadRegulationZones());
     _catchStore = CatchPhotosStore();
     _catchStore.addListener(_onCatchStoreChanged);
     HomeTabIndex.pendingMapFocus.addListener(_applyPendingMapFocus);
@@ -113,7 +143,39 @@ class _MapaScreenState extends State<MapaScreen> {
       if (!mounted) return;
       _applyPendingMapFocus();
       unawaited(_loadCatchPhotos());
+      unawaited(_loadSpots());
     });
+  }
+
+  Future<void> _loadSpots() async {
+    if (_loadingSpots) return;
+    setState(() => _loadingSpots = true);
+    try {
+      double lat = 39.5;
+      double lon = -8.5;
+      try {
+        final pos = await Geolocator.getLastKnownPosition();
+        if (pos != null) {
+          lat = pos.latitude;
+          lon = pos.longitude;
+        } else {
+          final c = _mapController.camera.center;
+          lat = c.latitude;
+          lon = c.longitude;
+        }
+      } catch (_) {}
+      final spots = await _spotRepo.fetchNearby(
+        lat: lat,
+        lon: lon,
+        radiusKm: 200,
+      );
+      if (!mounted) return;
+      setState(() => _spots = spots);
+    } catch (e) {
+      debugPrint('FishingSpots load error: $e');
+    } finally {
+      if (mounted) setState(() => _loadingSpots = false);
+    }
   }
 
   void _onSubscriptionChanged() {
@@ -126,6 +188,49 @@ class _MapaScreenState extends State<MapaScreen> {
       elite: elite,
       sub: SubscriptionStore.instance.value.value,
     );
+  }
+
+  List<FishingSpot> get _filteredSpots {
+    if (_selectedSpecies.isEmpty) return _spots;
+    return _spots
+        .where(
+          (s) => s.species.any(
+            (sp) => _selectedSpecies.any(
+              (sel) => sel.toLowerCase() == sp.toLowerCase(),
+            ),
+          ),
+        )
+        .toList();
+  }
+
+  void _toggleSpeciesChip(String species, bool selected) {
+    setState(() {
+      if (selected) {
+        if (!_selectedSpecies.contains(species)) {
+          _selectedSpecies = [..._selectedSpecies, species];
+        }
+      } else {
+        _selectedSpecies =
+            _selectedSpecies.where((s) => s != species).toList();
+      }
+    });
+  }
+
+  Widget _spotImage(
+    String path, {
+    double? width,
+    double? height,
+    BoxFit fit = BoxFit.cover,
+    BorderRadius? radius,
+  }) {
+    final r = radius ?? BorderRadius.zero;
+    if (path.startsWith('assets/')) {
+      return ClipRRect(
+        borderRadius: r,
+        child: Image.asset(path, width: width, height: height, fit: fit),
+      );
+    }
+    return netImg(path, width: width, height: height, fit: fit, radius: r);
   }
 
   void _applyPendingMapFocus() {
@@ -179,6 +284,7 @@ class _MapaScreenState extends State<MapaScreen> {
     SubscriptionStore.instance.value.removeListener(_onSubscriptionChanged);
     _catchStore.removeListener(_onCatchStoreChanged);
     _catchStore.dispose();
+    _regulationHitNotifier.dispose();
     _mapController.dispose();
     super.dispose();
   }
@@ -187,6 +293,53 @@ class _MapaScreenState extends State<MapaScreen> {
     final p = await SharedPreferences.getInstance();
     final val = p.getBool(_prefsKeySeamarks);
     if (val != null && mounted) setState(() => _showSeamarks = val);
+  }
+
+  Future<void> _loadBathymetryPrefs() async {
+    final p = await SharedPreferences.getInstance();
+    final val = p.getBool(_prefsKeyBathymetry);
+    if (val != null && mounted) setState(() => _showBathymetry = val);
+  }
+
+  Future<void> _loadRegulationZones() async {
+    try {
+      final zones = await FishingRegulationZone.loadFromAsset();
+      if (!mounted) return;
+      setState(() => _regulationZones = zones);
+    } catch (e) {
+      debugPrint('RegulationGeoJSON load error: $e');
+    }
+  }
+
+  Future<void> _loadHeatZones() async {
+    if (_loadingHeatZones) return;
+    setState(() => _loadingHeatZones = true);
+    try {
+      double lat = 39.5;
+      double lon = -8.5;
+      try {
+        final pos = await Geolocator.getLastKnownPosition();
+        if (pos != null) {
+          lat = pos.latitude;
+          lon = pos.longitude;
+        } else {
+          final c = _mapController.camera.center;
+          lat = c.latitude;
+          lon = c.longitude;
+        }
+      } catch (_) {}
+      final zones = await _heatmapRepo.fetchHeatmap(
+        lat: lat,
+        lon: lon,
+        radiusKm: 120,
+      );
+      if (!mounted) return;
+      setState(() => _heatZones = zones);
+    } catch (e) {
+      debugPrint('CommunityHeatmap load error: $e');
+    } finally {
+      if (mounted) setState(() => _loadingHeatZones = false);
+    }
   }
 
   Future<void> _loadSavedSpotPhotosFromPrefs() async {
@@ -229,7 +382,7 @@ class _MapaScreenState extends State<MapaScreen> {
     final distance = const Distance();
     return _baitShops.where((shop) {
       if (!shop.isOpen) return false;
-      return _spots.any((spot) {
+      return _filteredSpots.any((spot) {
         final km = distance.as(
           LengthUnit.Kilometer,
           LatLng(shop.lat, shop.lon),
@@ -415,51 +568,70 @@ class _MapaScreenState extends State<MapaScreen> {
               const SizedBox(height: 10),
 
               if (!_mostrarLojas) ...[
-                _spotRow(
-                  'Praia da Comporta',
-                  'Setúbal · PRAIA',
-                  'FREE',
-                  null,
-                  '71',
-                  bloqueado: _isSpotLocked(tier: 'FREE', elite: false),
-                  species: 'DOURADA',
-                  photoUrl: 'https://images.unsplash.com/photo-1505118380757-91f5f5632de0?w=80&q=70&auto=format',
-                  onTap: () => _setContext('SETUBAL', 'DOURADA', spotName: 'Praia da Comporta'),
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: _topSpecies
+                        .map(
+                          (s) => Padding(
+                            padding: const EdgeInsets.only(right: 6),
+                            child: FilterChip(
+                              label: Text(s, style: ibm(12)),
+                              selected: _selectedSpecies.contains(s),
+                              onSelected: (v) => _toggleSpeciesChip(s, v),
+                              selectedColor:
+                                  kCyan.withValues(alpha: 0.15),
+                              checkmarkColor: kCyan,
+                              labelStyle: TextStyle(
+                                color: _selectedSpecies.contains(s)
+                                    ? kCyan
+                                    : kHint,
+                              ),
+                              side: BorderSide(
+                                color: _selectedSpecies.contains(s)
+                                    ? kCyan.withValues(alpha: 0.45)
+                                    : kHint.withValues(alpha: 0.25),
+                              ),
+                            ),
+                          ),
+                        )
+                        .toList(),
+                  ),
                 ),
-                _spotRow(
-                  'Cabo Espichel N.',
-                  'Sesimbra · ROCHA',
-                  'PRO',
-                  'GHOST',
-                  '84',
-                  bloqueado: _isSpotLocked(tier: 'PRO', elite: false),
-                  species: 'ROBALO',
-                  photoUrl: 'https://images.unsplash.com/photo-1544979590-04bcee11af7d?w=80&q=70&auto=format',
-                  onTap: () => _setContext('SETUBAL', 'ROBALO', spotName: 'Cabo Espichel N.'),
-                ),
-                _spotRow(
-                  'Pedra Branca',
-                  'Ericeira · ROCHA',
-                  'PRO',
-                  null,
-                  '68',
-                  bloqueado: _isSpotLocked(tier: 'PRO', elite: false),
-                  species: 'ROBALO',
-                  photoUrl: 'https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=80&q=70&auto=format',
-                  onTap: () => _setContext('MAFRA', 'ROBALO', spotName: 'Pedra Branca'),
-                ),
-                _spotRow(
-                  'Elite #7 · Sagres',
-                  'Algarve · ROCHA',
-                  'ELITE',
-                  'GHOST',
-                  '92',
-                  bloqueado: _isSpotLocked(tier: 'ELITE', elite: true),
-                  elite: true,
-                  species: 'CORVINA',
-                  photoUrl: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=80&q=70&auto=format',
-                  onTap: () => _setContext('CASCAIS', 'CORVINA', spotName: 'Elite #7'),
-                ),
+                const SizedBox(height: 10),
+                if (_loadingSpots && _spots.isEmpty)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    child: Center(
+                      child: SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: kCyan.withValues(alpha: 0.7),
+                        ),
+                      ),
+                    ),
+                  )
+                else
+                  ..._filteredSpots.map(
+                    (s) => _spotRow(
+                      s.name,
+                      s.local,
+                      s.tierLabel,
+                      s.elite ? 'GHOST' : null,
+                      s.score.toString(),
+                      bloqueado: _isSpotLocked(tier: s.tierLabel, elite: s.elite),
+                      elite: s.elite,
+                      species: s.primarySpecies,
+                      photoUrl: s.photo,
+                      onTap: () => _setContext(
+                        s.regionKey,
+                        s.primarySpecies,
+                        spotName: s.name,
+                      ),
+                    ),
+                  ),
                 const SizedBox(height: 8),
               ] else ...[
                 _lojaRow(
@@ -554,13 +726,153 @@ class _MapaScreenState extends State<MapaScreen> {
 
   void _cycleLayers() {
     HapticFeedback.selectionClick();
-    setState(() => _showSeamarks = !_showSeamarks);
-    SharedPreferences.getInstance().then((p) => p.setBool(_prefsKeySeamarks, _showSeamarks));
+    final t = aqxL10nOf(context);
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => Container(
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
+        decoration: const BoxDecoration(
+          color: kCard,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+        ),
+        child: SafeArea(
+          top: false,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 36,
+                height: 4,
+                margin: const EdgeInsets.only(bottom: 14),
+                decoration: BoxDecoration(
+                  color: kHint.withValues(alpha: 0.35),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              Text(
+                t.es ? 'CAPAS DEL MAPA' : 'CAMADAS DO MAPA',
+                style: mono(10, ls: 1.2, c: kCyan),
+              ),
+              const SizedBox(height: 8),
+              SwitchListTile(
+                contentPadding: EdgeInsets.zero,
+                title: Text(
+                  t.es ? 'Marcas náuticas' : 'Marcas náuticas',
+                  style: ibm(14, fw: FontWeight.w600),
+                ),
+                value: _showSeamarks,
+                activeThumbColor: kCyan,
+                onChanged: (on) {
+                  setState(() => _showSeamarks = on);
+                  SharedPreferences.getInstance()
+                      .then((p) => p.setBool(_prefsKeySeamarks, on));
+                  if (!mounted) return;
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        on ? 'Marcas náuticas: ON' : 'Marcas náuticas: OFF',
+                        style: ibm(13),
+                      ),
+                      backgroundColor: kCard,
+                      behavior: SnackBarBehavior.floating,
+                      duration: const Duration(seconds: 2),
+                    ),
+                  );
+                },
+              ),
+              SwitchListTile(
+                contentPadding: EdgeInsets.zero,
+                title: Text('Batimetria', style: ibm(14, fw: FontWeight.w600)),
+                subtitle: Text(
+                  'GEBCO · taludes e profundidades',
+                  style: ibm(11, c: kHint),
+                ),
+                value: _showBathymetry && !_rioMode,
+                activeThumbColor: kCyan,
+                onChanged: (on) => _setBathymetry(on),
+              ),
+              SwitchListTile(
+                contentPadding: EdgeInsets.zero,
+                title: Text('Regulamentos', style: ibm(14, fw: FontWeight.w600)),
+                subtitle: Text(
+                  'DGRM + MITERD · zonas PT/ES',
+                  style: ibm(11, c: kHint),
+                ),
+                value: _showRegulations,
+                activeThumbColor: kCyan,
+                onChanged: (on) {
+                  setState(() => _showRegulations = on);
+                  if (!mounted) return;
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        on ? 'Regulamentos: ON' : 'Regulamentos: OFF',
+                        style: ibm(13),
+                      ),
+                      backgroundColor: kCard,
+                      behavior: SnackBarBehavior.floating,
+                      duration: const Duration(seconds: 2),
+                    ),
+                  );
+                },
+              ),
+              SwitchListTile(
+                contentPadding: EdgeInsets.zero,
+                title: Text('Actividade', style: ibm(14, fw: FontWeight.w600)),
+                subtitle: Text(
+                  '👻 Capturas esta semana · zonas',
+                  style: ibm(11, c: kHint),
+                ),
+                value: _showCommunityHeat,
+                activeThumbColor: kCyan,
+                onChanged: (on) {
+                  setState(() => _showCommunityHeat = on);
+                  if (on) unawaited(_loadHeatZones());
+                  if (!mounted) return;
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        on ? 'Actividade: ON' : 'Actividade: OFF',
+                        style: ibm(13),
+                      ),
+                      backgroundColor: kCard,
+                      behavior: SnackBarBehavior.floating,
+                      duration: const Duration(seconds: 2),
+                    ),
+                  );
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _setBathymetry(bool on) {
+    if (on && _rioMode) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Batimetria disponível em modo Costa',
+            style: ibm(13),
+          ),
+          backgroundColor: kCard,
+          behavior: SnackBarBehavior.floating,
+          duration: const Duration(seconds: 2),
+        ),
+      );
+      return;
+    }
+    setState(() => _showBathymetry = on);
+    SharedPreferences.getInstance()
+        .then((p) => p.setBool(_prefsKeyBathymetry, on));
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          _showSeamarks ? 'Marcas náuticas: ON' : 'Marcas náuticas: OFF',
+          on ? 'Batimetria: ON' : 'Batimetria: OFF',
           style: ibm(13),
         ),
         backgroundColor: kCard,
@@ -573,6 +885,203 @@ class _MapaScreenState extends State<MapaScreen> {
   void _centerOnIberia() {
     HapticFeedback.selectionClick();
     _mapController.move(const LatLng(39.5, -9.0), 6.8);
+  }
+
+  (Color fill, Color stroke) _regulationColors(String tipo) {
+    switch (tipo) {
+      case 'licenca_especial':
+        return (kAmber.withValues(alpha: 0.2), kAmber);
+      case 'defeso_temp':
+        return (const Color(0xFFFF8C42).withValues(alpha: 0.2), const Color(0xFFFF8C42));
+      case 'proibido':
+      default:
+        return (const Color(0xFFFF4444).withValues(alpha: 0.25), const Color(0xFFFF4444));
+    }
+  }
+
+  String _regulationTipoLabel(String tipo, {required bool es}) {
+    switch (tipo) {
+      case 'licenca_especial':
+        return es ? 'Licencia especial' : 'Licença especial';
+      case 'defeso_temp':
+        return es ? 'Veda temporal' : 'Defeso temporário';
+      case 'proibido':
+      default:
+        return es ? 'Prohibido' : 'Proibido';
+    }
+  }
+
+  Polygon<FishingRegulationZone> _regulationPolygon(FishingRegulationZone zone) {
+    final colors = _regulationColors(zone.tipo);
+    return Polygon<FishingRegulationZone>(
+      points: zone.points,
+      color: colors.$1,
+      borderColor: colors.$2,
+      borderStrokeWidth: 2,
+      hitValue: zone,
+    );
+  }
+
+  void _showRegulationDetail(FishingRegulationZone zone) {
+    HapticFeedback.selectionClick();
+    final t = aqxL10nOf(context);
+    final tipoLabel = _regulationTipoLabel(zone.tipo, es: t.es);
+    final tipoColor = _regulationColors(zone.tipo).$2;
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => Container(
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
+        decoration: const BoxDecoration(
+          color: kCard,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+        ),
+        child: SafeArea(
+          top: false,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(zone.name, style: orb(18, fw: FontWeight.w800)),
+              const SizedBox(height: 6),
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: tipoColor.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(6),
+                      border: Border.all(color: tipoColor.withValues(alpha: 0.5)),
+                    ),
+                    child: Text(tipoLabel, style: mono(9, c: tipoColor, ls: 0.4)),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(zone.country, style: mono(10, c: kHint)),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Text(zone.ruleSummary, style: ibm(13, c: Colors.white70)),
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: () async {
+                    final uri = Uri.tryParse(zone.contactUrl);
+                    if (uri == null) return;
+                    await launchUrl(uri, mode: LaunchMode.externalApplication);
+                  },
+                  icon: const Icon(Icons.open_in_new_rounded, size: 16, color: kCyan),
+                  label: Text(
+                    t.es ? 'Ver regulamento' : 'Ver regulamento',
+                    style: ibm(13, c: kCyan, fw: FontWeight.w600),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    side: BorderSide(color: kCyan.withValues(alpha: 0.45)),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  bool get _heatmapProView => SubscriptionGate.canAccessProFeatures(
+        SubscriptionStore.instance.value.value,
+      );
+
+  List<Marker> _buildCommunityHeatMarkers() {
+    final baseColor = _heatmapProView ? kCyan : Colors.white;
+    return _heatZones.map((zone) {
+      final radiusPx = 20.0 + (zone.catchCount * 8).clamp(0, 60);
+      final diameter = radiusPx * 2;
+      return Marker(
+        point: LatLng(zone.lat, zone.lon),
+        width: diameter,
+        height: diameter,
+        alignment: Alignment.center,
+        child: GestureDetector(
+          onTap: () => _showHeatZoneDetail(zone),
+          child: Container(
+            width: diameter,
+            height: diameter,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: baseColor.withValues(alpha: 0.35),
+              border: Border.all(
+                color: baseColor.withValues(alpha: 0.65),
+                width: 1.5,
+              ),
+            ),
+          ),
+        ),
+      );
+    }).toList();
+  }
+
+  void _showHeatZoneDetail(HeatmapZone zone) {
+    HapticFeedback.selectionClick();
+    final t = aqxL10nOf(context);
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => Container(
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
+        decoration: const BoxDecoration(
+          color: kCard,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+        ),
+        child: SafeArea(
+          top: false,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const AqxGhostModeBadge(size: 11, showPill: false),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(zone.zoneLabel, style: orb(18, fw: FontWeight.w800)),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              Text(
+                '${zone.catchCount} ${t.es ? "capturas esta semana" : "capturas esta semana"}',
+                style: ibm(14, fw: FontWeight.w600, c: kCyan),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                '${t.es ? "Especie top" : "Espécie top"}: ${zone.topSpecies}',
+                style: ibm(13, c: kHint),
+              ),
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton(
+                  onPressed: () {
+                    Navigator.pop(ctx);
+                    HomeTabIndex.notifier.value = HomeTabIndex.communityTabIndex;
+                  },
+                  style: FilledButton.styleFrom(
+                    backgroundColor: kCyan.withValues(alpha: 0.15),
+                    foregroundColor: kCyan,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
+                  child: Text(
+                    t.es ? 'Ver Comunidad' : 'Ver Comunidade',
+                    style: ibm(13, fw: FontWeight.w700),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   Widget _buildFlutterMap() {
@@ -592,6 +1101,12 @@ class _MapaScreenState extends State<MapaScreen> {
         initialZoom: 6.5,
         minZoom: 4.0,
         maxZoom: 19.0,
+        onTap: (_, __) {
+          if (!_showRegulations) return;
+          final hit = _regulationHitNotifier.value;
+          if (hit == null || hit.hitValues.isEmpty) return;
+          _showRegulationDetail(hit.hitValues.last);
+        },
       ),
       children: [
         // Base: satélite (COSTA) ou OSM topográfico (RIO)
@@ -609,6 +1124,15 @@ class _MapaScreenState extends State<MapaScreen> {
             userAgentPackageName: 'com.example.aquanautix',
             maxNativeZoom: 19,
           ),
+        if (_showBathymetry && !_rioMode)
+          Opacity(
+            opacity: 0.55,
+            child: TileLayer(
+              urlTemplate: _gebcoWmsUrlTemplate,
+              tileSize: 256,
+              userAgentPackageName: 'com.example.aquanautix',
+            ),
+          ),
         // Marcas náuticas
         if (_showSeamarks)
           Opacity(
@@ -620,6 +1144,14 @@ class _MapaScreenState extends State<MapaScreen> {
               maxNativeZoom: 18,
             ),
           ),
+        if (_showRegulations && _regulationZones.isNotEmpty)
+          PolygonLayer<FishingRegulationZone>(
+            hitNotifier: _regulationHitNotifier,
+            polygonLabels: false,
+            polygons: _regulationZones.map(_regulationPolygon).toList(),
+          ),
+        if (_showCommunityHeat && _heatZones.isNotEmpty)
+          MarkerLayer(markers: _buildCommunityHeatMarkers()),
         MarkerLayer(
           markers: [
             ..._buildFocusPinMarkers(),
@@ -646,14 +1178,16 @@ class _MapaScreenState extends State<MapaScreen> {
 
   Future<void> _ghostOrPaywall() async {
     HapticFeedback.mediumImpact();
-    if (SubscriptionStore.instance.value.value.hasProEntitlement) {
+    if (SubscriptionGate.canAccessProFeatures(
+      SubscriptionStore.instance.value.value,
+    )) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Ghost Mode activo', style: ibm(13))),
       );
       return;
     }
-    await PaywallScreen.open(context, source: 'mapa_ghost_mode');
+    await SubscriptionGate.ensureProAccess(context, source: 'mapa_ghost_mode');
   }
 
   /// Pin de destaque ao abrir mapa desde Início (Spots em Destaque) ou Oráculo.
@@ -702,28 +1236,30 @@ class _MapaScreenState extends State<MapaScreen> {
 
   /// Comunidade curada: FREE amarelo, PRO azulão, ELITE âmbar.
   List<Marker> _buildCommunitySpotMarkers() {
-    return _spots.map((s) {
-      final locked = _isSpotLocked(tier: s.tier, elite: s.elite);
+    return _filteredSpots.map((s) {
+      final locked = _isSpotLocked(tier: s.tierLabel, elite: s.elite);
       final Color pinColor = s.elite
           ? kAmber
-          : (s.tier == 'PRO' ? _pinProBlue : _pinCommunity);
+          : (s.tierLabel == 'PRO' ? _pinProBlue : _pinCommunity);
       return Marker(
         point: LatLng(s.lat, s.lon),
         width: 40,
         height: 47,
         child: GestureDetector(
           onTap: () {
-            if (!locked) _setContext(s.region, s.species, spotName: s.name);
+            if (!locked) {
+              _setContext(s.regionKey, s.primarySpecies, spotName: s.name);
+            }
             _showSpotDetail(
               ctx: context,
               name: s.name,
               local: s.local,
               score: s.score.toString(),
-              tier: s.tier,
+              tier: s.tierLabel,
               bloqueado: locked,
               elite: s.elite,
               photoUrl: s.photo,
-              species: s.species,
+              species: s.primarySpecies,
               onTap: locked ? null : widget.onSpotOpensOracle,
             );
           },
@@ -734,7 +1270,7 @@ class _MapaScreenState extends State<MapaScreen> {
                 size: const Size(40, 47),
                 painter: s.elite
                     ? const AqxPinElite()
-                    : (s.tier == 'PRO'
+                    : (s.tierLabel == 'PRO'
                         ? const AqxPinPro()
                         : const AqxPinFree()),
               ),
@@ -1211,23 +1747,14 @@ class _MapaScreenState extends State<MapaScreen> {
 
                 // ── Hero image 220px ──────────────────────────
                 Stack(children: [
-                  Image.network(
-                    photoUrl.replaceAll('w=80', 'w=800').replaceAll('w=160', 'w=800'),
+                  _spotImage(
+                    photoUrl.startsWith('assets/')
+                        ? photoUrl
+                        : photoUrl
+                            .replaceAll('w=80', 'w=800')
+                            .replaceAll('w=160', 'w=800'),
                     width: MediaQuery.of(ctx).size.width,
                     height: 220,
-                    fit: BoxFit.cover,
-                    loadingBuilder: (_, child, progress) => progress == null
-                        ? child
-                        : Container(
-                            width: MediaQuery.of(ctx).size.width,
-                            height: 220,
-                            color: const Color(0xFF0A1F3A),
-                          ),
-                    errorBuilder: (_, __, ___) => Container(
-                      width: MediaQuery.of(ctx).size.width,
-                      height: 220,
-                      color: const Color(0xFF0A1F3A),
-                    ),
                   ),
                   // Overlay escuro para spots bloqueados
                   if (bloqueado)
@@ -1579,7 +2106,7 @@ class _MapaScreenState extends State<MapaScreen> {
     required bool bloqueado,
     bool elite = false,
     String species = 'ROBALO',
-    String photoUrl = 'https://images.unsplash.com/photo-1505118380757-91f5f5632de0?w=80&q=70&auto=format',
+    String photoUrl = 'assets/marketing/catches/robalo.jpg',
     VoidCallback? onTap,
   }) {
     final t = aqxL10nOf(context);
@@ -1590,15 +2117,22 @@ class _MapaScreenState extends State<MapaScreen> {
         Icon(Icons.location_on, size: 14, color: elite ? kAmber : (tier == 'PRO' ? kGreen : kCyan)),
         const SizedBox(width: 6),
         // Foto do spot
-        ClipRRect(
-          borderRadius: BorderRadius.circular(8),
-          child: bloqueado
-              ? ImageFiltered(
-                  imageFilter: ImageFilter.blur(sigmaX: 6, sigmaY: 6),
-                  child: netImg(photoUrl, width: 52, height: 52),
-                )
-              : netImg(photoUrl, width: 52, height: 52),
-        ),
+        bloqueado
+            ? ImageFiltered(
+                imageFilter: ImageFilter.blur(sigmaX: 6, sigmaY: 6),
+                child: _spotImage(
+                  photoUrl,
+                  width: 52,
+                  height: 52,
+                  radius: BorderRadius.circular(8),
+                ),
+              )
+            : _spotImage(
+                photoUrl,
+                width: 52,
+                height: 52,
+                radius: BorderRadius.circular(8),
+              ),
         const SizedBox(width: 10),
         Container(
           width: 8, height: 8,
