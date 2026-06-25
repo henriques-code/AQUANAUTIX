@@ -86,10 +86,13 @@ class _MapaScreenState extends State<MapaScreen> {
   static const _prefsKeySeamarks = 'map_show_seamarks_v1';
   static const _prefsKeyBathymetry = 'mapa_bathymetry';
 
-  static const _gebcoWmsUrlTemplate =
-      'https://wms.gebco.net/mapserv?bbox={bbox-epsg-3857}&service=WMS'
-      '&request=GetMap&srs=EPSG:3857&transparent=true&width=256&height=256'
-      '&layers=GEBCO_LATEST&format=image/png&version=1.1.1';
+  static final _gebcoWmsOptions = WMSTileLayerOptions(
+    baseUrl: 'https://wms.gebco.net/mapserv?',
+    layers: ['GEBCO_LATEST'],
+    format: 'image/png',
+    transparent: true,
+    version: '1.1.1',
+  );
 
   bool _rioMode = false;
   bool _mostrarLojas = false;
@@ -722,6 +725,7 @@ class _MapaScreenState extends State<MapaScreen> {
                       elite: s.elite,
                       species: s.primarySpecies,
                       photoUrl: s.photo,
+                      spot: s,
                       onTap: () => _setContext(
                         s.regionKey,
                         s.primarySpecies,
@@ -1234,7 +1238,7 @@ class _MapaScreenState extends State<MapaScreen> {
           Opacity(
             opacity: 0.55,
             child: TileLayer(
-              urlTemplate: _gebcoWmsUrlTemplate,
+              wmsOptions: _gebcoWmsOptions,
               tileSize: 256,
               userAgentPackageName: 'com.example.aquanautix',
             ),
@@ -1367,6 +1371,7 @@ class _MapaScreenState extends State<MapaScreen> {
               photoUrl: s.photo,
               species: s.primarySpecies,
               onTap: locked ? null : widget.onSpotOpensOracle,
+              spot: s,
             );
           },
           child: Stack(
@@ -1816,6 +1821,7 @@ class _MapaScreenState extends State<MapaScreen> {
     required String photoUrl,
     String species = 'ROBALO',
     VoidCallback? onTap,
+    FishingSpot? spot,
   }) {
     final t = aqxL10nOf(ctx);
     final scoreInt = int.tryParse(score) ?? 0;
@@ -1833,7 +1839,7 @@ class _MapaScreenState extends State<MapaScreen> {
         ? bundle!.tideTrendPt
         : (t.es ? 'A subir ↑' : 'A subir ↑');
 
-    // Isco + técnica por espécie
+    // Isco + técnica: preferir dados reais do spot, fallback para mapa por espécie
     final iscoMap = <String, (String, String)>{
       'ROBALO':   ('Borracha shad 12cm', 'Spinning 9–12ft'),
       'DOURADA':  ('Minhoca / amêijoa',  'Surf 3.9–4.2m'),
@@ -1844,7 +1850,13 @@ class _MapaScreenState extends State<MapaScreen> {
       'BARBO':    ('Milho / minhoca',    'Fundo rio'),
       'ACHIGÃ':   ('Shad / popper',      'Bait 6–8ft'),
     };
-    final isco = iscoMap[species] ?? ('Isco natural', 'Adaptado ao local');
+    final fallback = iscoMap[species] ?? ('Isco natural', 'Adaptado ao local');
+    final baitStr = spot?.bestBait.isNotEmpty == true
+        ? spot!.bestBait.join(' · ')
+        : fallback.$1;
+    final techStr = spot?.technique ?? fallback.$2;
+    final rodStr  = spot?.rodType;
+    final isco = (baitStr, techStr);
 
     // Capturas recentes placeholder (Ghost Mode)
     const ghostCaptures = [
@@ -2005,9 +2017,9 @@ class _MapaScreenState extends State<MapaScreen> {
                       child: bloqueado
                           ? ImageFiltered(
                               imageFilter: ImageFilter.blur(sigmaX: 4, sigmaY: 4),
-                              child: _iscoContent(isco, t, accentColor),
+                              child                          : _iscoContent(isco, t, accentColor, rodType: rodStr),
                             )
-                          : _iscoContent(isco, t, accentColor),
+                          : _iscoContent(isco, t, accentColor, rodType: rodStr),
                     ),
                     if (bloqueado)
                       Positioned.fill(child: Center(
@@ -2023,6 +2035,53 @@ class _MapaScreenState extends State<MapaScreen> {
                       )),
                   ]),
                 ),
+
+                // ── Dados reais do spot ───────────────────────
+                if (spot != null) ...[
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
+                    child: Text(t.es ? 'DATOS DEL SPOT' : 'DADOS DO SPOT',
+                        style: mono(10, ls: 1.2)),
+                  ),
+                  const SizedBox(height: 8),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        if (spot.depthMin != null && spot.depthMax != null)
+                          _infoChip(
+                            '📏',
+                            '${spot.depthMin!.toInt()}–${spot.depthMax!.toInt()}m',
+                            t.es ? 'Profund.' : 'Profund.',
+                          ),
+                        if (spot.bottomType != null)
+                          _infoChip('🪨', spot.bottomType!, t.es ? 'Fondo' : 'Fundo'),
+                        if (rodStr != null)
+                          _infoChip('🎣', rodStr, t.es ? 'Caña' : 'Cana'),
+                        _infoChip(
+                          spot.carAccess ? '🚗' : '🥾',
+                          spot.carAccess
+                              ? (t.es ? 'Coche' : 'Carro')
+                              : (t.es ? 'A pie' : 'A pé'),
+                          t.es ? 'Acceso' : 'Acesso',
+                        ),
+                        _infoChip(
+                          '⭐',
+                          '${spot.difficulty}/5',
+                          t.es ? 'Dificult.' : 'Dificul.',
+                        ),
+                        if (spot.bestSeason.isNotEmpty)
+                          _infoChip(
+                            '📅',
+                            spot.bestSeason.take(2).join(' · '),
+                            t.es ? 'Temporada' : 'Época',
+                          ),
+                      ],
+                    ),
+                  ),
+                ],
 
                 // ── Actividade do peixe ───────────────────────
                 Padding(
@@ -2155,7 +2214,7 @@ class _MapaScreenState extends State<MapaScreen> {
   }
 
   Widget _iscoContent(
-      (String, String) isco, AqxL10n t, Color accentColor) {
+      (String, String) isco, AqxL10n t, Color accentColor, {String? rodType}) {
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       Text('🎣 ${t.es ? "ISCO + TÉCNICA" : "ISCO + TÉCNICA"}',
           style: mono(10, ls: 1.2, c: accentColor)),
@@ -2163,7 +2222,7 @@ class _MapaScreenState extends State<MapaScreen> {
       Row(children: [
         const Icon(Icons.anchor_rounded, size: 14, color: kHint),
         const SizedBox(width: 6),
-        Text(isco.$1, style: ibm(13, fw: FontWeight.w600)),
+        Expanded(child: Text(isco.$1, style: ibm(13, fw: FontWeight.w600))),
       ]),
       const SizedBox(height: 4),
       Row(children: [
@@ -2171,8 +2230,31 @@ class _MapaScreenState extends State<MapaScreen> {
         const SizedBox(width: 6),
         Text(isco.$2, style: ibm(12, c: kHint)),
       ]),
+      if (rodType != null) ...[
+        const SizedBox(height: 4),
+        Row(children: [
+          const Icon(Icons.linear_scale_rounded, size: 14, color: kHint),
+          const SizedBox(width: 6),
+          Text(rodType, style: ibm(12, c: kHint)),
+        ]),
+      ],
     ]);
   }
+
+  Widget _infoChip(String icon, String val, String lbl) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+    decoration: BoxDecoration(
+      color: kBg,
+      borderRadius: BorderRadius.circular(8),
+      border: Border.all(color: kCyan.withValues(alpha: 0.12)),
+    ),
+    child: Column(mainAxisSize: MainAxisSize.min, children: [
+      Text(icon, style: const TextStyle(fontSize: 13)),
+      const SizedBox(height: 2),
+      Text(val, style: ibm(10, fw: FontWeight.w600)),
+      Text(lbl, style: mono(7, c: kHint)),
+    ]),
+  );
 
   Widget _condCard(String icon, String val, String lbl) => Expanded(
     child: Container(
@@ -2246,6 +2328,7 @@ class _MapaScreenState extends State<MapaScreen> {
     bool elite = false,
     String species = 'ROBALO',
     String photoUrl = 'assets/marketing/catches/robalo.jpg',
+    FishingSpot? spot,
     VoidCallback? onTap,
   }) {
     final t = aqxL10nOf(context);
@@ -2344,6 +2427,7 @@ class _MapaScreenState extends State<MapaScreen> {
         elite: elite,
         species: species,
         photoUrl: photoUrl,
+        spot: spot,
         onTap: onTap,
       ),
       child: row,

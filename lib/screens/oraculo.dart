@@ -422,7 +422,7 @@ class _OraculoScreenState extends State<OraculoScreen>
       HomeTabIndex.pendingMapFocus.value = (
         lat: coords.lat,
         lon: coords.lon,
-        label: null,
+        label: _planningPlace?.label,
       );
     }
     HomeTabIndex.notifier.value = HomeTabIndex.mapTabIndex;
