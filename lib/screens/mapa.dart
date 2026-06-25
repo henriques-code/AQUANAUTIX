@@ -2046,40 +2046,56 @@ class _MapaScreenState extends State<MapaScreen> {
                   const SizedBox(height: 8),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: [
-                        if (spot.depthMin != null && spot.depthMax != null)
-                          _infoChip(
-                            '📏',
-                            '${spot.depthMin!.toInt()}–${spot.depthMax!.toInt()}m',
-                            t.es ? 'Profund.' : 'Profund.',
-                          ),
-                        if (spot.bottomType != null)
-                          _infoChip('🪨', spot.bottomType!, t.es ? 'Fondo' : 'Fundo'),
-                        if (rodStr != null)
-                          _infoChip('🎣', rodStr, t.es ? 'Caña' : 'Cana'),
-                        _infoChip(
-                          spot.carAccess ? '🚗' : '🥾',
-                          spot.carAccess
-                              ? (t.es ? 'Coche' : 'Carro')
-                              : (t.es ? 'A pie' : 'A pé'),
-                          t.es ? 'Acceso' : 'Acesso',
+                    child: Stack(children: [
+                      // Conteúdo — desfocado quando bloqueado (P4 coerente)
+                      ImageFiltered(
+                        imageFilter: bloqueado
+                            ? ImageFilter.blur(sigmaX: 4, sigmaY: 4)
+                            : ImageFilter.blur(sigmaX: 0, sigmaY: 0),
+                        child: Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: [
+                            if (spot.depthMin != null && spot.depthMax != null)
+                              _infoChip(
+                                '📏',
+                                '${spot.depthMin!.toInt()}–${spot.depthMax!.toInt()}m',
+                                t.es ? 'Profund.' : 'Profund.',
+                              ),
+                            if (spot.bottomType != null)
+                              _infoChip('🪨', spot.bottomType!, t.es ? 'Fondo' : 'Fundo'),
+                            if (rodStr != null)
+                              _infoChip('🎣', rodStr, t.es ? 'Caña' : 'Cana'),
+                            _infoChip(
+                              spot.carAccess ? '🚗' : '🥾',
+                              spot.carAccess
+                                  ? (t.es ? 'Coche' : 'Carro')
+                                  : (t.es ? 'A pie' : 'A pé'),
+                              t.es ? 'Acceso' : 'Acesso',
+                            ),
+                            _infoChip(
+                              '⭐',
+                              '${spot.difficulty}/5',
+                              t.es ? 'Dificult.' : 'Dificul.',
+                            ),
+                            if (spot.bestSeason.isNotEmpty)
+                              _infoChip(
+                                '📅',
+                                spot.bestSeason.take(2).join(' · '),
+                                t.es ? 'Temporada' : 'Época',
+                              ),
+                          ],
                         ),
-                        _infoChip(
-                          '⭐',
-                          '${spot.difficulty}/5',
-                          t.es ? 'Dificult.' : 'Dificul.',
-                        ),
-                        if (spot.bestSeason.isNotEmpty)
-                          _infoChip(
-                            '📅',
-                            spot.bestSeason.take(2).join(' · '),
-                            t.es ? 'Temporada' : 'Época',
+                      ),
+                      // Overlay de cadeado quando bloqueado
+                      if (bloqueado)
+                        Positioned.fill(
+                          child: Center(
+                            child: Icon(Icons.lock_rounded,
+                                color: accentColor.withValues(alpha: 0.7), size: 22),
                           ),
-                      ],
-                    ),
+                        ),
+                    ]),
                   ),
                 ],
 
