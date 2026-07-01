@@ -443,14 +443,15 @@ class _OraculoScreenState extends State<OraculoScreen>
     required AqxL10n t,
     required String speciesLabel,
     required int proScore,
+    String nextHour = '07:00',
   }) {
     unawaited(
       showOracleProUnlockSheet(
         context,
         distanceLabel: t.es ? 'Spot PRO a 1.2 km' : 'Spot PRO a 1.2 km',
         scoreLine: t.es
-            ? 'Score $proScore mañana 07:15'
-            : 'Score $proScore amanhã 07:15',
+            ? 'Score $proScore mañana $nextHour'
+            : 'Score $proScore amanhã $nextHour',
         speciesLabel: speciesLabel,
         source: 'oraculo_pro_drawer',
         es: t.es,
@@ -580,16 +581,23 @@ class _OraculoScreenState extends State<OraculoScreen>
             final proScore = ((hasData ? d.score : 84) + 8).clamp(0, 100);
             final windowHours = _heroWindowLabel(d.horario);
             final speciesLabel = _speciesUiLabel(species);
+            // Extrair hora real da próxima janela de ouro (janelaTexto real do bundle)
+            final janelaTexto = _rioMode
+                ? (_rioBundle?.janelaTexto ?? '')
+                : (_costaBundle?.janelaTexto ?? '');
+            final nextHourMatch = RegExp(r'(\d{2}:\d{2})').firstMatch(janelaTexto);
+            final nextHour = nextHourMatch?.group(1) ?? '07:00';
             final decisionText = OracleDecisionCopy.line(
               es: t.es,
               score: hasData ? d.score : 0,
               windowHours: windowHours,
               proScore: proScore,
               loading: loading,
+              nextHour: nextHour,
             );
             final proSticky = t.es
-                ? 'Spot PRO a 1.2 km · Score $proScore mañana 07:15'
-                : 'Spot PRO a 1.2 km · Score $proScore amanhã 07:15';
+                ? 'Spot PRO a 1.2 km · Score $proScore mañana $nextHour'
+                : 'Spot PRO a 1.2 km · Score $proScore amanhã $nextHour';
             final ghostPosts = CommunityDemoPosts.oracleGhostRow();
             final communityProHint = t.es
                 ? '${ghostPosts.length} capturas cerca · PRO ve zona 5 km'
@@ -600,6 +608,7 @@ class _OraculoScreenState extends State<OraculoScreen>
                   t: t,
                   speciesLabel: speciesLabel,
                   proScore: proScore,
+                  nextHour: nextHour,
                 );
 
             return OracleDecisaoFold(
@@ -671,8 +680,8 @@ class _OraculoScreenState extends State<OraculoScreen>
               onViewCommunity: _openCommunityTab,
               proDistanceLabel: 'Spot PRO a 1.2 km',
               proScoreLine: t.es
-                  ? 'Score $proScore mañana 07:15'
-                  : 'Score $proScore amanhã 07:15',
+                  ? 'Score $proScore mañana $nextHour'
+                  : 'Score $proScore amanhã $nextHour',
               proUnlockLabel:
                   t.es ? 'PRO 3 días gratis →' : 'PRO 3 dias grátis →',
               proSpeciesLabel: speciesLabel,
