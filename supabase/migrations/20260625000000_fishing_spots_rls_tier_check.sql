@@ -3,9 +3,11 @@
 -- Spots FREE continuam públicos (anon + authenticated).
 -- Corrige achado médio do security review (Jun 2026).
 
--- Remover policies desalinhadas
-DROP POLICY IF EXISTS "pro spots for pro users"    ON fishing_spots;
-DROP POLICY IF EXISTS "elite spots for elite users" ON fishing_spots;
+-- Remover policies desalinhadas (nomes antigos e novos — idempotente)
+DROP POLICY IF EXISTS "pro spots for pro users"          ON fishing_spots;
+DROP POLICY IF EXISTS "elite spots for elite users"      ON fishing_spots;
+DROP POLICY IF EXISTS "pro spots for pro and elite users" ON fishing_spots;
+DROP POLICY IF EXISTS "elite spots for elite users only"  ON fishing_spots;
 
 -- PRO: tier PRO ou ELITE em user_profiles
 CREATE POLICY "pro spots for pro and elite users"
