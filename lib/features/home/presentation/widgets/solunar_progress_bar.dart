@@ -5,10 +5,6 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 
 /// Barra de progresso animada para actividade solunar (0–100).
-///
-/// Gradiente amber (fraco) → cyan (excelente) com indicador com glow.
-/// Entrada animada via [TweenAnimationBuilder] em 1.2 s.
-/// Envolto em [RepaintBoundary] para isolar a animação.
 class SolunarProgressBar extends StatelessWidget {
   const SolunarProgressBar({
     super.key,
@@ -16,12 +12,14 @@ class SolunarProgressBar extends StatelessWidget {
     required this.qualityLabel,
     this.weakLabel = 'FRACA',
     this.excellentLabel = 'EXCELENTE',
+    this.showScoreBadge = true,
   });
 
   final int score;
   final String qualityLabel;
   final String weakLabel;
   final String excellentLabel;
+  final bool showScoreBadge;
 
   @override
   Widget build(BuildContext context) {
@@ -36,6 +34,7 @@ class SolunarProgressBar extends StatelessWidget {
           qualityLabel: qualityLabel,
           weakLabel: weakLabel,
           excellentLabel: excellentLabel,
+          showScoreBadge: showScoreBadge,
         ),
       ),
     );
@@ -49,6 +48,7 @@ class _SolunarBarContent extends StatelessWidget {
     required this.qualityLabel,
     required this.weakLabel,
     required this.excellentLabel,
+    required this.showScoreBadge,
   });
 
   final double fraction;
@@ -56,6 +56,7 @@ class _SolunarBarContent extends StatelessWidget {
   final String qualityLabel;
   final String weakLabel;
   final String excellentLabel;
+  final bool showScoreBadge;
 
   Color get _badgeColor {
     if (score >= 65) return AppColors.accent;
@@ -68,173 +69,120 @@ class _SolunarBarContent extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       mainAxisSize: MainAxisSize.min,
       children: [
-        // Labels extremidades + título central
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Text(
-                  weakLabel,
-                  style: AppTextStyles.ibmSans(
-                    9,
-                    color: AppColors.amber,
-                    fw: FontWeight.w700,
-                    ls: 0.3,
-                  ),
-                ),
-                // Peixes iguais com degradê amber→cyan + bob escalonado
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    for (int i = 0; i < 3; i++) ...[
-                      ColorFiltered(
-                        colorFilter: ColorFilter.mode(
-                          Color.lerp(
-                            const Color(0xFF0055FF), // azul royal
-                            AppColors.accent,        // cyan #00F5FF
-                            i / 2.0,
-                          )!,
-                          BlendMode.srcIn,
-                        ),
-                        child: const Text(
-                          '🐟',
-                          style: TextStyle(fontSize: 15),
-                        ),
-                      )
-                          .animate(
-                            onPlay: (c) => c.repeat(reverse: true),
-                            delay: Duration(milliseconds: i * 280),
-                          )
-                          .moveY(
-                            begin: 2.0,
-                            end: -2.0,
-                            duration: 900.ms,
-                            curve: Curves.easeInOut,
-                          ),
-                      if (i < 2) const SizedBox(width: 4),
-                    ],
-                  ],
-                ),
-                Text(
-                  excellentLabel,
-                  style: AppTextStyles.ibmSans(
-                    9,
-                    color: AppColors.accent,
-                    fw: FontWeight.w700,
-                    ls: 0.3,
-                  ),
-                ),
-              ],
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              weakLabel,
+              style: AppTextStyles.ibmSans(
+                9,
+                color: const Color(0xFFE53935),
+                fw: FontWeight.w700,
+                ls: 0.3,
+              ),
             ),
-        const SizedBox(height: 4),
-
-        // Barra com gradiente + indicador com glow
+            Text(
+              excellentLabel,
+              style: AppTextStyles.ibmSans(
+                9,
+                color: AppColors.green,
+                fw: FontWeight.w700,
+                ls: 0.3,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 6),
         LayoutBuilder(
           builder: (context, constraints) {
-            const double dotSize = 10.0;
-            final double fillWidth =
-                (constraints.maxWidth * fraction).clamp(0.0, constraints.maxWidth);
+            const double fishWidth = 52;
+            final maxLeft = (constraints.maxWidth - fishWidth).clamp(0.0, constraints.maxWidth);
+            final indicatorLeft = maxLeft * fraction;
 
             return SizedBox(
-              height: dotSize,
+              height: 28,
               child: Stack(
                 clipBehavior: Clip.none,
                 children: [
-                  // Track (fundo)
                   Positioned(
-                    top: (dotSize - 6) / 2,
-                    bottom: (dotSize - 6) / 2,
                     left: 0,
                     right: 0,
+                    top: 11,
                     child: Container(
+                      height: 6,
                       decoration: BoxDecoration(
-                        color: AppColors.surface,
                         borderRadius: BorderRadius.circular(4),
-                        border: Border.all(
-                          color: AppColors.accent.withValues(alpha: 0.12),
-                        ),
-                      ),
-                    ),
-                  ),
-
-                  // Fill gradiente
-                  if (fillWidth > 0)
-                    Positioned(
-                  top: (dotSize - 6) / 2,
-                    bottom: (dotSize - 6) / 2,
-                    left: 0,
-                    width: fillWidth,
-                      child: Container(
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(4),
-                          gradient: const LinearGradient(
-                            colors: [AppColors.amber, AppColors.accent],
-                          ),
-                        ),
-                      ),
-                    ),
-
-                  // Indicador circular com glow
-                  if (fraction > 0)
-                    Positioned(
-                      left: (fillWidth - dotSize / 2)
-                          .clamp(0.0, constraints.maxWidth - dotSize),
-                      top: 0,
-                      child: Container(
-                        width: dotSize,
-                        height: dotSize,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: AppColors.accent,
-                          boxShadow: [
-                            BoxShadow(
-                              color: AppColors.accent.withValues(alpha: 0.65),
-                              blurRadius: 8,
-                              spreadRadius: 2,
-                            ),
+                        gradient: const LinearGradient(
+                          colors: [
+                            Color(0xFFE53935),
+                            AppColors.amber,
+                            AppColors.green,
                           ],
                         ),
                       ),
                     ),
+                  ),
+                  Positioned(
+                    left: indicatorLeft,
+                    top: 0,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        for (int i = 0; i < 3; i++) ...[
+                          ColorFiltered(
+                            colorFilter: const ColorFilter.mode(
+                              AppColors.accent,
+                              BlendMode.srcIn,
+                            ),
+                            child: const Text('🐟', style: TextStyle(fontSize: 14)),
+                          )
+                              .animate(
+                                onPlay: (c) => c.repeat(reverse: true),
+                                delay: Duration(milliseconds: i * 220),
+                              )
+                              .moveY(
+                                begin: 2,
+                                end: -2,
+                                duration: 800.ms,
+                                curve: Curves.easeInOut,
+                              ),
+                          if (i < 2) const SizedBox(width: 1),
+                        ],
+                      ],
+                    ),
+                  ),
                 ],
               ),
             );
           },
         ),
-
-        const SizedBox(height: 5),
-
-        // Score + badge de qualidade
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Text(
-              '$score',
-              style: AppTextStyles.orbitron(15, fw: FontWeight.w700),
-            ),
-            const SizedBox(width: 8),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-              decoration: BoxDecoration(
-                color: _badgeColor.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(6),
-                border: Border.all(
-                  color: _badgeColor.withValues(alpha: 0.45),
+        if (showScoreBadge && qualityLabel.isNotEmpty) ...[
+          const SizedBox(height: 8),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text('$score', style: AppTextStyles.orbitron(15, fw: FontWeight.w700)),
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: _badgeColor.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(6),
+                  border: Border.all(color: _badgeColor.withValues(alpha: 0.45)),
+                ),
+                child: Text(
+                  qualityLabel,
+                  style: AppTextStyles.ibmSans(
+                    10,
+                    color: _badgeColor,
+                    fw: FontWeight.w700,
+                    ls: 0.4,
+                  ),
                 ),
               ),
-              child: Text(
-                qualityLabel,
-                style: AppTextStyles.ibmSans(
-                  10,
-                  color: _badgeColor,
-                  fw: FontWeight.w700,
-                  ls: 0.4,
-                ),
-              ),
-            ),
-          ],
-        ),
+            ],
+          ),
+        ],
       ],
     );
   }

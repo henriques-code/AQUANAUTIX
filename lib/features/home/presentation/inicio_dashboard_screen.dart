@@ -19,12 +19,13 @@ import '../data/home_repository_impl.dart';
 import '../domain/repositories/home_repository.dart';
 import 'widgets/community_activity_card.dart';
 import 'widgets/featured_spot_card.dart';
+import 'widgets/fishing_activity_section.dart';
 import 'widgets/greeting_header.dart';
 import 'widgets/hourly_condition_card.dart';
 import 'widgets/section_header.dart';
 import 'widgets/weather_card.dart';
 
-/// Ecrã Início — hub diário (dados mock via [HomeRepository]).
+/// Ecrã Início — layout mockup v2 (Jun 2026).
 class InicioDashboardScreen extends StatefulWidget {
   const InicioDashboardScreen({
     super.key,
@@ -97,7 +98,6 @@ class _InicioDashboardScreenState extends State<InicioDashboardScreen>
     unawaited(_refreshGpsInBackground());
   }
 
-  /// Permissão (diálogo) → fix curto em background → reload se houver coords.
   Future<void> _startGpsFlow({bool forcePermission = false}) async {
     final status = await GpsBootstrap.ensurePermission(forceRetry: forcePermission);
     if (!mounted) return;
@@ -244,12 +244,15 @@ class _InicioDashboardScreenState extends State<InicioDashboardScreen>
 
     final data = _data!;
     final hour = DateTime.now().hour;
+    final tagline = homeTaglineParts(t, data.weather.solunarScore);
+    final updatedAt = data.lastUpdated ?? DateTime.now();
+    final greeting = t.homeGreetingPersonalized(hour, data.userDisplayName);
 
     return RefreshIndicator(
-        color: AppColors.accent,
-        backgroundColor: const Color(0xFF071428),
-        onRefresh: _onPullRefresh,
-        child: SingleChildScrollView(
+      color: AppColors.accent,
+      backgroundColor: const Color(0xFF071428),
+      onRefresh: _onPullRefresh,
+      child: SingleChildScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.fromLTRB(AppSpacing.md, AppSpacing.xs, AppSpacing.md, AppSpacing.lg),
         child: Column(
@@ -265,61 +268,71 @@ class _InicioDashboardScreenState extends State<InicioDashboardScreen>
               const SizedBox(height: AppSpacing.sm),
             ],
             GreetingHeader(
-              greetingLine: t.homeGreetingLine(hour),
-              tagline: t.homeTagline,
+              greetingLine: greeting,
+              taglinePrefix: tagline.$1,
+              taglineHighlight: tagline.$2,
+              taglineSuffix: tagline.$3,
+              location: data.weather.location,
+              onLocationTap: widget.onVerOracle,
             ),
             const SizedBox(height: AppSpacing.md),
             WeatherCard(weather: data.weather, t: t),
             const SizedBox(height: AppSpacing.md),
+            FishingActivitySection(
+              score: data.weather.solunarScore,
+              t: t,
+              updatedAt: updatedAt,
+              onRefresh: () => unawaited(_onPullRefresh()),
+            ),
+            const SizedBox(height: AppSpacing.lg),
             HomeSectionHeader(
-              title: t.homeSectionConditions,
+              title: t.homeSectionBestHour,
+              icon: Icons.schedule_rounded,
               actionLabel: t.homeVerTodas,
               onActionTap: widget.onVerOracle,
             ),
             const SizedBox(height: AppSpacing.sm),
-            // 5 slots iguais — sem altura fixa, sem scroll
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                for (var i = 0; i < data.hourlyConditions.length; i++) ...[
-                  if (i > 0)
-                    Container(
-                      width: 0.5,
-                      margin: const EdgeInsets.symmetric(horizontal: 3),
-                      color: AppColors.accent.withValues(alpha: 0.12),
-                    ),
-                  Expanded(
-                    child: HourlyConditionCard(
-                      item: data.hourlyConditions[i],
-                      t: t,
-                    ),
-                  ),
-                ],
-              ],
+            SizedBox(
+              height: 118,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                itemCount: data.hourlyConditions.length,
+                separatorBuilder: (_, __) => const SizedBox(width: 8),
+                itemBuilder: (context, i) => HourlyConditionCard(
+                  item: data.hourlyConditions[i],
+                  t: t,
+                ),
+              ),
             ),
-            const SizedBox(height: AppSpacing.md),
-            HomeSectionHeader(title: t.homeSectionSpots, actionLabel: t.homeVerMapa, onActionTap: widget.onVerMapa),
-            const SizedBox(height: AppSpacing.sm),
-            GridView.count(
-              crossAxisCount: 3,
-              crossAxisSpacing: 8,
-              mainAxisSpacing: 8,
-              childAspectRatio: 0.75,
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              children: data.featuredSpots
-                  .map(
-                    (s) => FeaturedSpotCard(
-                      spot: s,
-                      es: t.es,
-                      onTap: () => _openFeaturedSpotOnMap(s),
-                    ),
-                  )
-                  .toList(),
+            const SizedBox(height: AppSpacing.lg),
+            HomeSectionHeader(
+              title: t.homeSectionSpots,
+              icon: Icons.place_outlined,
+              actionLabel: t.homeVerMapa,
+              onActionTap: widget.onVerMapa,
             ),
-            const SizedBox(height: AppSpacing.md),
-            HomeSectionHeader(title: t.homeSectionCommunity),
             const SizedBox(height: AppSpacing.sm),
+            SizedBox(
+              height: 218,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                itemCount: data.featuredSpots.length,
+                separatorBuilder: (_, __) => const SizedBox(width: 10),
+                itemBuilder: (context, i) => FeaturedSpotCard(
+                  spot: data.featuredSpots[i],
+                  es: t.es,
+                  onTap: () => _openFeaturedSpotOnMap(data.featuredSpots[i]),
+                ),
+              ),
+            ),
+            const SizedBox(height: AppSpacing.lg),
+            HomeSectionHeader(
+              title: t.homeSectionCatches,
+              icon: Icons.photo_camera_outlined,
+              actionLabel: t.homeVerTodas,
+              onActionTap: () => widget.onOpenTab(HomeTabIndex.communityTabIndex),
+            ),
+            const SizedBox(height: AppSpacing.xs),
             if (data.communityActivities.isEmpty)
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
@@ -334,33 +347,12 @@ class _InicioDashboardScreenState extends State<InicioDashboardScreen>
                 ),
               )
             else
-              ...data.communityActivities.map((a) => Padding(
-                    padding: const EdgeInsets.only(bottom: 6),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        CommunityActivityCard(
-                          activity: a,
-                          onUserTap: () => _openCommunityProfile(a),
-                        ),
-                        const SizedBox(height: 3),
-                        Row(
-                          children: [
-                            Icon(Icons.favorite_border, size: 12, color: AppColors.textSecondary),
-                            Text(
-                              ' 24  ',
-                              style: AppTextStyles.ibmSans(10, color: AppColors.textSecondary),
-                            ),
-                            Icon(Icons.chat_bubble_outline, size: 12, color: AppColors.textSecondary),
-                            Text(
-                              ' 5 comentários',
-                              style: AppTextStyles.ibmSans(10, color: AppColors.textSecondary),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  )),
+              ...data.communityActivities.map(
+                (a) => CommunityActivityCard(
+                  activity: a,
+                  onUserTap: () => _openCommunityProfile(a),
+                ),
+              ),
           ],
         ),
       ),
@@ -375,10 +367,10 @@ extension on HomeDashboardData {
         featuredSpots: featuredSpots,
         communityActivities: communityActivities,
         userDisplayName: name,
+        lastUpdated: lastUpdated,
       );
 }
 
-/// Banner inline — nunca modal (modal bloqueava toques no MIUI).
 class _GpsInlineBanner extends StatelessWidget {
   const _GpsInlineBanner({
     required this.t,

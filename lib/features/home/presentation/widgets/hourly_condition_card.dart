@@ -5,89 +5,104 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../domain/entities/hourly_condition.dart';
 
-/// Chip horário compacto — score Oráculo + destaque na melhor hora.
+/// Card horário do carrossel «Melhor Hora Hoje» (mockup).
 class HourlyConditionCard extends StatelessWidget {
   const HourlyConditionCard({
     super.key,
     required this.item,
     required this.t,
+    this.width = 88,
   });
 
   final HourlyCondition item;
   final AqxL10n t;
+  final double width;
 
-  static Color _scoreColor(int score) {
-    if (score >= 80) return AppColors.qualityExcelente;
-    if (score >= 65) return AppColors.accent;
-    if (score >= 45) return AppColors.amber;
+  static String _qualityLabel(AqxL10n t, int score) {
+    if (score >= 32) return 'EXCELENTE';
+    if (score >= 31) return t.es ? 'MUY BUENA' : 'MUITO BOA';
+    if (score >= 29) return t.es ? 'BUENA' : 'BOA';
+    if (score >= 27) return t.es ? 'MODERADA' : 'MODERADA';
+    return t.es ? 'DÉBIL' : 'FRACA';
+  }
+
+  static Color _qualityColor(int score) {
+    if (score >= 32) return AppColors.green;
+    if (score >= 31) return AppColors.accent;
+    if (score >= 29) return const Color(0xFF8BC34A);
+    if (score >= 27) return AppColors.amber;
     return AppColors.textSecondary;
+  }
+
+  static int _starCount(int score) {
+    if (score >= 32) return 5;
+    if (score >= 31) return 5;
+    if (score >= 29) return 4;
+    if (score >= 27) return 3;
+    return 2;
   }
 
   @override
   Widget build(BuildContext context) {
-    final scoreColor = _scoreColor(item.oracleScore);
-    final borderColor = item.isBestHour
-        ? AppColors.amber
-        : AppColors.accent.withValues(alpha: 0.12);
+    final label = _qualityLabel(t, item.displayScore);
+    final color = _qualityColor(item.displayScore);
+    final stars = _starCount(item.displayScore);
 
-    return Semantics(
-      label: '${item.hour}: score ${item.oracleScore}'
-          '${item.isBestHour ? ", melhor hora" : ""}',
+    return SizedBox(
+      width: width,
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(10),
+          color: AppColors.surface.withValues(alpha: 0.9),
+          borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: borderColor,
-            width: item.isBestHour ? 1.5 : 0.8,
+            color: item.isBestHour
+                ? AppColors.accent.withValues(alpha: 0.75)
+                : AppColors.accent.withValues(alpha: 0.15),
+            width: item.isBestHour ? 1.5 : 1,
           ),
-          color: item.isBestHour
-              ? AppColors.amber.withValues(alpha: 0.06)
-              : Colors.transparent,
         ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
+        child: Stack(
+          clipBehavior: Clip.none,
           children: [
-            Text(
-              item.hour,
-              style: AppTextStyles.ibmSans(
-                10,
-                color: AppColors.textSecondary,
-                fw: FontWeight.w600,
+            if (item.isBestHour)
+              const Positioned(
+                top: -2,
+                right: 2,
+                child: Text('👑', style: TextStyle(fontSize: 12)),
               ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              '${item.oracleScore}',
-              style: AppTextStyles.orbitron(
-                18,
-                fw: FontWeight.w700,
-                color: scoreColor,
-              ),
-            ),
-            const SizedBox(height: 3),
-            // Mini barra de score
-            ClipRRect(
-              borderRadius: BorderRadius.circular(2),
-              child: LinearProgressIndicator(
-                value: (item.oracleScore / 100).clamp(0.0, 1.0),
-                minHeight: 3,
-                backgroundColor: AppColors.accent.withValues(alpha: 0.1),
-                valueColor: AlwaysStoppedAnimation<Color>(scoreColor),
-              ),
-            ),
-            if (item.isBestHour) ...[
-              const SizedBox(height: 4),
-              Text(
-                t.es ? 'MEJOR' : 'MELHOR',
-                style: AppTextStyles.ibmSans(
-                  7,
-                  color: AppColors.amber,
-                  fw: FontWeight.w700,
-                  ls: 0.5,
+            Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  item.hour,
+                  style: AppTextStyles.ibmSans(11, color: AppColors.textSecondary),
                 ),
-              ),
-            ],
+                const SizedBox(height: 4),
+                Text(
+                  '${item.displayScore}',
+                  style: AppTextStyles.orbitron(22, fw: FontWeight.w700, color: color),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  label,
+                  style: AppTextStyles.ibmSans(8, fw: FontWeight.w700, color: color, ls: 0.3),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 4),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: List.generate(
+                    5,
+                    (i) => Icon(
+                      i < stars ? Icons.star_rounded : Icons.star_outline_rounded,
+                      size: 10,
+                      color: AppColors.amber,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ],
         ),
       ),

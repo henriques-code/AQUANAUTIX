@@ -9,21 +9,26 @@ class HomeSectionHeader extends StatelessWidget {
     required this.title,
     this.actionLabel,
     this.onActionTap,
+    this.icon,
   });
 
   final String title;
   final String? actionLabel;
   final VoidCallback? onActionTap;
+  final IconData? icon;
 
   @override
   Widget build(BuildContext context) {
     return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
+        if (icon != null) ...[
+          Icon(icon, size: 16, color: AppColors.accent),
+          const SizedBox(width: 6),
+        ],
         Expanded(
           child: Text(
             title,
-            style: AppTextStyles.orbitron(16, fw: FontWeight.w700),
+            style: AppTextStyles.orbitron(14, fw: FontWeight.w700, ls: 0.2),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
@@ -38,7 +43,7 @@ class HomeSectionHeader extends StatelessWidget {
             ),
             child: Text(
               actionLabel!,
-              style: AppTextStyles.ibmSans(13, fw: FontWeight.w500, color: AppColors.accent),
+              style: AppTextStyles.ibmSans(12, fw: FontWeight.w500, color: AppColors.accent),
             ),
           ),
       ],
