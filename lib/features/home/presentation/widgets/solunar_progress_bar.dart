@@ -4,7 +4,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 
-/// Barra de progresso animada para actividade solunar (0–100).
+/// Barra de actividade piscatória — layout mockup Início.
 class SolunarProgressBar extends StatelessWidget {
   const SolunarProgressBar({
     super.key,
@@ -20,6 +20,20 @@ class SolunarProgressBar extends StatelessWidget {
   final String weakLabel;
   final String excellentLabel;
   final bool showScoreBadge;
+
+  static const _barHeight = 9.0;
+  static const _knobSize = 15.0;
+  static const _fishAreaHeight = 22.0;
+
+  static const _barGradient = LinearGradient(
+    colors: [
+      Color(0xFFFF5722),
+      Color(0xFFFFB300),
+      Color(0xFF4CAF50),
+      Color(0xFF00E5FF),
+    ],
+    stops: [0.0, 0.35, 0.72, 1.0],
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -69,85 +83,92 @@ class _SolunarBarContent extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       mainAxisSize: MainAxisSize.min,
       children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              weakLabel,
-              style: AppTextStyles.ibmSans(
-                9,
-                color: const Color(0xFFE53935),
-                fw: FontWeight.w700,
-                ls: 0.3,
-              ),
-            ),
-            Text(
-              excellentLabel,
-              style: AppTextStyles.ibmSans(
-                9,
-                color: AppColors.green,
-                fw: FontWeight.w700,
-                ls: 0.3,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 6),
         LayoutBuilder(
           builder: (context, constraints) {
-            const double fishWidth = 52;
-            final maxLeft = (constraints.maxWidth - fishWidth).clamp(0.0, constraints.maxWidth);
-            final indicatorLeft = maxLeft * fraction;
+            final barWidth = constraints.maxWidth;
+            final knobCenter = (barWidth * fraction).clamp(
+              SolunarProgressBar._knobSize / 2,
+              barWidth - SolunarProgressBar._knobSize / 2,
+            );
+            final fillWidth = knobCenter + SolunarProgressBar._knobSize / 2;
+            const fishRowWidth = 54.0;
+            final fishLeft = (knobCenter - fishRowWidth / 2)
+                .clamp(0.0, barWidth - fishRowWidth);
 
             return SizedBox(
-              height: 28,
+              height: SolunarProgressBar._fishAreaHeight +
+                  SolunarProgressBar._barHeight +
+                  2,
               child: Stack(
                 clipBehavior: Clip.none,
                 children: [
+                  // Peixes acima do indicador
+                  Positioned(
+                    left: fishLeft,
+                    top: 0,
+                    child: _FishCluster(),
+                  ),
+                  // Barra
                   Positioned(
                     left: 0,
                     right: 0,
-                    top: 11,
-                    child: Container(
-                      height: 6,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(4),
-                        gradient: const LinearGradient(
-                          colors: [
-                            Color(0xFFE53935),
-                            AppColors.amber,
-                            AppColors.green,
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                  Positioned(
-                    left: indicatorLeft,
-                    top: 0,
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
+                    bottom: 0,
+                    height: SolunarProgressBar._barHeight,
+                    child: Stack(
+                      clipBehavior: Clip.none,
                       children: [
-                        for (int i = 0; i < 3; i++) ...[
-                          ColorFiltered(
-                            colorFilter: const ColorFilter.mode(
-                              AppColors.accent,
-                              BlendMode.srcIn,
+                        // Trilho escuro (zona não preenchida)
+                        Container(
+                          height: SolunarProgressBar._barHeight,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(99),
+                            color: const Color(0xFF0D1B2A).withValues(alpha: 0.85),
+                            border: Border.all(
+                              color: Colors.white.withValues(alpha: 0.06),
                             ),
-                            child: const Text('🐟', style: TextStyle(fontSize: 14)),
-                          )
-                              .animate(
-                                onPlay: (c) => c.repeat(reverse: true),
-                                delay: Duration(milliseconds: i * 220),
-                              )
-                              .moveY(
-                                begin: 2,
-                                end: -2,
-                                duration: 800.ms,
-                                curve: Curves.easeInOut,
+                          ),
+                        ),
+                        // Preenchimento gradiente até ao knob
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(99),
+                          child: Align(
+                            alignment: Alignment.centerLeft,
+                            child: Container(
+                              width: fillWidth.clamp(0.0, barWidth),
+                              height: SolunarProgressBar._barHeight,
+                              decoration: const BoxDecoration(
+                                gradient: SolunarProgressBar._barGradient,
                               ),
-                          if (i < 2) const SizedBox(width: 1),
-                        ],
+                            ),
+                          ),
+                        ),
+                        // Knob ciano com glow
+                        Positioned(
+                          left: knobCenter - SolunarProgressBar._knobSize / 2,
+                          top: (SolunarProgressBar._barHeight -
+                                  SolunarProgressBar._knobSize) /
+                              2,
+                          child: Container(
+                            width: SolunarProgressBar._knobSize,
+                            height: SolunarProgressBar._knobSize,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: AppColors.accent,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: AppColors.accent.withValues(alpha: 0.9),
+                                  blurRadius: 10,
+                                  spreadRadius: 1,
+                                ),
+                                BoxShadow(
+                                  color: AppColors.accent.withValues(alpha: 0.45),
+                                  blurRadius: 18,
+                                  spreadRadius: 3,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -155,6 +176,30 @@ class _SolunarBarContent extends StatelessWidget {
               ),
             );
           },
+        ),
+        const SizedBox(height: 6),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              weakLabel,
+              style: AppTextStyles.ibmSans(
+                11,
+                color: const Color(0xFFFF4C4C),
+                fw: FontWeight.w700,
+                ls: 0.5,
+              ),
+            ),
+            Text(
+              excellentLabel,
+              style: AppTextStyles.ibmSans(
+                11,
+                color: const Color(0xFF00C853),
+                fw: FontWeight.w700,
+                ls: 0.5,
+              ),
+            ),
+          ],
         ),
         if (showScoreBadge && qualityLabel.isNotEmpty) ...[
           const SizedBox(height: 8),
@@ -185,5 +230,57 @@ class _SolunarBarContent extends StatelessWidget {
         ],
       ],
     );
+  }
+}
+
+class _FishCluster extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        for (int i = 0; i < 3; i++) ...[
+          _FishIcon(
+            bright: i == 1,
+            delayMs: i * 200,
+          ),
+          if (i < 2) const SizedBox(width: 2),
+        ],
+      ],
+    );
+  }
+}
+
+class _FishIcon extends StatelessWidget {
+  const _FishIcon({required this.bright, required this.delayMs});
+
+  final bool bright;
+  final int delayMs;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = bright ? AppColors.accent : const Color(0xFF007BFF);
+
+    Widget fish = Container(
+      decoration: bright
+          ? BoxDecoration(
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.accent.withValues(alpha: 0.75),
+                  blurRadius: 8,
+                  spreadRadius: 1,
+                ),
+              ],
+            )
+          : null,
+      child: ColorFiltered(
+        colorFilter: ColorFilter.mode(color, BlendMode.srcIn),
+        child: const Text('🐟', style: TextStyle(fontSize: 16, height: 1)),
+      ),
+    );
+
+    return fish
+        .animate(onPlay: (c) => c.repeat(reverse: true), delay: Duration(milliseconds: delayMs))
+        .moveY(begin: 1.5, end: -1.5, duration: 900.ms, curve: Curves.easeInOut);
   }
 }

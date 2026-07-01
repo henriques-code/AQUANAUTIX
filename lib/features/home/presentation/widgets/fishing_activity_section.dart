@@ -41,15 +41,15 @@ class FishingActivitySection extends StatelessWidget {
             ),
             Text(
               '${t.homeUpdated} ${_formatTime(updatedAt)}',
-              style: AppTextStyles.ibmSans(10, color: AppColors.textSecondary),
+              style: AppTextStyles.ibmSans(11, color: AppColors.textSecondary),
             ),
-            const SizedBox(width: 4),
+            const SizedBox(width: 6),
             GestureDetector(
               onTap: onRefresh,
               child: Icon(
                 Icons.refresh_rounded,
-                size: 16,
-                color: AppColors.accent.withValues(alpha: 0.85),
+                size: 17,
+                color: AppColors.textPrimary.withValues(alpha: 0.85),
               ),
             ),
           ],
