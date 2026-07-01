@@ -2,19 +2,20 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/l10n/aqx_l10n.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_text_styles.dart';
-import '../../../../core/widgets/aqua_card.dart';
 import '../../domain/entities/weather_data.dart';
-import 'location_header.dart';
-import 'solunar_progress_bar.dart';
+import 'greeting_header.dart';
+import 'oracle_index_gauge.dart';
 
-/// Módulo de Condições Actuais — layout compacto de linha única.
+/// Hero de condições — foto de fundo + gauge circular (mockup Início).
 class WeatherCard extends StatelessWidget {
   const WeatherCard({super.key, required this.weather, required this.t});
 
   final WeatherData weather;
   final AqxL10n t;
+
+  static const _heroImage =
+      'https://images.unsplash.com/photo-1555881400-74d7acaacd8b?w=800&q=80';
 
   static String _solunarBadgeLabel(int score) {
     if (score >= 70) return 'Major';
@@ -30,219 +31,201 @@ class WeatherCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bool hasTide = weather.hasTide;
+    final hasTide = weather.hasTide;
     final tideSubValue = weather.tideRising
-        ? (t.es ? '↑ Creciente' : '↑ Enchente')
-        : (t.es ? '↓ Vaciante' : '↓ Vazante');
+        ? (t.es ? '↑ Enchente' : '↑ Enchente')
+        : (t.es ? '↓ Vazante' : '↓ Vazante');
     final tideColor = weather.tideRising ? AppColors.accent : AppColors.amber;
+    final indexLabel = indexGaugeLabel(t, weather.solunarScore);
 
-    return AquaCard(
-      borderRadius: 16,
-      borderAlpha: 0.18,
-      padding: const EdgeInsets.fromLTRB(AppSpacing.xs, 6, AppSpacing.xs, 6),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // ── Localização + hora ────────────────────────────────────────
-          LocationHeader(location: weather.location),
-          const SizedBox(height: 4),
-          Divider(height: 1, color: AppColors.accent.withValues(alpha: 0.12)),
-          const SizedBox(height: 5),
-
-          // ── Temperatura + condição (linha única) ──────────────────────
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Expanded(
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.baseline,
-                  textBaseline: TextBaseline.alphabetic,
-                  children: [
-                    Text(
-                      '${weather.temperature.round()}',
-                      style: AppTextStyles.orbitron(26, fw: FontWeight.w700),
-                    ),
-                    Text(
-                      '°C',
-                      style: AppTextStyles.orbitron(
-                        13,
-                        fw: FontWeight.w400,
-                        color: AppColors.accent,
-                      ),
-                    ),
-                    const SizedBox(width: 6),
-                    Flexible(
-                      child: Text(
-                        weather.condition,
-                        style: AppTextStyles.ibmSans(
-                          10,
-                          color: AppColors.textSecondary,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(16),
+      child: SizedBox(
+        height: 200,
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            Image.network(
+              _heroImage,
+              fit: BoxFit.cover,
+              errorBuilder: (_, __, ___) => Container(
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [Color(0xFF1A2840), Color(0xFF071428)],
+                  ),
+                ),
+              ),
+            ),
+            DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.black.withValues(alpha: 0.35),
+                    Colors.black.withValues(alpha: 0.72),
                   ],
                 ),
               ),
-              Text(
-                weather.conditionIcon,
-                style: const TextStyle(fontSize: 22),
-              ),
-            ],
-          ),
-
-          const SizedBox(height: 5),
-          Divider(height: 1, color: AppColors.accent.withValues(alpha: 0.12)),
-          const SizedBox(height: 5),
-
-          // ── 4 métricas alinhadas numa linha ──────────────────────────
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              // Vento — direcção como sub-valor (sem bússola inline)
-              Expanded(
-                child: _CompactMetric(
-                  icon: const Icon(
-                    Icons.air_rounded,
-                    size: 16,
-                    color: AppColors.accent,
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(14, 12, 14, 10),
+              child: Column(
+                children: [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  '${weather.temperature.round()}',
+                                  style: AppTextStyles.orbitron(42, fw: FontWeight.w700),
+                                ),
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 6),
+                                  child: Text(
+                                    '°C',
+                                    style: AppTextStyles.orbitron(
+                                      16,
+                                      fw: FontWeight.w400,
+                                      color: AppColors.accent,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 2),
+                            Row(
+                              children: [
+                                Text(
+                                  weather.conditionIcon,
+                                  style: const TextStyle(fontSize: 18),
+                                ),
+                                const SizedBox(width: 6),
+                                Flexible(
+                                  child: Text(
+                                    weather.condition,
+                                    style: AppTextStyles.ibmSans(
+                                      12,
+                                      color: AppColors.textPrimary.withValues(alpha: 0.9),
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                      OracleIndexGauge(
+                        score: weather.solunarScore,
+                        label: '${t.homeIndexLabel} $indexLabel',
+                        size: 88,
+                      ),
+                    ],
                   ),
-                  label: t.homeStatWind,
-                  value: '${weather.windSpeed.round()} km/h',
-                  subValue: weather.windDir,
-                ),
-              ),
-              _vDiv(),
-              // Ondas
-              Expanded(
-                child: _CompactMetric(
-                  icon: const Icon(
-                    Icons.waves_rounded,
-                    size: 16,
-                    color: AppColors.accent,
+                  const Spacer(),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _HeroMetric(
+                          icon: Icons.air_rounded,
+                          label: t.homeStatWind,
+                          value: '${weather.windSpeed.round()} km/h',
+                          sub: weather.windDir ?? '—',
+                        ),
+                      ),
+                      Expanded(
+                        child: _HeroMetric(
+                          icon: Icons.waves_rounded,
+                          label: t.homeStatWaves,
+                          value: '≈ ${weather.waveHeight.toStringAsFixed(1)} m',
+                        ),
+                      ),
+                      Expanded(
+                        child: Opacity(
+                          opacity: hasTide ? 1 : 0.35,
+                          child: _HeroMetric(
+                            icon: weather.tideRising
+                                ? Icons.trending_up_rounded
+                                : Icons.trending_down_rounded,
+                            label: t.homeStatTide,
+                            value: '≈ ${weather.tideHeight.toStringAsFixed(1)} m',
+                            sub: tideSubValue,
+                            subColor: tideColor,
+                          ),
+                        ),
+                      ),
+                      Expanded(
+                        child: _HeroMetric(
+                          icon: Icons.nightlight_round,
+                          label: t.homeStatMoon,
+                          value: weather.moonPhase,
+                          sub: _solunarBadgeLabel(weather.solunarScore),
+                          subColor: _solunarBadgeColor(weather.solunarScore),
+                        ),
+                      ),
+                    ],
                   ),
-                  label: t.homeStatWaves,
-                  value: '≈ ${weather.waveHeight.toStringAsFixed(1)} m',
-                ),
+                ],
               ),
-              _vDiv(),
-              // Maré
-              Expanded(
-                child: AnimatedOpacity(
-                  opacity: hasTide ? 1.0 : 0.0,
-                  duration: const Duration(milliseconds: 400),
-                  child: _CompactMetric(
-                    icon: Icon(
-                      weather.tideRising
-                          ? Icons.trending_up_rounded
-                          : Icons.trending_down_rounded,
-                      size: 16,
-                      color: tideColor,
-                    ),
-                    label: t.homeStatTide,
-                    value: '≈ ${weather.tideHeight.toStringAsFixed(1)} m',
-                    subValue: tideSubValue,
-                    subValueColor: tideColor,
-                  ),
-                ),
-              ),
-              _vDiv(),
-              // Lua
-              Expanded(
-                child: _CompactMetric(
-                  icon: const Icon(
-                    Icons.nightlight_round,
-                    size: 16,
-                    color: AppColors.amber,
-                  ),
-                  label: t.homeStatMoon,
-                  value: weather.moonPhase,
-                  subValue: _solunarBadgeLabel(weather.solunarScore),
-                  subValueColor: _solunarBadgeColor(weather.solunarScore),
-                ),
-              ),
-            ],
-          ),
-
-          const SizedBox(height: 5),
-          Divider(height: 1, color: AppColors.accent.withValues(alpha: 0.10)),
-          const SizedBox(height: 4),
-
-          // ── Barra solunar ─────────────────────────────────────────────
-          SolunarProgressBar(
-            score: weather.solunarScore,
-            qualityLabel: t.scoreLabel(weather.solunarScore),
-            weakLabel: t.es ? 'DÉBIL' : 'FRACA',
-            excellentLabel: 'EXCELENTE',
-          ),
-        ],
+            ),
+          ],
+        ),
       ),
     );
   }
-
-  /// Divisor vertical entre colunas de métricas.
-  static Widget _vDiv() => Container(
-        width: 0.5,
-        height: 56,
-        margin: const EdgeInsets.symmetric(horizontal: 4),
-        color: AppColors.accent.withValues(alpha: 0.15),
-      );
 }
 
-// ── Métrica compacta (coluna única sem bordas) ────────────────────────────────
-
-class _CompactMetric extends StatelessWidget {
-  const _CompactMetric({
+class _HeroMetric extends StatelessWidget {
+  const _HeroMetric({
     required this.icon,
     required this.label,
     required this.value,
-    this.subValue,
-    this.subValueColor,
+    this.sub,
+    this.subColor,
   });
 
-  final Widget icon;
+  final IconData icon;
   final String label;
   final String value;
-  final String? subValue;
-  final Color? subValueColor;
+  final String? sub;
+  final Color? subColor;
 
   @override
   Widget build(BuildContext context) {
     return Column(
       mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        icon,
-        const SizedBox(height: 4),
-        Text(
-          label.toUpperCase(),
-          style: AppTextStyles.ibmSans(
-            9,
-            color: AppColors.textSecondary,
-            fw: FontWeight.w600,
-            ls: 0.3,
-          ),
-          textAlign: TextAlign.center,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-        ),
+        Icon(icon, size: 14, color: AppColors.accent),
         const SizedBox(height: 3),
         Text(
+          label.toUpperCase(),
+          style: AppTextStyles.ibmSans(8, color: AppColors.textSecondary, ls: 0.2),
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: 2),
+        Text(
           value,
-          style: AppTextStyles.orbitron(13, fw: FontWeight.w700),
+          style: AppTextStyles.ibmSans(10, fw: FontWeight.w700),
           textAlign: TextAlign.center,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
         ),
-        if (subValue != null) ...[
-          const SizedBox(height: 2),
+        if (sub != null) ...[
           Text(
-            subValue!,
+            sub!,
             style: AppTextStyles.ibmSans(
-              9,
-              color: subValueColor ?? AppColors.accent,
+              8,
+              color: subColor ?? AppColors.textSecondary,
               fw: FontWeight.w600,
             ),
             textAlign: TextAlign.center,

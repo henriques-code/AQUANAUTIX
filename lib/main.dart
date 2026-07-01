@@ -13,6 +13,7 @@ import 'core/state/subscription_store.dart';
 import 'core/services/revenue_cat_service.dart';
 import 'core/monetization/subscription_auth_bridge.dart';
 import 'core/config/mapbox_config.dart';
+import 'core/notifications/golden_window_notification_service.dart';
 import 'core/species/species_catalog.dart';
 
 Future<void> main() async {
@@ -33,6 +34,7 @@ Future<void> main() async {
   }
   await SubscriptionStore.instance.init();
   SubscriptionAuthBridge.init();
+  unawaited(GoldenWindowNotificationService.instance.init());
   if (kDebugMode && RevenueCatService.instance.isSdkReady) {
     final d = await RevenueCatService.instance.diagnostics();
     debugPrint(

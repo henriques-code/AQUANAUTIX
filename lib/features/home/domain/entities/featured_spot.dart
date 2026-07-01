@@ -8,6 +8,10 @@ class FeaturedSpot {
     required this.quality,
     required this.lat,
     required this.lon,
+    this.species = const [],
+    this.scorePercent = 70,
+    this.distanceKm = 0,
+    this.waveHeightM = 0.8,
   });
 
   final String id;
@@ -16,4 +20,8 @@ class FeaturedSpot {
   final SpotQuality quality;
   final double lat;
   final double lon;
+  final List<String> species;
+  final int scorePercent;
+  final double distanceKm;
+  final double waveHeightM;
 }

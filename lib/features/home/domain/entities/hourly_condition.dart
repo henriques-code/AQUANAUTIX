@@ -18,4 +18,7 @@ class HourlyCondition {
 
   /// Dentro da janela de ouro do Oráculo (ex. 07:00→09:30).
   final bool isGoldenWindow;
+
+  /// Score compacto para UI do carrossel (mockup 20–40).
+  int get displayScore => (oracleScore / 3).round().clamp(20, 40);
 }

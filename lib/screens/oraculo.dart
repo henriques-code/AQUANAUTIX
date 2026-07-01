@@ -21,6 +21,7 @@ import '../core/community/community_demo_posts.dart';
 import '../core/community/community_store.dart';
 import '../core/monetization/subscription_gate.dart';
 import '../core/fishing/bait_technique_service.dart';
+import '../core/notifications/golden_window_notification_service.dart';
 import '../core/species/oracle_rig_recommendation.dart';
 import '../core/location/gps_access.dart';
 import '../core/state/logbook_tab_index.dart';
@@ -421,7 +422,7 @@ class _OraculoScreenState extends State<OraculoScreen>
       HomeTabIndex.pendingMapFocus.value = (
         lat: coords.lat,
         lon: coords.lon,
-        label: null,
+        label: _planningPlace?.label,
       );
     }
     HomeTabIndex.notifier.value = HomeTabIndex.mapTabIndex;
@@ -442,14 +443,15 @@ class _OraculoScreenState extends State<OraculoScreen>
     required AqxL10n t,
     required String speciesLabel,
     required int proScore,
+    String nextHour = '07:00',
   }) {
     unawaited(
       showOracleProUnlockSheet(
         context,
         distanceLabel: t.es ? 'Spot PRO a 1.2 km' : 'Spot PRO a 1.2 km',
         scoreLine: t.es
-            ? 'Score $proScore mañana 07:15'
-            : 'Score $proScore amanhã 07:15',
+            ? 'Score $proScore mañana $nextHour'
+            : 'Score $proScore amanhã $nextHour',
         speciesLabel: speciesLabel,
         source: 'oraculo_pro_drawer',
         es: t.es,
@@ -579,16 +581,23 @@ class _OraculoScreenState extends State<OraculoScreen>
             final proScore = ((hasData ? d.score : 84) + 8).clamp(0, 100);
             final windowHours = _heroWindowLabel(d.horario);
             final speciesLabel = _speciesUiLabel(species);
+            // Extrair hora real da próxima janela de ouro (janelaTexto real do bundle)
+            final janelaTexto = _rioMode
+                ? (_rioBundle?.janelaTexto ?? '')
+                : (_costaBundle?.janelaTexto ?? '');
+            final nextHourMatch = RegExp(r'(\d{2}:\d{2})').firstMatch(janelaTexto);
+            final nextHour = nextHourMatch?.group(1) ?? '07:00';
             final decisionText = OracleDecisionCopy.line(
               es: t.es,
               score: hasData ? d.score : 0,
               windowHours: windowHours,
               proScore: proScore,
               loading: loading,
+              nextHour: nextHour,
             );
             final proSticky = t.es
-                ? 'Spot PRO a 1.2 km · Score $proScore mañana 07:15'
-                : 'Spot PRO a 1.2 km · Score $proScore amanhã 07:15';
+                ? 'Spot PRO a 1.2 km · Score $proScore mañana $nextHour'
+                : 'Spot PRO a 1.2 km · Score $proScore amanhã $nextHour';
             final ghostPosts = CommunityDemoPosts.oracleGhostRow();
             final communityProHint = t.es
                 ? '${ghostPosts.length} capturas cerca · PRO ve zona 5 km'
@@ -599,6 +608,7 @@ class _OraculoScreenState extends State<OraculoScreen>
                   t: t,
                   speciesLabel: speciesLabel,
                   proScore: proScore,
+                  nextHour: nextHour,
                 );
 
             return OracleDecisaoFold(
@@ -655,10 +665,10 @@ class _OraculoScreenState extends State<OraculoScreen>
                 },
                 compareProLabel:
                     t.es ? 'Comparar 3 sitios (PRO)' : 'Comparar 3 sítios (PRO)',
-                onAlertPro: () {},
+                onAlertPro: () => _handleAlertPro(t),
                 alertProLabel: t.es
-                    ? 'Alertar ventana (PRO) · PRONTO'
-                    : 'Alertar janela (PRO) · EM BREVE',
+                    ? 'Alertar ventana (PRO)'
+                    : 'Alertar janela (PRO)',
               ),
               communityPosts: ghostPosts,
               es: t.es,
@@ -670,8 +680,8 @@ class _OraculoScreenState extends State<OraculoScreen>
               onViewCommunity: _openCommunityTab,
               proDistanceLabel: 'Spot PRO a 1.2 km',
               proScoreLine: t.es
-                  ? 'Score $proScore mañana 07:15'
-                  : 'Score $proScore amanhã 07:15',
+                  ? 'Score $proScore mañana $nextHour'
+                  : 'Score $proScore amanhã $nextHour',
               proUnlockLabel:
                   t.es ? 'PRO 3 días gratis →' : 'PRO 3 dias grátis →',
               proSpeciesLabel: speciesLabel,
@@ -948,15 +958,35 @@ class _OraculoScreenState extends State<OraculoScreen>
                       border: Border.all(color: kHint.withValues(alpha: 0.25)),
                     ),
                     child: Row(children: [
-                      Container(
-                        width: 32,
-                        height: 32,
-                        decoration: BoxDecoration(
-                          color: kHint.withValues(alpha: 0.08),
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(Icons.notifications_active_outlined,
-                            color: kHint.withValues(alpha: 0.7), size: 17),
+                      ValueListenableBuilder<SubscriptionState>(
+                        valueListenable: SubscriptionStore.instance.value,
+                        builder: (_, sub, __) {
+                          final enabled = GoldenWindowNotificationService
+                              .instance.isEnabled;
+                          final isPro =
+                              SubscriptionGate.canAccessProFeatures(sub);
+                          return Container(
+                            width: 32,
+                            height: 32,
+                            decoration: BoxDecoration(
+                              color: enabled
+                                  ? kCyan.withValues(alpha: 0.15)
+                                  : kHint.withValues(alpha: 0.08),
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(
+                              enabled
+                                  ? Icons.notifications_active_rounded
+                                  : isPro
+                                      ? Icons.notifications_none_rounded
+                                      : Icons.notifications_off_outlined,
+                              color: enabled
+                                  ? kCyan
+                                  : kHint.withValues(alpha: 0.7),
+                              size: 17,
+                            ),
+                          );
+                        },
                       ),
                       const SizedBox(width: 10),
                       Expanded(
@@ -974,19 +1004,52 @@ class _OraculoScreenState extends State<OraculoScreen>
                           ],
                         ),
                       ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: kHint.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(6),
-                          border:
-                              Border.all(color: kHint.withValues(alpha: 0.35)),
-                        ),
-                        child: Text(
-                          t.es ? 'EM BREVE' : 'EM BREVE',
-                          style: mono(10, c: kHint, ls: 0.5),
-                        ),
+                      ValueListenableBuilder<SubscriptionState>(
+                        valueListenable: SubscriptionStore.instance.value,
+                        builder: (_, sub, __) {
+                          final isPro =
+                              SubscriptionGate.canAccessProFeatures(sub);
+                          final enabled = GoldenWindowNotificationService
+                              .instance.isEnabled;
+                          return GestureDetector(
+                            onTap: () => _handleAlertPro(t),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: enabled
+                                    ? kCyan.withValues(alpha: 0.18)
+                                    : isPro
+                                        ? kAmber.withValues(alpha: 0.15)
+                                        : kHint.withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(6),
+                                border: Border.all(
+                                  color: enabled
+                                      ? kCyan.withValues(alpha: 0.6)
+                                      : isPro
+                                          ? kAmber.withValues(alpha: 0.5)
+                                          : kHint.withValues(alpha: 0.35),
+                                ),
+                              ),
+                              child: Text(
+                                enabled
+                                    ? (t.es ? 'ACTIVO' : 'ACTIVO')
+                                    : isPro
+                                        ? t.activate
+                                        : 'PRO',
+                                style: mono(
+                                  10,
+                                  c: enabled
+                                      ? kCyan
+                                      : isPro
+                                          ? kAmber
+                                          : kHint,
+                                  ls: 0.5,
+                                ),
+                              ),
+                            ),
+                          );
+                        },
                       ),
                     ]),
                   ),
@@ -1010,6 +1073,98 @@ class _OraculoScreenState extends State<OraculoScreen>
     final b = _costaBundle;
     if (b == null) return t.alertZone;
     return b.usedGps ? t.alertYou : b.locationHeadline.split('·').first.trim();
+  }
+
+  /// Activa ou cancela alertas Janela de Ouro.
+  /// PRO → agenda diariamente às 07:00.
+  /// FREE → mostra paywall (só 1 alerta/semana disponível gratuitamente).
+  Future<void> _handleAlertPro(AqxL10n t) async {
+    final sub = SubscriptionStore.instance.value.value;
+    final isPro = SubscriptionGate.canAccessProFeatures(sub);
+
+    final svc = GoldenWindowNotificationService.instance;
+
+    // toggle OFF se já activo
+    if (svc.isEnabled) {
+      await svc.cancelAll();
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            t.es ? 'Alertas desactivadas.' : 'Alertas desactivados.',
+            style: ibm(14),
+          ),
+          backgroundColor: kCard,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      setState(() {});
+      return;
+    }
+
+    // FREE → paywall
+    if (!isPro) {
+      _openProUnlockSheet(
+        context,
+        t: t,
+        speciesLabel: '',
+        proScore: (_costaBundle?.score ?? _rioBundle?.score ?? 75)
+            .clamp(0, 100),
+      );
+      return;
+    }
+
+    final bundle = _rioMode ? null : _costaBundle;
+    final rioBundle = _rioMode ? _rioBundle : null;
+    final score =
+        (bundle?.score ?? rioBundle?.score ?? 0).clamp(0, 100).toInt();
+    final place = _rioMode
+        ? (t.es ? 'Rio Tajo' : 'Rio Tejo')
+        : _alertPlaceHint(t);
+
+    // extrair hora da janela de janelaTexto (ex.: "Amanhã 07:00 -> 09:30 — ...")
+    String bestHour = '07:00';
+    final jt = bundle?.janelaTexto ?? rioBundle?.janelaTexto ?? '';
+    final hourMatch = RegExp(r'(\d{2}:\d{2})').firstMatch(jt);
+    if (hourMatch != null) bestHour = hourMatch.group(1)!;
+
+    final ok = await svc.requestAndSchedule(
+      placeHint: place,
+      scoreEstimate: score,
+      bestHour: bestHour,
+      isPro: isPro,
+    );
+    if (!mounted) return;
+
+    if (!ok) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            t.es
+                ? 'Permiso de notificación denegado.'
+                : 'Permissão de notificação negada.',
+            style: ibm(14),
+          ),
+          backgroundColor: kCard,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+
+    setState(() {});
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          t.es
+              ? '✅ Alerta activa — notificación diaria a las 07:00'
+              : '✅ Alerta activa — notificação diária às 07:00',
+          style: ibm(14),
+        ),
+        backgroundColor: kCard,
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
   }
 
   bool _isGpsBlocked() {

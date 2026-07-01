@@ -28,10 +28,23 @@ class _AquanautixHomeState extends State<AquanautixHome> {
   int _idx = 0;
   /// Um tab de cada vez (sem IndexedStack) — preserva estado após 1.ª visita.
   final Map<int, Widget> _tabCache = {};
+  /// Histórico de navegação entre tabs (máx. 20 entradas).
+  final List<int> _history = [];
+
+  bool get _canGoBack => _history.isNotEmpty;
 
   void _setTab(int i) {
+    if (i != _idx) _history.add(_idx);
+    if (_history.length > 20) _history.removeAt(0);
     setState(() => _idx = i);
     HomeTabIndex.notifier.value = i;
+  }
+
+  void _goBack() {
+    if (_history.isEmpty) return;
+    final prev = _history.removeLast();
+    setState(() => _idx = prev);
+    HomeTabIndex.notifier.value = prev;
   }
 
   @override
@@ -54,7 +67,11 @@ class _AquanautixHomeState extends State<AquanautixHome> {
   void _onExternalTabRequest() {
     final i = HomeTabIndex.notifier.value;
     if (!mounted || i == _idx) return;
-    setState(() => _idx = i);
+    setState(() {
+      _history.add(_idx);
+      if (_history.length > 20) _history.removeAt(0);
+      _idx = i;
+    });
   }
 
   Widget _createTab(int i) {
@@ -90,16 +107,6 @@ class _AquanautixHomeState extends State<AquanautixHome> {
     return _tabCache.putIfAbsent(_idx, () => _createTab(_idx));
   }
 
-  static const _icons = [
-    Icons.home_outlined,
-    Icons.track_changes_rounded,
-    Icons.map_outlined,
-    Icons.photo_camera_outlined,
-    Icons.menu_book_outlined,
-    Icons.person_outline_rounded,
-    Icons.groups_outlined,
-  ];
-
   void _openOracleFromMap() {
     if (!mounted) return;
     _setTab(HomeTabIndex.oracleTabIndex);
@@ -113,31 +120,85 @@ class _AquanautixHomeState extends State<AquanautixHome> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: kBg,
-      appBar: const HomeAppBar(),
-      drawer: HomeNavigationDrawer(onOpenTab: _setTab),
-      body: SafeArea(
-        top: false,
-        bottom: false,
-        child: _activeTab(),
+    return PopScope(
+      canPop: !_canGoBack,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop && _canGoBack) _goBack();
+      },
+      child: Scaffold(
+        backgroundColor: kBg,
+        appBar: HomeAppBar(onBack: _canGoBack ? _goBack : null),
+        drawer: HomeNavigationDrawer(onOpenTab: _setTab),
+        body: SafeArea(
+          top: false,
+          bottom: false,
+          child: _activeTab(),
+        ),
+        bottomNavigationBar: _buildNav(),
       ),
-      bottomNavigationBar: _buildNav(),
     );
   }
 
-  List<String> _tabLabels(AqxL10n t) => [
-        t.tabHome,
-        t.tabOracle,
-        t.tabMap,
-        t.tabVision,
-        t.tabLog,
-        t.tabProfile,
-        t.tabCommunity,
-      ];
+  static const _navIcons = [
+    Icons.home_outlined,
+    Icons.auto_awesome_outlined,
+    Icons.map_outlined,
+    Icons.center_focus_strong_outlined,
+    Icons.menu_book_outlined,
+    Icons.person_outline_rounded,
+  ];
 
   Widget _buildNav() {
-    final labels = _tabLabels(AqxL10n(Localizations.localeOf(context).languageCode));
+    final t = AqxL10n(Localizations.localeOf(context).languageCode);
+    final labels = [
+      t.tabHome,
+      t.tabOracle,
+      t.tabMap,
+      t.tabVision,
+      t.tabLog,
+      t.tabProfile,
+    ];
+
+    Widget navItem(int tabIndex, int labelIndex) {
+      final sel = _idx == tabIndex;
+      final c = sel ? kCyan : kInact;
+      return Expanded(
+        child: GestureDetector(
+          onTap: () {
+            _setTab(tabIndex);
+            unawaited(AnalyticsService.instance.track(
+              AnalyticsEvents.tabChange,
+              params: {'tab': labels[labelIndex]},
+            ));
+          },
+          behavior: HitTestBehavior.opaque,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(_navIcons[labelIndex], size: 20, color: c),
+              const SizedBox(height: 3),
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(labels[labelIndex], style: mono(8, c: c)),
+              ),
+              const SizedBox(height: 4),
+              Container(
+                width: 4,
+                height: 4,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: sel ? kCyan : Colors.transparent,
+                  boxShadow: sel
+                      ? [BoxShadow(color: kCyan.withValues(alpha: 0.8), blurRadius: 6)]
+                      : null,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     return Material(
       color: kNav,
       child: SafeArea(
@@ -149,50 +210,44 @@ class _AquanautixHomeState extends State<AquanautixHome> {
           ),
           padding: const EdgeInsets.fromLTRB(4, 8, 4, 8),
           child: Row(
-            children: List.generate(7, (i) {
-              final sel = _idx == i;
-              final c = sel ? kCyan : kInact;
-              return Expanded(
-                child: GestureDetector(
-                  onTap: () {
-                    final nextLabel = labels[i];
-                    _setTab(i);
-                    unawaited(AnalyticsService.instance.track(
-                      AnalyticsEvents.tabChange,
-                      params: {'tab': nextLabel},
-                    ));
-                  },
-                  behavior: HitTestBehavior.opaque,
-                  child: Column(mainAxisSize: MainAxisSize.min, children: [
-                    Icon(_icons[i], size: 20, color: c),
-                    const SizedBox(height: 3),
-                    SizedBox(
-                      width: double.infinity,
-                      child: FittedBox(
-                        fit: BoxFit.scaleDown,
-                        child: Text(
-                          labels[i],
-                          style: mono(8, c: c),
-                          maxLines: 1,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Container(
-                      width: 4,
-                      height: 4,
+            children: [
+              navItem(0, 0),
+              navItem(1, 1),
+              navItem(2, 2),
+              Expanded(
+                child: Transform.translate(
+                  offset: const Offset(0, -14),
+                  child: GestureDetector(
+                    onTap: () {
+                      _setTab(3);
+                      unawaited(AnalyticsService.instance.track(
+                        AnalyticsEvents.tabChange,
+                        params: {'tab': labels[3], 'source': 'fab_hook'},
+                      ));
+                    },
+                    child: Container(
+                      width: 52,
+                      height: 52,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: sel ? kCyan : Colors.transparent,
-                        boxShadow: sel
-                            ? [BoxShadow(color: kCyan.withValues(alpha: 0.8), blurRadius: 6)]
-                            : null,
+                        color: kCyan,
+                        boxShadow: [
+                          BoxShadow(
+                            color: kCyan.withValues(alpha: 0.55),
+                            blurRadius: 16,
+                            spreadRadius: 1,
+                          ),
+                        ],
                       ),
+                      child: const Icon(Icons.phishing_rounded, color: kBg, size: 26),
                     ),
-                  ]),
+                  ),
                 ),
-              );
-            }),
+              ),
+              navItem(3, 3),
+              navItem(4, 4),
+              navItem(5, 5),
+            ],
           ),
         ),
       ),

@@ -8,7 +8,10 @@ import '../../../../core/theme/app_text_styles.dart';
 import '../../../../screens/paywall.dart';
 
 class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
-  const HomeAppBar({super.key});
+  const HomeAppBar({super.key, this.onBack});
+
+  /// Quando não nulo, mostra seta de retroceder em vez do menu hamburger.
+  final VoidCallback? onBack;
 
   @override
   Size get preferredSize => const Size.fromHeight(kToolbarHeight);
@@ -18,12 +21,18 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
     return AppBar(
       backgroundColor: Colors.transparent,
       elevation: 0,
-      leading: Builder(
-        builder: (context) => IconButton(
-          icon: Icon(Icons.menu_rounded, color: AppColors.accent),
-          onPressed: () => Scaffold.of(context).openDrawer(),
-        ),
-      ),
+      leading: onBack != null
+          ? IconButton(
+              icon: Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.accent),
+              tooltip: 'Voltar',
+              onPressed: onBack,
+            )
+          : Builder(
+              builder: (ctx) => IconButton(
+                icon: Icon(Icons.menu_rounded, color: AppColors.accent),
+                onPressed: () => Scaffold.of(ctx).openDrawer(),
+              ),
+            ),
       title: Column(
         mainAxisSize: MainAxisSize.min,
         children: [

@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import '../../../core/location/gps_access.dart';
 import '../../../core/supabase_bootstrap.dart';
 import '../../../core/state/fishing_context_store.dart';
@@ -16,64 +18,76 @@ import '../domain/repositories/home_repository.dart';
 class HomeRepositoryImpl implements HomeRepository {
   final _meteo = OpenMeteoTidesRepository();
 
-  // ─── Spots em destaque (fotos reais em assets/marketing/spots/) ───────────
-  static const _featuredSpots = [
+  // ─── Spots em destaque (ordem mockup Início) ─────────────────────────────
+  static const _featuredSpotsBase = [
     FeaturedSpot(
-      id: '1',
-      name: 'Cabo Espichel',
-      imageUrl: 'assets/marketing/spots/cabo_da_roca.jpg',
-      quality: SpotQuality.excelente,
-      // Farol / plato do cabo (terra) — não no mar a leste.
-      lat: 38.4162,
-      lon: -9.2178,
-    ),
-    FeaturedSpot(
-      id: '2',
-      name: 'Peniche',
-      imageUrl: 'assets/marketing/spots/peniche.jpg',
-      quality: SpotQuality.muitoBom,
-      // Porto / doca de pesca — ~38.35°N (não 39.35).
-      lat: 38.3558,
-      lon: -9.3812,
-    ),
-    FeaturedSpot(
-      id: '3',
+      id: 'sesimbra',
       name: 'Sesimbra',
       imageUrl: 'assets/marketing/spots/sesimbra.jpg',
-      quality: SpotQuality.bom,
+      quality: SpotQuality.excelente,
       lat: 38.4443,
       lon: -9.1011,
+      species: ['Robalo', 'Corvina', 'Sargo'],
+      scorePercent: 85,
+      distanceKm: 12,
+      waveHeightM: 0.8,
+    ),
+    FeaturedSpot(
+      id: 'peniche',
+      name: 'Peniche',
+      imageUrl: 'assets/marketing/spots/peniche.jpg',
+      quality: SpotQuality.bom,
+      lat: 38.3558,
+      lon: -9.3812,
+      species: ['Robalo', 'Corvina', 'Lúcio'],
+      scorePercent: 72,
+      distanceKm: 48,
+      waveHeightM: 1.1,
+    ),
+    FeaturedSpot(
+      id: 'espichel',
+      name: 'Cabo Espichel',
+      imageUrl: 'assets/marketing/spots/cabo_da_roca.jpg',
+      quality: SpotQuality.razoavel,
+      lat: 38.4162,
+      lon: -9.2178,
+      species: ['Sargo', 'Dourada', 'Corvina'],
+      scorePercent: 64,
+      distanceKm: 25,
+      waveHeightM: 0.7,
     ),
   ];
 
-  // ─── Comunidade (fotos reais em assets/marketing/catches/) ────────────────
+  // ─── Comunidade (mockup Últimas Capturas) ────────────────────────────────
   static List<CommunityActivity> _communityActivities(DateTime now) => [
         CommunityActivity(
-          userId: 'brunopescas',
-          username: 'BrunoPescas',
-          avatarUrl:
-              'https://images.unsplash.com/photo-1568602471122-7832951cc4c5?w=96&q=80',
-          activityText: 'Apanhou uma Dourada de 2.4 kg em Sesimbra',
-          catchImageUrl: 'assets/marketing/catches/dourada.jpg',
-          timestamp: now.subtract(const Duration(hours: 2)),
-        ),
-        CommunityActivity(
-          userId: 'nuno_sesimbra',
-          username: 'Nuno_Sesimbra',
+          userId: 'joao_m',
+          username: 'João M.',
           avatarUrl:
               'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=96&q=80',
-          activityText: 'Robalo de 2.8 kg no surfcasting · Sesimbra',
+          activityText: 'Robalo 3.1 kg',
+          species: 'Robalo',
+          weightKg: 3.1,
+          lengthCm: 68,
+          location: 'Sesimbra',
           catchImageUrl: 'assets/marketing/catches/robalo.jpg',
-          timestamp: now.subtract(const Duration(hours: 5)),
+          timestamp: now.subtract(const Duration(hours: 2)),
+          likes: 32,
+          verified: true,
         ),
         CommunityActivity(
-          userId: 'miguel_peniche',
-          username: 'Miguel_Peniche',
+          userId: 'miguel_p',
+          username: 'Miguel P.',
           avatarUrl:
               'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=96&q=80',
-          activityText: 'Sargo de 1.6 kg na costa rochosa · Peniche',
+          activityText: 'Sargo 1.2 kg',
+          species: 'Sargo',
+          weightKg: 1.2,
+          lengthCm: 32,
+          location: 'Cacilhas',
           catchImageUrl: 'assets/marketing/catches/sargo.jpg',
-          timestamp: now.subtract(const Duration(hours: 9)),
+          timestamp: now.subtract(const Duration(hours: 4)),
+          likes: 18,
         ),
       ];
 
@@ -96,11 +110,12 @@ class HomeRepositoryImpl implements HomeRepository {
         tideRising: true,
         moonPhase: 'Crescente',
         moonIcon: '🌙',
-        solunarScore: OracleDataService.instance.lastBundle?.score ?? 50,
+        solunarScore: OracleDataService.instance.lastBundle?.score ?? 49,
       ),
       hourlyConditions: repo._fallbackHourly(now),
-      featuredSpots: _featuredSpots,
+      featuredSpots: _featuredSpotsBase,
       communityActivities: _communityActivities(now),
+      lastUpdated: now,
     );
   }
 
@@ -215,8 +230,9 @@ class HomeRepositoryImpl implements HomeRepository {
       userDisplayName: _getUserDisplayName(),
       weather: weather,
       hourlyConditions: hourly,
-      featuredSpots: _featuredSpots,
+      featuredSpots: _spotsWithDistance(lat, lon, waveHeightM: cur?.waveHeightM ?? 0.8),
       communityActivities: _communityActivities(now),
+      lastUpdated: now,
     );
   }
 
@@ -318,29 +334,43 @@ class HomeRepositoryImpl implements HomeRepository {
     return (moon + cloudScore - rainPenalty).round().clamp(0, 100);
   }
 
-  List<HourlyCondition> _withBestHour(List<HourlyCondition> items) {
-    if (items.isEmpty) return items;
-    var bestIdx = 0;
-    var bestScore = items.first.oracleScore;
-    for (var i = 1; i < items.length; i++) {
-      if (items[i].oracleScore > bestScore) {
-        bestScore = items[i].oracleScore;
-        bestIdx = i;
-      }
-    }
-    return [
-      for (var i = 0; i < items.length; i++)
-        HourlyCondition(
-          hour: items[i].hour,
-          oracleScore: items[i].oracleScore,
-          isBestHour: i == bestIdx,
-        ),
-    ];
+  List<FeaturedSpot> _spotsWithDistance(
+    double userLat,
+    double userLon, {
+    required double waveHeightM,
+  }) {
+    return _featuredSpotsBase.map((s) {
+      final km = _haversineKm(userLat, userLon, s.lat, s.lon);
+      return FeaturedSpot(
+        id: s.id,
+        name: s.name,
+        imageUrl: s.imageUrl,
+        quality: s.quality,
+        lat: s.lat,
+        lon: s.lon,
+        species: s.species,
+        scorePercent: s.scorePercent,
+        distanceKm: km > 1 ? km : s.distanceKm,
+        waveHeightM: waveHeightM,
+      );
+    }).toList();
+  }
+
+  double _haversineKm(double lat1, double lon1, double lat2, double lon2) {
+    const r = 6371.0;
+    final dLat = (lat2 - lat1) * math.pi / 180;
+    final dLon = (lon2 - lon1) * math.pi / 180;
+    final a = math.sin(dLat / 2) * math.sin(dLat / 2) +
+        math.cos(lat1 * math.pi / 180) *
+            math.cos(lat2 * math.pi / 180) *
+            math.sin(dLon / 2) *
+            math.sin(dLon / 2);
+    return r * 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a));
   }
 
   List<HourlyCondition> _mapHourly(
       List<ForecastWeatherHour> series, DateTime now) {
-    final upcoming = series.where((h) => h.time.isAfter(now)).take(5).toList();
+    final upcoming = series.where((h) => h.time.isAfter(now)).take(12).toList();
     if (upcoming.isEmpty) return [];
     final items = upcoming.map((h) {
       final hourStr = '${h.time.hour.toString().padLeft(2, '0')}:00';
@@ -349,7 +379,15 @@ class HomeRepositoryImpl implements HomeRepository {
         oracleScore: _hourlyOracleScore(h),
       );
     }).toList();
-    return _withBestHour(items);
+    final sorted = [...items]..sort((a, b) => b.displayScore.compareTo(a.displayScore));
+    return [
+      for (var i = 0; i < sorted.length && i < 6; i++)
+        HourlyCondition(
+          hour: sorted[i].hour,
+          oracleScore: sorted[i].oracleScore,
+          isBestHour: i == 0,
+        ),
+    ];
   }
 
   List<HourlyCondition> _fallbackHourly(DateTime now) {
@@ -367,7 +405,15 @@ class HomeRepositoryImpl implements HomeRepository {
         oracleScore: _hourlyOracleScore(fake),
       );
     });
-    return _withBestHour(items);
+    final sorted = [...items]..sort((a, b) => b.displayScore.compareTo(a.displayScore));
+    return [
+      for (var i = 0; i < sorted.length; i++)
+        HourlyCondition(
+          hour: sorted[i].hour,
+          oracleScore: sorted[i].oracleScore,
+          isBestHour: i == 0,
+        ),
+    ];
   }
 
   // ─── Helpers ──────────────────────────────────────────────────────────────
@@ -439,7 +485,7 @@ class HomeRepositoryImpl implements HomeRepository {
     if (code <= 55) return 'Chuvisco';
     if (code <= 67) return 'Chuva';
     if (code <= 77) return 'Neve';
-    if (code <= 82) return 'Aguaceiros';
+    if (code <= 82) return 'Aguaceiros leves';
     return 'Trovoada';
   }
 }

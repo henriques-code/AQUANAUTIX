@@ -22,6 +22,7 @@ class OracleDecisionCopy {
     required String windowHours,
     required int proScore,
     required bool loading,
+    String nextHour = '07:00',
   }) {
     if (loading) return es ? 'A calcular condiciones…' : 'A calcular condições…';
     final end = _windowEnd(windowHours);
@@ -32,8 +33,8 @@ class OracleDecisionCopy {
     }
     if (proScore > score + 4) {
       return es
-          ? 'Débil ahora — mejor mañana 07:15 (Score $proScore con PRO)'
-          : 'Fraco agora — melhor amanhã 07:15 (Score $proScore com PRO)';
+          ? 'Débil ahora — mejor mañana $nextHour (Score $proScore con PRO)'
+          : 'Fraco agora — melhor amanhã $nextHour (Score $proScore com PRO)';
     }
     if (windowHours.isNotEmpty && windowHours != '—') {
       return es
