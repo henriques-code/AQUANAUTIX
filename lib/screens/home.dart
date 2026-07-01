@@ -28,10 +28,23 @@ class _AquanautixHomeState extends State<AquanautixHome> {
   int _idx = 0;
   /// Um tab de cada vez (sem IndexedStack) — preserva estado após 1.ª visita.
   final Map<int, Widget> _tabCache = {};
+  /// Histórico de navegação entre tabs (máx. 20 entradas).
+  final List<int> _history = [];
+
+  bool get _canGoBack => _history.isNotEmpty;
 
   void _setTab(int i) {
+    if (i != _idx) _history.add(_idx);
+    if (_history.length > 20) _history.removeAt(0);
     setState(() => _idx = i);
     HomeTabIndex.notifier.value = i;
+  }
+
+  void _goBack() {
+    if (_history.isEmpty) return;
+    final prev = _history.removeLast();
+    setState(() => _idx = prev);
+    HomeTabIndex.notifier.value = prev;
   }
 
   @override
@@ -54,7 +67,11 @@ class _AquanautixHomeState extends State<AquanautixHome> {
   void _onExternalTabRequest() {
     final i = HomeTabIndex.notifier.value;
     if (!mounted || i == _idx) return;
-    setState(() => _idx = i);
+    setState(() {
+      _history.add(_idx);
+      if (_history.length > 20) _history.removeAt(0);
+      _idx = i;
+    });
   }
 
   Widget _createTab(int i) {
@@ -103,16 +120,22 @@ class _AquanautixHomeState extends State<AquanautixHome> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: kBg,
-      appBar: const HomeAppBar(),
-      drawer: HomeNavigationDrawer(onOpenTab: _setTab),
-      body: SafeArea(
-        top: false,
-        bottom: false,
-        child: _activeTab(),
+    return PopScope(
+      canPop: !_canGoBack,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop && _canGoBack) _goBack();
+      },
+      child: Scaffold(
+        backgroundColor: kBg,
+        appBar: HomeAppBar(onBack: _canGoBack ? _goBack : null),
+        drawer: HomeNavigationDrawer(onOpenTab: _setTab),
+        body: SafeArea(
+          top: false,
+          bottom: false,
+          child: _activeTab(),
+        ),
+        bottomNavigationBar: _buildNav(),
       ),
-      bottomNavigationBar: _buildNav(),
     );
   }
 
