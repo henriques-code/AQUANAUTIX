@@ -33,7 +33,7 @@ class _VisionScreenState extends State<VisionScreen>
   static const _kMaxFreeScans = 3;
 
   int _freeScansUsed = 0;
-  _ScanState _state = _ScanState.result;
+  _ScanState _state = _ScanState.idle;
   VisionScanResult? _scan;
   Uint8List? _previewBytes;
 
