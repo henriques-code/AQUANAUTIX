@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../monetization/subscription_tier_sync_service.dart';
 import '../services/revenue_cat_service.dart';
 
 enum SubscriptionPlan { free, pro, elite }
@@ -116,6 +117,7 @@ class SubscriptionStore {
       clearTrial: clearTrial,
     );
     await _persist();
+    SubscriptionTierSyncService.scheduleSync();
   }
 
   Future<void> setPlan(SubscriptionPlan plan) async {
