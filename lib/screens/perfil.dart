@@ -11,6 +11,7 @@ import '../core/services/analytics_service.dart';
 import '../core/state/fishing_context_store.dart';
 import '../core/state/subscription_store.dart';
 import '../core/l10n/aqx_l10n.dart';
+import '../core/legal/legal_document_sheet.dart';
 import '../core/location/gps_bootstrap.dart';
 
 // ══════════════════════════════════════════════════════════
@@ -313,6 +314,19 @@ class _PerfilScreenState extends State<PerfilScreen> {
             icon: Icons.map_outlined,
             accent: kCyan,
             destination: const MapaModuleScreen(),
+          ),
+          const SizedBox(height: 18),
+          Text(t.legalSectionTitle, style: mono(10, ls: 1.2)),
+          const SizedBox(height: 10),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            decoration: BoxDecoration(
+              color: kCard,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: kCyan.withValues(alpha: 0.16)),
+            ),
+            child: LegalLinksRow(t: t),
           ),
           if (isSupabaseAuthenticated) ...[
             const SizedBox(height: 10),
