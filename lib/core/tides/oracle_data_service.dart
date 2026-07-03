@@ -4,6 +4,7 @@ import '../location/gps_access.dart';
 import '../l10n/aqx_l10n.dart';
 import '../state/app_locale_store.dart';
 import '../state/fishing_context_store.dart';
+import '../state/fishing_mode_store.dart';
 import 'marine_bundle.dart';
 import 'moon_phase.dart';
 import 'open_meteo_tides_repository.dart';
@@ -13,6 +14,7 @@ import 'oracle_day_scorer.dart';
 import 'region_presets.dart';
 import 'river_discharge_repository.dart';
 import 'species_tide_hints.dart';
+import 'spot_oracle_snapshot.dart';
 import 'tide_analysis.dart';
 
 /// Não há coordenadas do utilizador — o índice exige GPS para a zona real de pesca.
@@ -166,6 +168,7 @@ class OracleDataService {
   RiverOracleBundle? _riverCache;
   String? _riverCacheKey;
   DateTime? _riverCacheTime;
+  final Map<String, ({SpotOracleSnapshot snapshot, DateTime time})> _spotCache = {};
 
   static const _cacheTtl = Duration(minutes: 30);
 
@@ -184,6 +187,78 @@ class OracleDataService {
     _riverCache = null;
     _riverCacheKey = null;
     _riverCacheTime = null;
+    _spotCache.clear();
+  }
+
+  /// Oráculo compacto para coordenadas de spot — sem exigir GPS.
+  ///
+  /// Usado em badges de pins e sheets de detalhe. Cache TTL 30 min por
+  /// `(lat, lon, modo, idioma)` arredondado a 3 casas decimais.
+  Future<SpotOracleSnapshot> fetchForSpot({
+    required double lat,
+    required double lon,
+    String? species,
+    String? country,
+    bool? isRiver,
+  }) async {
+    final lang = AppLocaleStore.instance.locale.languageCode;
+    final river = isRiver ?? FishingModeStore.instance.isRio.value;
+    final key = SpotOracleSnapshot.cacheKey(
+      lat: lat,
+      lon: lon,
+      lang: lang,
+      isRiver: river,
+    );
+    final now = DateTime.now();
+    final cached = _spotCache[key];
+    if (cached != null && now.difference(cached.time) < _cacheTtl) {
+      return cached.snapshot;
+    }
+
+    final ctxCountry = (country ?? FishingContextStore.instance.value.value.country)
+        .toUpperCase();
+    final speciesKey =
+        (species ?? FishingContextStore.instance.value.value.species).toUpperCase();
+    final tz = TideMapPreset.timezoneForCountry(ctxCountry);
+    final t = AqxL10n(lang);
+
+    final SpotOracleSnapshot snapshot;
+    if (river) {
+      final series = await _repo.fetchForecastWeatherSeries(
+        latitude: lat,
+        longitude: lon,
+        timezone: tz,
+        pastDays: 1,
+        forecastDays: 2,
+      );
+      snapshot = buildRiverSpotOracleSnapshot(
+        lat: lat,
+        lon: lon,
+        series: series,
+        species: speciesKey,
+        t: t,
+        fetchedAt: now,
+      );
+    } else {
+      final series = await _repo.fetchSeries(
+        latitude: lat,
+        longitude: lon,
+        timezone: tz,
+        pastDays: 1,
+        forecastDays: 2,
+      );
+      snapshot = buildMarineSpotOracleSnapshot(
+        lat: lat,
+        lon: lon,
+        series: series,
+        species: speciesKey,
+        t: t,
+        fetchedAt: now,
+      );
+    }
+
+    _spotCache[key] = (snapshot: snapshot, time: now);
+    return snapshot;
   }
 
   /// Posição actual obrigatória — sem GPS não há índice fiável para a zona de pesca.
@@ -740,4 +815,242 @@ class OracleDataService {
   }
 
   String _pad(int n) => n.toString().padLeft(2, '0');
+}
+
+/// Constrói snapshot COSTA a partir de série Open‑Meteo (testável sem rede).
+SpotOracleSnapshot buildMarineSpotOracleSnapshot({
+  required double lat,
+  required double lon,
+  required List<MarineHourPoint> series,
+  required String species,
+  required AqxL10n t,
+  required DateTime fetchedAt,
+}) {
+  final today = dateOnly(fetchedAt);
+  final dayScores = buildDayScoreMap(series);
+  final todayHours = hoursForDay(series, today);
+  final todayScore = dayScores[today] ?? 50;
+
+  MarineHourPoint? closest;
+  if (todayHours.isNotEmpty) {
+    closest = todayHours.reduce((a, b) =>
+        a.time.difference(fetchedAt).abs() < b.time.difference(fetchedAt).abs()
+            ? a
+            : b);
+  }
+
+  final extrema = detectTideExtrema(todayHours);
+  var phaseLabel = t.tideActive;
+  if (extrema.length >= 2) {
+    final phase = tidePhaseBetween(extrema[0], extrema[1]);
+    phaseLabel = phase != null
+        ? t.tideWithPhase(t.mapTidePhaseWord(phase))
+        : t.slackWater;
+  } else if (extrema.length == 1) {
+    phaseLabel = extrema[0].isHigh ? t.highTide : t.lowTide;
+  }
+
+  final moonPhase = moonPhase01(fetchedAt);
+  final moonLabel = t.moonLong(moonPhase);
+  final moonPhaseTile = t.moonTileShort(moonPhase);
+  final moonPct = (moonFishingFactor(fetchedAt) * 100).round().clamp(0, 100);
+  final pressLabel = _pressureLabelStatic(todayHours, t);
+
+  String tideTrendPt = '';
+  String tempTrendPt = '';
+  final sortedToday = [...todayHours]..sort((a, b) => a.time.compareTo(b.time));
+  if (closest != null && sortedToday.length >= 2) {
+    var bestI = -1;
+    var bestAbs = 999999999;
+    for (var i = 0; i < sortedToday.length; i++) {
+      final absMin =
+          sortedToday[i].time.difference(closest.time).inMinutes.abs();
+      if (absMin < bestAbs) {
+        bestAbs = absMin;
+        bestI = i;
+      }
+    }
+    if (bestI >= 0 && bestI < sortedToday.length - 1) {
+      tideTrendPt = _tideTrendLabelStatic(
+        sortedToday[bestI].seaLevelMslM,
+        sortedToday[bestI + 1].seaLevelMslM,
+        t,
+      );
+      tempTrendPt = _tempTrendLabelStatic(
+        sortedToday[bestI].temperatureC,
+        sortedToday[bestI + 1].temperatureC,
+        t,
+      );
+    }
+  }
+
+  final bestHour = bestHourForSpecies(todayHours, species);
+  final windowHours = _windowFromHourStatic(bestHour);
+  final pressureTrendPt = _pressureTrendSubtitleStatic(todayHours, t);
+
+  return SpotOracleSnapshot(
+    lat: lat,
+    lon: lon,
+    score: todayScore,
+    statusLabel: t.scoreLabel(todayScore),
+    statusDesc: '$phaseLabel + $moonLabel\n+ $pressLabel',
+    windowHours: windowHours,
+    moonPct: moonPct,
+    tideHeightM: closest?.seaLevelMslM,
+    tempC: closest?.temperatureC,
+    pressureHpa: closest?.pressureHpa,
+    tideTrendPt: tideTrendPt,
+    pressureTrendPt: pressureTrendPt,
+    moonPhaseShortPt: moonPhaseTile,
+    tempTrendPt: tempTrendPt,
+    fetchedAt: fetchedAt,
+    isRiver: false,
+  );
+}
+
+/// Constrói snapshot RIO a partir de série meteorológica (testável sem rede).
+SpotOracleSnapshot buildRiverSpotOracleSnapshot({
+  required double lat,
+  required double lon,
+  required List<ForecastWeatherHour> series,
+  required String species,
+  required AqxL10n t,
+  required DateTime fetchedAt,
+}) {
+  final today = dateOnly(fetchedAt);
+  final dayScores = buildRiverDayScoreMap(series);
+  final todayHours = forecastHoursForDay(series, today);
+  final todayScore = dayScores[today] ?? 52;
+
+  ForecastWeatherHour? closest;
+  if (todayHours.isNotEmpty) {
+    closest = todayHours.reduce((a, b) =>
+        a.time.difference(fetchedAt).abs() < b.time.difference(fetchedAt).abs()
+            ? a
+            : b);
+  }
+
+  final moonPhase = moonPhase01(fetchedAt);
+  final moonLabel = t.moonLong(moonPhase);
+  final moonPhaseTile = t.moonTileShort(moonPhase);
+  final moonPct = (moonFishingFactor(fetchedAt) * 100).round().clamp(0, 100);
+  final skyShort = _skyShortLabelStatic(todayHours, t);
+  final pressLabel = _pressureLabelForecastStatic(todayHours, t);
+
+  String tempTrendPt = '';
+  final sortedToday = [...todayHours]..sort((a, b) => a.time.compareTo(b.time));
+  if (closest != null && sortedToday.length >= 2) {
+    var bestI = -1;
+    var bestAbs = 999999999;
+    for (var i = 0; i < sortedToday.length; i++) {
+      final absMin =
+          sortedToday[i].time.difference(closest.time).inMinutes.abs();
+      if (absMin < bestAbs) {
+        bestAbs = absMin;
+        bestI = i;
+      }
+    }
+    if (bestI >= 0 && bestI < sortedToday.length - 1) {
+      tempTrendPt = _tempTrendLabelStatic(
+        sortedToday[bestI].temperatureC,
+        sortedToday[bestI + 1].temperatureC,
+        t,
+      );
+    }
+  }
+
+  final bestHour = bestHourForRiver(todayHours);
+  final windowHours = _windowFromHourStatic(bestHour);
+
+  return SpotOracleSnapshot(
+    lat: lat,
+    lon: lon,
+    score: todayScore,
+    statusLabel: t.scoreLabel(todayScore),
+    statusDesc: '$skyShort + $moonLabel\n+ $pressLabel',
+    windowHours: windowHours,
+    moonPct: moonPct,
+    tempC: closest?.temperatureC,
+    pressureHpa: closest?.pressureHpa,
+    moonPhaseShortPt: moonPhaseTile,
+    tempTrendPt: tempTrendPt,
+    fetchedAt: fetchedAt,
+    isRiver: true,
+  );
+}
+
+String _windowFromHourStatic(int? h) {
+  if (h == null) return '—';
+  final endH = (h + 2) % 24;
+  return '${h.toString().padLeft(2, '0')}:00 -> ${endH.toString().padLeft(2, '0')}:30';
+}
+
+String _tideTrendLabelStatic(double y0, double y1, AqxL10n t) {
+  final dy = y1 - y0;
+  if (dy > 0.02) return t.tideRising;
+  if (dy < -0.02) return t.tideFalling;
+  return t.tideFlat;
+}
+
+String _tempTrendLabelStatic(double? t0, double? t1, AqxL10n t) {
+  if (t0 == null || t1 == null) return '';
+  final dt = t1 - t0;
+  if (dt > 0.06) return t.tempWarming;
+  if (dt < -0.06) return t.tempCooling;
+  return t.tempStable;
+}
+
+String _pressureTrendSubtitleStatic(List<MarineHourPoint> hours, AqxL10n t) {
+  final pressures =
+      hours.map((e) => e.pressureHpa).whereType<double>().toList();
+  if (pressures.length < 4) return '';
+  final mean = pressures.reduce((a, b) => a + b) / pressures.length;
+  if (mean.abs() <= 1e-6) return '';
+  var varSum = 0.0;
+  for (final p in pressures) {
+    varSum += (p - mean) * (p - mean);
+  }
+  final std = math.sqrt(varSum / pressures.length);
+  final cv = (std / mean).abs();
+  return cv < 0.006 ? t.pressureStableShort : t.pressureVariableShort;
+}
+
+String _pressureLabelStatic(List<MarineHourPoint> hours, AqxL10n t) {
+  final pressures =
+      hours.map((e) => e.pressureHpa).whereType<double>().toList();
+  if (pressures.length < 4) return t.pressureDash;
+  final mean = pressures.reduce((a, b) => a + b) / pressures.length;
+  if (mean.abs() <= 1e-6) return t.pressureDash;
+  var varSum = 0.0;
+  for (final p in pressures) {
+    varSum += (p - mean) * (p - mean);
+  }
+  final std = math.sqrt(varSum / pressures.length);
+  final cv = (std / mean).abs();
+  return cv < 0.006 ? t.pressureStable : t.pressureVariable;
+}
+
+String _skyShortLabelStatic(List<ForecastWeatherHour> dayHours, AqxL10n t) {
+  final clouds =
+      dayHours.map((e) => e.cloudCoverPct).whereType<double>().toList();
+  if (clouds.isEmpty) return t.weatherVariable;
+  final avg = clouds.reduce((a, b) => a + b) / clouds.length;
+  if (avg < 38) return t.skyClear;
+  if (avg < 72) return t.skyMedium;
+  return t.skyOvercast;
+}
+
+String _pressureLabelForecastStatic(List<ForecastWeatherHour> hours, AqxL10n t) {
+  final pressures =
+      hours.map((e) => e.pressureHpa).whereType<double>().toList();
+  if (pressures.length < 4) return t.pressureDash;
+  final mean = pressures.reduce((a, b) => a + b) / pressures.length;
+  if (mean.abs() <= 1e-6) return t.pressureDash;
+  var varSum = 0.0;
+  for (final p in pressures) {
+    varSum += (p - mean) * (p - mean);
+  }
+  final std = math.sqrt(varSum / pressures.length);
+  final cv = (std / mean).abs();
+  return cv < 0.006 ? t.pressureStable : t.pressureVariable;
 }

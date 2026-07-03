@@ -77,19 +77,17 @@ class _MapaScreenState extends State<MapaScreen> {
     'Enguia',
   ];
 
-  /// Amarelo — spots FREE partilhados (comunidade / curados).
-  static const _pinCommunity = Color(0xFFFFD600);
-  /// Azulão — spots PRO (curadoria).
-  static const _pinProBlue = Color(0xFF007BFF);
-
   static const _prefsKeySavedSpotPhotos = 'map_saved_spot_pins_v1';
   static const _prefsKeySeamarks = 'map_show_seamarks_v1';
   static const _prefsKeyBathymetry = 'mapa_bathymetry';
 
-  static const _gebcoWmsUrlTemplate =
-      'https://wms.gebco.net/mapserv?bbox={bbox-epsg-3857}&service=WMS'
-      '&request=GetMap&srs=EPSG:3857&transparent=true&width=256&height=256'
-      '&layers=GEBCO_LATEST&format=image/png&version=1.1.1';
+  static final _gebcoWmsOptions = WMSTileLayerOptions(
+    baseUrl: 'https://wms.gebco.net/mapserv?',
+    layers: ['GEBCO_LATEST'],
+    format: 'image/png',
+    transparent: true,
+    version: '1.1.1',
+  );
 
   bool _rioMode = false;
   bool _mostrarLojas = false;
@@ -722,6 +720,7 @@ class _MapaScreenState extends State<MapaScreen> {
                       elite: s.elite,
                       species: s.primarySpecies,
                       photoUrl: s.photo,
+                      spot: s,
                       onTap: () => _setContext(
                         s.regionKey,
                         s.primarySpecies,
@@ -1234,7 +1233,7 @@ class _MapaScreenState extends State<MapaScreen> {
           Opacity(
             opacity: 0.55,
             child: TileLayer(
-              urlTemplate: _gebcoWmsUrlTemplate,
+              wmsOptions: _gebcoWmsOptions,
               tileSize: 256,
               userAgentPackageName: 'com.example.aquanautix',
             ),
@@ -1340,18 +1339,20 @@ class _MapaScreenState extends State<MapaScreen> {
     ];
   }
 
-  /// Comunidade curada: FREE amarelo, PRO azulão, ELITE âmbar.
+  /// Spots curados — gota unificada, cor por tier, oráculo no badge (mesmo bloqueado).
   List<Marker> _buildCommunitySpotMarkers() {
     return _filteredSpots.map((s) {
       final locked = _isSpotLocked(tier: s.tierLabel, elite: s.elite);
-      final Color pinColor = s.elite
-          ? kAmber
-          : (s.tierLabel == 'PRO' ? _pinProBlue : _pinCommunity);
       return Marker(
         point: LatLng(s.lat, s.lon),
         width: 40,
         height: 47,
-        child: GestureDetector(
+        child: buildSpotMapPin(
+          tier: s.tierLabel,
+          elite: s.elite,
+          oracleScore: s.score,
+          photoUrl: s.photo,
+          locked: locked,
           onTap: () {
             if (!locked) {
               _setContext(s.regionKey, s.primarySpecies, spotName: s.name);
@@ -1367,58 +1368,9 @@ class _MapaScreenState extends State<MapaScreen> {
               photoUrl: s.photo,
               species: s.primarySpecies,
               onTap: locked ? null : widget.onSpotOpensOracle,
+              spot: s,
             );
           },
-          child: Stack(
-            clipBehavior: Clip.none,
-            children: [
-              // Pin desfocado + opaco quando bloqueado (P4)
-              if (locked)
-                ImageFiltered(
-                  imageFilter: ImageFilter.blur(sigmaX: 2.0, sigmaY: 2.0),
-                  child: Opacity(
-                    opacity: 0.55,
-                    child: CustomPaint(
-                      size: const Size(40, 47),
-                      painter: s.elite
-                          ? const AqxPinElite()
-                          : const AqxPinPro(),
-                    ),
-                  ),
-                )
-              else
-                CustomPaint(
-                  size: const Size(40, 47),
-                  painter: s.elite
-                      ? const AqxPinElite()
-                      : (s.tierLabel == 'PRO'
-                          ? const AqxPinPro()
-                          : const AqxPinFree()),
-                ),
-              // Cadeado — sempre nítido em cima do pin (P4)
-              if (locked)
-                Positioned(
-                  right: -2,
-                  top: -2,
-                  child: Container(
-                    width: 16,
-                    height: 16,
-                    decoration: BoxDecoration(
-                      color: kCard,
-                      shape: BoxShape.circle,
-                      border: Border.all(color: pinColor.withValues(alpha: 0.8)),
-                      boxShadow: [
-                        BoxShadow(
-                          color: pinColor.withValues(alpha: 0.35),
-                          blurRadius: 4,
-                        ),
-                      ],
-                    ),
-                    child: Icon(Icons.lock_rounded, size: 10, color: pinColor),
-                  ),
-                ),
-            ],
-          ),
         ),
       );
     }).toList();
@@ -1436,11 +1388,16 @@ class _MapaScreenState extends State<MapaScreen> {
             point: LatLng(s.lat, s.lon),
             width: 40,
             height: 47,
-            child: GestureDetector(
-              onTap: () => _showSavedFishermanPinDetail(name: s.name, photo: photoBytes, lat: s.lat, lon: s.lon),
-              child: const CustomPaint(
-                size: Size(40, 47),
-                painter: AqxPinSaved(),
+            child: AqxUnifiedPin(
+              kind: AqxPinKind.saved,
+              oracleScore: s.score,
+              image: MemoryImage(photoBytes),
+              onTap: () => _showSavedFishermanPinDetail(
+                name: s.name,
+                photo: photoBytes,
+                lat: s.lat,
+                lon: s.lon,
+                oracleScore: s.score,
               ),
             ),
           ),
@@ -1456,6 +1413,7 @@ class _MapaScreenState extends State<MapaScreen> {
     required Uint8List photo,
     required double lat,
     required double lon,
+    int? oracleScore,
   }) {
     final t = aqxL10nOf(context);
     showModalBottomSheet<void>(
@@ -1472,7 +1430,33 @@ class _MapaScreenState extends State<MapaScreen> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(name, style: orb(16, fw: FontWeight.w800)),
+              Row(
+                children: [
+                  Expanded(child: Text(name, style: orb(16, fw: FontWeight.w800))),
+                  if (oracleScore != null) ...[
+                    CustomPaint(
+                      size: const Size(44, 44),
+                      painter: _ScoreRingPainter(oracleScore),
+                      child: SizedBox(
+                        width: 44,
+                        height: 44,
+                        child: Center(
+                          child: Text(
+                            '$oracleScore',
+                            style: orb(
+                              14,
+                              fw: FontWeight.w900,
+                              c: oracleScore >= 75
+                                  ? kGreen
+                                  : (oracleScore >= 50 ? kAmber : const Color(0xFFFF4444)),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
               const SizedBox(height: 8),
               ClipRRect(
                 borderRadius: BorderRadius.circular(10),
@@ -1499,12 +1483,9 @@ class _MapaScreenState extends State<MapaScreen> {
         point: LatLng(shop.lat, shop.lon),
         width: 40,
         height: 47,
-        child: GestureDetector(
+        child: AqxUnifiedPin(
+          kind: AqxPinKind.baitShop,
           onTap: () => _showBaitShopPinDetail(shop),
-          child: const CustomPaint(
-            size: Size(40, 47),
-            painter: AqxPinBait(),
-          ),
         ),
       );
     }).toList();
@@ -1697,13 +1678,13 @@ class _MapaScreenState extends State<MapaScreen> {
       (lat: 38.55, lon: -9.35, label: 'COMUNIDADE TEST', kind: 5),
     ];
 
-    CustomPainter painterFor(int kind) => switch (kind) {
-      1 => const AqxPinPro(),
-      2 => const AqxPinElite(),
-      3 => const AqxPinSaved(),
-      4 => const AqxPinBait(),
-      5 => const AqxPinCommunity(),
-      _ => const AqxPinFree(),
+    AqxPinKind kindFor(int kind) => switch (kind) {
+      1 => AqxPinKind.pro,
+      2 => AqxPinKind.elite,
+      3 => AqxPinKind.saved,
+      4 => AqxPinKind.baitShop,
+      5 => AqxPinKind.community,
+      _ => AqxPinKind.free,
     };
 
     return pins.map((p) => Marker(
@@ -1712,7 +1693,12 @@ class _MapaScreenState extends State<MapaScreen> {
       height: 47,
       child: Tooltip(
         message: p.label,
-        child: CustomPaint(size: const Size(40, 47), painter: painterFor(p.kind)),
+        child: AqxUnifiedPin(
+          kind: kindFor(p.kind),
+          oracleScore: p.kind <= 2 ? 72 : (p.kind == 0 ? 58 : null),
+          locked: p.kind == 1 || p.kind == 2,
+          isLive: p.kind == 5,
+        ),
       ),
     )).toList();
   }
@@ -1816,6 +1802,7 @@ class _MapaScreenState extends State<MapaScreen> {
     required String photoUrl,
     String species = 'ROBALO',
     VoidCallback? onTap,
+    FishingSpot? spot,
   }) {
     final t = aqxL10nOf(ctx);
     final scoreInt = int.tryParse(score) ?? 0;
@@ -1833,7 +1820,7 @@ class _MapaScreenState extends State<MapaScreen> {
         ? bundle!.tideTrendPt
         : (t.es ? 'A subir ↑' : 'A subir ↑');
 
-    // Isco + técnica por espécie
+    // Isco + técnica: preferir dados reais do spot, fallback para mapa por espécie
     final iscoMap = <String, (String, String)>{
       'ROBALO':   ('Borracha shad 12cm', 'Spinning 9–12ft'),
       'DOURADA':  ('Minhoca / amêijoa',  'Surf 3.9–4.2m'),
@@ -1844,7 +1831,13 @@ class _MapaScreenState extends State<MapaScreen> {
       'BARBO':    ('Milho / minhoca',    'Fundo rio'),
       'ACHIGÃ':   ('Shad / popper',      'Bait 6–8ft'),
     };
-    final isco = iscoMap[species] ?? ('Isco natural', 'Adaptado ao local');
+    final fallback = iscoMap[species] ?? ('Isco natural', 'Adaptado ao local');
+    final baitStr = spot?.bestBait.isNotEmpty == true
+        ? spot!.bestBait.join(' · ')
+        : fallback.$1;
+    final techStr = spot?.technique ?? fallback.$2;
+    final rodStr  = spot?.rodType;
+    final isco = (baitStr, techStr);
 
     // Capturas recentes placeholder (Ghost Mode)
     const ghostCaptures = [
@@ -2005,9 +1998,9 @@ class _MapaScreenState extends State<MapaScreen> {
                       child: bloqueado
                           ? ImageFiltered(
                               imageFilter: ImageFilter.blur(sigmaX: 4, sigmaY: 4),
-                              child: _iscoContent(isco, t, accentColor),
+                              child                          : _iscoContent(isco, t, accentColor, rodType: rodStr),
                             )
-                          : _iscoContent(isco, t, accentColor),
+                          : _iscoContent(isco, t, accentColor, rodType: rodStr),
                     ),
                     if (bloqueado)
                       Positioned.fill(child: Center(
@@ -2023,6 +2016,69 @@ class _MapaScreenState extends State<MapaScreen> {
                       )),
                   ]),
                 ),
+
+                // ── Dados reais do spot ───────────────────────
+                if (spot != null) ...[
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
+                    child: Text(t.es ? 'DATOS DEL SPOT' : 'DADOS DO SPOT',
+                        style: mono(10, ls: 1.2)),
+                  ),
+                  const SizedBox(height: 8),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Stack(children: [
+                      // Conteúdo — desfocado quando bloqueado (P4 coerente)
+                      ImageFiltered(
+                        imageFilter: bloqueado
+                            ? ImageFilter.blur(sigmaX: 4, sigmaY: 4)
+                            : ImageFilter.blur(sigmaX: 0, sigmaY: 0),
+                        child: Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: [
+                            if (spot.depthMin != null && spot.depthMax != null)
+                              _infoChip(
+                                '📏',
+                                '${spot.depthMin!.toInt()}–${spot.depthMax!.toInt()}m',
+                                t.es ? 'Profund.' : 'Profund.',
+                              ),
+                            if (spot.bottomType != null)
+                              _infoChip('🪨', spot.bottomType!, t.es ? 'Fondo' : 'Fundo'),
+                            if (rodStr != null)
+                              _infoChip('🎣', rodStr, t.es ? 'Caña' : 'Cana'),
+                            _infoChip(
+                              spot.carAccess ? '🚗' : '🥾',
+                              spot.carAccess
+                                  ? (t.es ? 'Coche' : 'Carro')
+                                  : (t.es ? 'A pie' : 'A pé'),
+                              t.es ? 'Acceso' : 'Acesso',
+                            ),
+                            _infoChip(
+                              '⭐',
+                              '${spot.difficulty}/5',
+                              t.es ? 'Dificult.' : 'Dificul.',
+                            ),
+                            if (spot.bestSeason.isNotEmpty)
+                              _infoChip(
+                                '📅',
+                                spot.bestSeason.take(2).join(' · '),
+                                t.es ? 'Temporada' : 'Época',
+                              ),
+                          ],
+                        ),
+                      ),
+                      // Overlay de cadeado quando bloqueado
+                      if (bloqueado)
+                        Positioned.fill(
+                          child: Center(
+                            child: Icon(Icons.lock_rounded,
+                                color: accentColor.withValues(alpha: 0.7), size: 22),
+                          ),
+                        ),
+                    ]),
+                  ),
+                ],
 
                 // ── Actividade do peixe ───────────────────────
                 Padding(
@@ -2155,7 +2211,7 @@ class _MapaScreenState extends State<MapaScreen> {
   }
 
   Widget _iscoContent(
-      (String, String) isco, AqxL10n t, Color accentColor) {
+      (String, String) isco, AqxL10n t, Color accentColor, {String? rodType}) {
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       Text('🎣 ${t.es ? "ISCO + TÉCNICA" : "ISCO + TÉCNICA"}',
           style: mono(10, ls: 1.2, c: accentColor)),
@@ -2163,7 +2219,7 @@ class _MapaScreenState extends State<MapaScreen> {
       Row(children: [
         const Icon(Icons.anchor_rounded, size: 14, color: kHint),
         const SizedBox(width: 6),
-        Text(isco.$1, style: ibm(13, fw: FontWeight.w600)),
+        Expanded(child: Text(isco.$1, style: ibm(13, fw: FontWeight.w600))),
       ]),
       const SizedBox(height: 4),
       Row(children: [
@@ -2171,8 +2227,31 @@ class _MapaScreenState extends State<MapaScreen> {
         const SizedBox(width: 6),
         Text(isco.$2, style: ibm(12, c: kHint)),
       ]),
+      if (rodType != null) ...[
+        const SizedBox(height: 4),
+        Row(children: [
+          const Icon(Icons.linear_scale_rounded, size: 14, color: kHint),
+          const SizedBox(width: 6),
+          Text(rodType, style: ibm(12, c: kHint)),
+        ]),
+      ],
     ]);
   }
+
+  Widget _infoChip(String icon, String val, String lbl) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+    decoration: BoxDecoration(
+      color: kBg,
+      borderRadius: BorderRadius.circular(8),
+      border: Border.all(color: kCyan.withValues(alpha: 0.12)),
+    ),
+    child: Column(mainAxisSize: MainAxisSize.min, children: [
+      Text(icon, style: const TextStyle(fontSize: 13)),
+      const SizedBox(height: 2),
+      Text(val, style: ibm(10, fw: FontWeight.w600)),
+      Text(lbl, style: mono(7, c: kHint)),
+    ]),
+  );
 
   Widget _condCard(String icon, String val, String lbl) => Expanded(
     child: Container(
@@ -2246,6 +2325,7 @@ class _MapaScreenState extends State<MapaScreen> {
     bool elite = false,
     String species = 'ROBALO',
     String photoUrl = 'assets/marketing/catches/robalo.jpg',
+    FishingSpot? spot,
     VoidCallback? onTap,
   }) {
     final t = aqxL10nOf(context);
@@ -2344,6 +2424,7 @@ class _MapaScreenState extends State<MapaScreen> {
         elite: elite,
         species: species,
         photoUrl: photoUrl,
+        spot: spot,
         onTap: onTap,
       ),
       child: row,

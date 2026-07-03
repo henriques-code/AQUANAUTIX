@@ -9,6 +9,7 @@ import 'package:video_player/video_player.dart';
 import '_shared.dart';
 import '../core/auth/login_session_store.dart';
 import '../core/auth/password_recovery_service.dart';
+import '../core/legal/legal_document_sheet.dart';
 import '../core/l10n/aqx_l10n.dart';
 import '../core/state/app_locale_store.dart';
 import '../core/supabase_bootstrap.dart';
@@ -379,6 +380,14 @@ class _LoginModuleScreenState extends State<LoginModuleScreen> {
                         ),
                       ),
                     ),
+                  ),
+                  const SizedBox(height: 20),
+                  LegalLinksRow(t: t),
+                  const SizedBox(height: 8),
+                  Text(
+                    '© AQUANAUTIX',
+                    style: ibm(10, c: _hint.withValues(alpha: 0.5)),
+                    textAlign: TextAlign.center,
                   ),
                 ],
               ),

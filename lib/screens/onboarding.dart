@@ -383,12 +383,12 @@ class _Slide1Pins extends StatelessWidget {
   final VoidCallback onNext;
 
   static const _pinData = [
-    (painter: AqxPinFree(), label: 'FREE', sub: 'Spots abertos', color: aqxPinCyan),
-    (painter: AqxPinPro(), label: 'PRO', sub: 'Spots curados', color: aqxPinBlue),
-    (painter: AqxPinElite(), label: 'ELITE', sub: 'Spots secretos', color: aqxPinAmber),
-    (painter: AqxPinSaved(), label: 'SAVED', sub: 'Os teus spots', color: aqxPinRed),
-    (painter: AqxPinBait(), label: 'LOJA', sub: 'Iscos perto', color: aqxPinGreen),
-    (painter: AqxPinCommunity(), label: 'COMUNIDADE', sub: 'Ghost Mode · anónimo', color: aqxPinCyan),
+    (kind: AqxPinKind.free, label: 'FREE', sub: 'Spots abertos', color: aqxPinCyan, score: 58, locked: false, live: false),
+    (kind: AqxPinKind.pro, label: 'PRO', sub: 'Spots curados', color: aqxPinBlue, score: 72, locked: true, live: false),
+    (kind: AqxPinKind.elite, label: 'ELITE', sub: 'Spots secretos', color: aqxPinAmber, score: 88, locked: true, live: false),
+    (kind: AqxPinKind.saved, label: 'SAVED', sub: 'Os teus spots', color: aqxPinRed, score: null, locked: false, live: false),
+    (kind: AqxPinKind.baitShop, label: 'LOJA', sub: 'Iscos perto', color: aqxPinGreen, score: null, locked: false, live: false),
+    (kind: AqxPinKind.community, label: 'COMUNIDADE', sub: 'Ghost Mode · anónimo', color: aqxPinGold, score: null, locked: false, live: true),
   ];
 
   @override
@@ -461,14 +461,28 @@ class _Slide1Pins extends StatelessWidget {
 
 class _PinWithLabel extends StatelessWidget {
   const _PinWithLabel({required this.data, required this.delay});
-  final ({CustomPainter painter, String label, String sub, Color color}) data;
+  final ({
+    AqxPinKind kind,
+    String label,
+    String sub,
+    Color color,
+    int? score,
+    bool locked,
+    bool live,
+  }) data;
   final int delay;
 
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
-        CustomPaint(size: const Size(80, 95), painter: data.painter)
+        AqxUnifiedPin(
+          kind: data.kind,
+          oracleScore: data.score,
+          locked: data.locked,
+          isLive: data.live,
+          size: const Size(80, 95),
+        )
             .animate(delay: Duration(milliseconds: delay))
             .slideY(begin: -3, end: 0, duration: 700.ms, curve: Curves.elasticOut)
             .fadeIn(duration: 300.ms),
@@ -1090,7 +1104,7 @@ class _CtaPlanCard extends StatelessWidget {
   }
 }
 
-// Pins: AqxPinFree/Pro/Elite/Saved/Bait/Community → aquanautix_pins.dart
+// Pins: AqxUnifiedPin → aquanautix_pins.dart
 
 
 // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
