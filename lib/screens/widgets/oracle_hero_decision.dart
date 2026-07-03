@@ -596,7 +596,7 @@ class OracleMockupCtas extends StatelessWidget {
                   child: _ProChipButton(
                     label: alertProLabel,
                     icon: Icons.notifications_none_rounded,
-                    enabled: false,
+                    enabled: true,
                     onTap: onAlertPro!,
                   ),
                 ),

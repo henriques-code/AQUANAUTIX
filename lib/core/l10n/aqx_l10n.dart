@@ -431,7 +431,36 @@ class AqxL10n {
   // ── Home / Oráculo UI ───────────────────────────────────
   String get tabOracle => 'ORÁCULO';
   String get tabMap => 'MAPA';
-  String get tabVision => es ? 'VISIÓN' : 'VISION';
+  String get tabVision => es ? 'VISIÓN' : 'VISÃO';
+
+  String get homeSectionActivity =>
+      es ? 'ACTIVIDAD PISCATORIA HOY' : 'ATIVIDADE PISCATÓRIA HOJE';
+
+  String get homeSectionBestHour =>
+      es ? 'MEJOR HORA HOY' : 'MELHOR HORA HOJE';
+
+  String get homeSectionCatches =>
+      es ? 'ÚLTIMAS CAPTURAS' : 'ÚLTIMAS CAPTURAS';
+
+  String get homeUpdated => es ? 'Actualizado' : 'Atualizado';
+
+  String get homeIndexLabel => es ? 'ÍNDICE' : 'ÍNDICE';
+  String get homeIndexExcellent => es ? 'EXCELENTE' : 'EXCELENTE';
+  String get homeIndexGood => es ? 'BUENO' : 'BOM';
+  String get homeIndexModerate => es ? 'MODERADO' : 'MODERADO';
+  String get homeIndexWeak => es ? 'DÉBIL' : 'FRACO';
+
+  String get homeTaglineGoodPrefix => es ? 'Hoy es un ' : 'Hoje é um ';
+  String get homeTaglineGoodHighlight => es ? 'buen día' : 'bom dia';
+  String get homeTaglineGoodSuffix => es ? ' para pescar.' : ' para pescar.';
+
+  String get homeTaglineOkPrefix => es ? 'Hoy es un ' : 'Hoje é um ';
+  String get homeTaglineOkHighlight => es ? 'día aceptable' : 'dia aceitável';
+  String get homeTaglineOkSuffix => es ? ' para pescar.' : ' para pescar.';
+
+  String get homeTaglineWeakPrefix => es ? 'Hoy es un ' : 'Hoje é um ';
+  String get homeTaglineWeakHighlight => es ? 'día difícil' : 'dia difícil';
+  String get homeTaglineWeakSuffix => es ? ' para pescar.' : ' para pescar.';
   String get tabLog => es ? 'DIARIO' : 'LOG';
   String get tabProfile => es ? 'PERFIL' : 'PERFIL';
 

@@ -1,6 +1,6 @@
 # AQUANAUTIX — Central de contexto
 
-**Última revisão estructural:** 18 Jun 2026 — Mapa V1 camadas (batimetria, regulamentos, heatmap, filtro espécies, lojas dinâmicas); P3 isco+técnica no Oráculo; fishing_spots + bait_shops no Supabase.
+**Última revisão estructural:** 25 Jun 2026 — P5 push Janela de Ouro local; P4 blur mapa; 53 spots PT+ES; fix GEBCO WMS; RLS fishing_spots; P3 isco+técnica; P7 lojas dinâmicas; camadas mapa V1.
 
 ## Estrutura do repositório (mono-repo)
 
@@ -240,7 +240,7 @@ AQUANAUTIX/
 
 **Mapa V1 — Camadas de informação (`1bfbe09`, `feat/mapa-camadas-v1`)**
 - **Fishing Spots Supabase:** `fishing_spots` table com PostGIS, RLS FREE/PRO/ELITE, 5 spots seed PT/ES; `FishingSpotRepository` com `fetchNearby`/`fetchBySpecies` e fallback offline.
-- **P2 Batimetria GEBCO:** `TileLayer` WMS GEBCO (opacidade 55%) no modo COSTA; toggle no sheet de camadas; `SnackBar` em modo RIO.
+- **P2 Batimetria GEBCO:** `TileLayer` com `WMSTileLayerOptions` GEBCO (opacidade 55%) no modo COSTA; toggle no sheet de camadas; `SnackBar` em modo RIO. **Fix 25 Jun:** substituído `urlTemplate` com `{bbox-epsg-3857}` (crash MIUI) por `wmsOptions`.
 - **P3 Regulamentos PT+ES:** `PolygonLayer` com GeoJSON `fishing_regulations_pt_es.geojson`; tap em polígono → `BottomSheet` com detalhes e link DGRM/MITERD; cores distintas por tipo (proibido=vermelho, licença_especial=âmbar, defeso_temp=laranja).
 - **P4 Heatmap Comunidade:** `CommunityHeatmapRepository`; `MarkerLayer` com círculos translúcidos (raio ∝ catchCount); ciano PRO / branco FREE; tap → tab Comunidade.
 - **P5 Filtro Espécies:** `FilterChip` horizontal no sheet de spots; `_filteredSpots` filtra pins e lista; fotos reais por espécie (assets locais + Wikimedia); lojas próximas respeitam filtro.
@@ -258,6 +258,21 @@ AQUANAUTIX/
 - `feat/mapa-camadas-v1` — pushed, PR pendente merge → main
 - `feat/oracle-p3-bait-technique` — pushed, inclui P3+P7, PR pendente merge → main
 - `main` local — 2 commits à frente de `origin/main` (aguarda PRs)
+
+### Sessão 25 Jun 2026
+
+**P5 Push Janela de Ouro local (`68b6af8`, `feat/p5-golden-window-push`)**
+- `GoldenWindowNotificationService` — `flutter_local_notifications`; canal `aqx_golden_window`; PRO 1×/dia, FREE 1×/semana; init em `main.dart`.
+
+**53 Spots reais PT+ES (`7a52ccc`)**
+- Migration `20260619000000_spots_real_data_and_fields.sql`; dados técnica/cana/profundidade no Supabase.
+
+**P4 Blur Mapa + Security (`0b0e7d4`, `fa6bc8a`)**
+- Pins PRO/ELITE desfocados + cadeado para FREE; banner FOMO spots bloqueados.
+- RLS `fishing_spots` corrigido — policies PRO/ELITE verificam `user_profiles.tier` (`20260625000000_fishing_spots_rls_tier_check.sql`).
+
+**Estado branch (25 Jun 2026)**
+- `feat/p5-golden-window-push` — 3 commits à frente de `main`; pushed para GitHub; PR pendente merge.
 
 ### Sessão 16 Jun 2026
 

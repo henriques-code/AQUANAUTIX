@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'subscription_tier_sync_service.dart';
 import '../services/revenue_cat_service.dart';
 import '../state/subscription_store.dart';
 import '../supabase_bootstrap.dart';
@@ -46,6 +47,7 @@ class SubscriptionAuthBridge {
     try {
       await RevenueCatService.instance.logIn(userId);
       await SubscriptionStore.instance.syncFromRevenueCat();
+      SubscriptionTierSyncService.scheduleSync();
     } catch (_) {
       // Rede/RC indisponível — prefs locais mantêm-se.
     }
