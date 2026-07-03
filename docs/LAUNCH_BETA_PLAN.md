@@ -73,9 +73,9 @@
 
 | # | Tarefa | Onde | Estado |
 |---|--------|------|--------|
-| 2.1 | Secret `REVENUECAT_SECRET_API_KEY` | Supabase → Edge Functions → Secrets | ⏳ manual |
-| 2.2 | Secret `REVENUECAT_WEBHOOK_AUTHORIZATION` | Idem | ⏳ manual |
-| 2.3 | Webhook URL no RevenueCat | `…/functions/v1/revenuecat-webhook` | ⏳ manual |
+| 2.1 | Secret `REVENUECAT_SECRET_API_KEY` | `.env` → `.\tools\configure_p2_secrets.ps1` | ⏳ correr local |
+| 2.2 | Secret `REVENUECAT_WEBHOOK_AUTHORIZATION` | Idem + header no dashboard RC | ⏳ correr local |
+| 2.3 | Webhook URL no RevenueCat | `…/functions/v1/revenuecat-webhook` | ⏳ manual (após 2.1) |
 | 2.4 | Teste: compra sandbox → `user_profiles.tier = PRO` | SQL Editor ou app Mapa | ⏳ após P3 |
 | 2.5 | Verificar migrations remotas = repo (16) | `supabase migration list` | ✅ |
 
@@ -167,7 +167,7 @@ cd /workspace
 P0 merge → P1 compliance → P2 secrets (manual) → [PAGAMENTO] → P3 Play → P4 beta → P5 produção
 ```
 
-**Próxima acção imediata (sem pagar):** merge PR #16 → `main` · configurar secrets P2 (`REVENUECAT_SECRET_API_KEY`).
+**Próxima acção imediata (sem pagar):** merge PR #17 → `main` · na tua máquina: `.\tools\verify_p2_secrets.ps1` → `.\tools\configure_p2_secrets.ps1` (chaves no `.env`).
 
 ---
 

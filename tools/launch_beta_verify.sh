@@ -122,10 +122,21 @@ else
   bad "Plano beta em falta"
 fi
 
+# ── P2 secrets (se .env presente) ────────────────────────
+if [[ -f "$ROOT/.env" ]]; then
+  if "$ROOT/tools/verify_p2_secrets.sh" >/dev/null 2>&1; then
+    ok "P2 .env — chaves RC webhook presentes"
+  else
+    note "P2 .env — chaves em falta (corre ./tools/verify_p2_secrets.sh)"
+  fi
+else
+  note "P2: .env ausente — secrets no PC local (AQUANAUTIX/.env)"
+fi
+
 # ── Secrets / Play (manual — só aviso) ───────────────────
 echo ""
 echo "── Verificações manuais (não bloqueiam script) ──"
-note "P2: REVENUECAT_SECRET_API_KEY + webhook no Supabase/RC"
+note "P2 remoto: após .env OK → configure_p2_secrets.ps1 + webhook RC"
 note "P3: Play Console + internal testing (requer pagamento)"
 
 echo ""

@@ -131,14 +131,31 @@ O RLS de `fishing_spots` cruza `user_profiles.tier`. A app chama `RevenueCat.log
 
 ### 8.2 Secrets Supabase (Dashboard → Edge Functions → Secrets)
 
-| Secret | Origem |
-|--------|--------|
+| Secret | Origem no `.env` local |
+|--------|------------------------|
 | `REVENUECAT_SECRET_API_KEY` | RevenueCat → Project → API keys → **Secret** (`sk_...`) |
 | `REVENUECAT_WEBHOOK_AUTHORIZATION` | String aleatória longa (ex. `Bearer aquanautix-rc-wh-...`) |
 | `REVENUECAT_ENTITLEMENT_PRO` | `pro` (opcional, default) |
 | `REVENUECAT_ENTITLEMENT_ELITE` | `elite` (opcional, default) |
 
-`SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY` são injectados automaticamente.
+`SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY` são injectados automaticamente pelo Supabase.
+
+**Automatizar a partir do `.env` (recomendado — Windows):**
+
+```powershell
+cd "C:\Users\Joaop\OneDrive\Documentos\AQUANAUTIX"
+.\tools\verify_p2_secrets.ps1      # audita chaves sem expor valores
+.\tools\configure_p2_secrets.ps1   # supabase secrets set (usa SUPABASE_ACCESS_TOKEN do .env)
+```
+
+Linux / Cloud Agent:
+
+```bash
+./tools/verify_p2_secrets.sh
+./tools/configure_p2_secrets.sh
+```
+
+O `.env` na raiz do repo contém **todas** as chaves — nunca versionar. Ver também `SUPABASE_ACCESS_TOKEN=sbp_...` para o CLI.
 
 ### 8.3 Configurar webhook no RevenueCat
 
@@ -167,6 +184,9 @@ O RLS de `fishing_spots` cruza `user_profiles.tier`. A app chama `RevenueCat.log
 SUPABASE_URL=https://xxx.supabase.co
 SUPABASE_ANON_KEY=eyJ...
 
+# CLI Supabase (só local — nunca dart-define)
+SUPABASE_ACCESS_TOKEN=sbp_...
+
 # Mapbox
 MAPBOX_ACCESS_TOKEN=pk.ey...
 MAPBOX_DOWNLOADS_TOKEN=sk.ey...
@@ -177,6 +197,8 @@ OPENAI_API_KEY=sk-...
 # RevenueCat
 REVENUECAT_API_KEY_ANDROID=goog_...
 REVENUECAT_API_KEY_IOS=appl_...
+REVENUECAT_SECRET_API_KEY=sk_...          # só Edge Functions / CLI — nunca na app
+REVENUECAT_WEBHOOK_AUTHORIZATION=Bearer ... # header webhook RC + secret Supabase
 REVENUECAT_ENTITLEMENT_PRO=pro
 REVENUECAT_ENTITLEMENT_ELITE=elite
 REVENUECAT_PACKAGE_PRO_MONTHLY=pro_monthly
