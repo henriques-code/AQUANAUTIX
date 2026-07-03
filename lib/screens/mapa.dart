@@ -77,11 +77,6 @@ class _MapaScreenState extends State<MapaScreen> {
     'Enguia',
   ];
 
-  /// Amarelo — spots FREE partilhados (comunidade / curados).
-  static const _pinCommunity = Color(0xFFFFD600);
-  /// Azulão — spots PRO (curadoria).
-  static const _pinProBlue = Color(0xFF007BFF);
-
   static const _prefsKeySavedSpotPhotos = 'map_saved_spot_pins_v1';
   static const _prefsKeySeamarks = 'map_show_seamarks_v1';
   static const _prefsKeyBathymetry = 'mapa_bathymetry';
@@ -1344,18 +1339,20 @@ class _MapaScreenState extends State<MapaScreen> {
     ];
   }
 
-  /// Comunidade curada: FREE amarelo, PRO azulão, ELITE âmbar.
+  /// Spots curados — gota unificada, cor por tier, oráculo no badge (mesmo bloqueado).
   List<Marker> _buildCommunitySpotMarkers() {
     return _filteredSpots.map((s) {
       final locked = _isSpotLocked(tier: s.tierLabel, elite: s.elite);
-      final Color pinColor = s.elite
-          ? kAmber
-          : (s.tierLabel == 'PRO' ? _pinProBlue : _pinCommunity);
       return Marker(
         point: LatLng(s.lat, s.lon),
         width: 40,
         height: 47,
-        child: GestureDetector(
+        child: buildSpotMapPin(
+          tier: s.tierLabel,
+          elite: s.elite,
+          oracleScore: s.score,
+          photoUrl: s.photo,
+          locked: locked,
           onTap: () {
             if (!locked) {
               _setContext(s.regionKey, s.primarySpecies, spotName: s.name);
@@ -1374,56 +1371,6 @@ class _MapaScreenState extends State<MapaScreen> {
               spot: s,
             );
           },
-          child: Stack(
-            clipBehavior: Clip.none,
-            children: [
-              // Pin desfocado + opaco quando bloqueado (P4)
-              if (locked)
-                ImageFiltered(
-                  imageFilter: ImageFilter.blur(sigmaX: 2.0, sigmaY: 2.0),
-                  child: Opacity(
-                    opacity: 0.55,
-                    child: CustomPaint(
-                      size: const Size(40, 47),
-                      painter: s.elite
-                          ? const AqxPinElite()
-                          : const AqxPinPro(),
-                    ),
-                  ),
-                )
-              else
-                CustomPaint(
-                  size: const Size(40, 47),
-                  painter: s.elite
-                      ? const AqxPinElite()
-                      : (s.tierLabel == 'PRO'
-                          ? const AqxPinPro()
-                          : const AqxPinFree()),
-                ),
-              // Cadeado — sempre nítido em cima do pin (P4)
-              if (locked)
-                Positioned(
-                  right: -2,
-                  top: -2,
-                  child: Container(
-                    width: 16,
-                    height: 16,
-                    decoration: BoxDecoration(
-                      color: kCard,
-                      shape: BoxShape.circle,
-                      border: Border.all(color: pinColor.withValues(alpha: 0.8)),
-                      boxShadow: [
-                        BoxShadow(
-                          color: pinColor.withValues(alpha: 0.35),
-                          blurRadius: 4,
-                        ),
-                      ],
-                    ),
-                    child: Icon(Icons.lock_rounded, size: 10, color: pinColor),
-                  ),
-                ),
-            ],
-          ),
         ),
       );
     }).toList();
@@ -1441,11 +1388,16 @@ class _MapaScreenState extends State<MapaScreen> {
             point: LatLng(s.lat, s.lon),
             width: 40,
             height: 47,
-            child: GestureDetector(
-              onTap: () => _showSavedFishermanPinDetail(name: s.name, photo: photoBytes, lat: s.lat, lon: s.lon),
-              child: const CustomPaint(
-                size: Size(40, 47),
-                painter: AqxPinSaved(),
+            child: AqxUnifiedPin(
+              kind: AqxPinKind.saved,
+              oracleScore: s.score,
+              image: MemoryImage(photoBytes),
+              onTap: () => _showSavedFishermanPinDetail(
+                name: s.name,
+                photo: photoBytes,
+                lat: s.lat,
+                lon: s.lon,
+                oracleScore: s.score,
               ),
             ),
           ),
@@ -1461,6 +1413,7 @@ class _MapaScreenState extends State<MapaScreen> {
     required Uint8List photo,
     required double lat,
     required double lon,
+    int? oracleScore,
   }) {
     final t = aqxL10nOf(context);
     showModalBottomSheet<void>(
@@ -1477,7 +1430,33 @@ class _MapaScreenState extends State<MapaScreen> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(name, style: orb(16, fw: FontWeight.w800)),
+              Row(
+                children: [
+                  Expanded(child: Text(name, style: orb(16, fw: FontWeight.w800))),
+                  if (oracleScore != null) ...[
+                    CustomPaint(
+                      size: const Size(44, 44),
+                      painter: _ScoreRingPainter(oracleScore),
+                      child: SizedBox(
+                        width: 44,
+                        height: 44,
+                        child: Center(
+                          child: Text(
+                            '$oracleScore',
+                            style: orb(
+                              14,
+                              fw: FontWeight.w900,
+                              c: oracleScore >= 75
+                                  ? kGreen
+                                  : (oracleScore >= 50 ? kAmber : const Color(0xFFFF4444)),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
               const SizedBox(height: 8),
               ClipRRect(
                 borderRadius: BorderRadius.circular(10),
@@ -1504,12 +1483,9 @@ class _MapaScreenState extends State<MapaScreen> {
         point: LatLng(shop.lat, shop.lon),
         width: 40,
         height: 47,
-        child: GestureDetector(
+        child: AqxUnifiedPin(
+          kind: AqxPinKind.baitShop,
           onTap: () => _showBaitShopPinDetail(shop),
-          child: const CustomPaint(
-            size: Size(40, 47),
-            painter: AqxPinBait(),
-          ),
         ),
       );
     }).toList();
@@ -1702,13 +1678,13 @@ class _MapaScreenState extends State<MapaScreen> {
       (lat: 38.55, lon: -9.35, label: 'COMUNIDADE TEST', kind: 5),
     ];
 
-    CustomPainter painterFor(int kind) => switch (kind) {
-      1 => const AqxPinPro(),
-      2 => const AqxPinElite(),
-      3 => const AqxPinSaved(),
-      4 => const AqxPinBait(),
-      5 => const AqxPinCommunity(),
-      _ => const AqxPinFree(),
+    AqxPinKind kindFor(int kind) => switch (kind) {
+      1 => AqxPinKind.pro,
+      2 => AqxPinKind.elite,
+      3 => AqxPinKind.saved,
+      4 => AqxPinKind.baitShop,
+      5 => AqxPinKind.community,
+      _ => AqxPinKind.free,
     };
 
     return pins.map((p) => Marker(
@@ -1717,7 +1693,12 @@ class _MapaScreenState extends State<MapaScreen> {
       height: 47,
       child: Tooltip(
         message: p.label,
-        child: CustomPaint(size: const Size(40, 47), painter: painterFor(p.kind)),
+        child: AqxUnifiedPin(
+          kind: kindFor(p.kind),
+          oracleScore: p.kind <= 2 ? 72 : (p.kind == 0 ? 58 : null),
+          locked: p.kind == 1 || p.kind == 2,
+          isLive: p.kind == 5,
+        ),
       ),
     )).toList();
   }
