@@ -118,6 +118,48 @@ Após compra ou **Restaurar compras**, `SubscriptionStore.syncFromRevenueCat()` 
 
 ---
 
+## 8. Webhook RevenueCat → `user_profiles.tier` (Supabase)
+
+O RLS de `fishing_spots` cruza `user_profiles.tier`. A app chama `RevenueCat.logIn(supabaseUserId)` — o webhook e a Edge Function mantêm o tier alinhado.
+
+### 8.1 Edge Functions (repo)
+
+| Função | JWT | Papel |
+|--------|-----|--------|
+| `revenuecat-webhook` | ❌ | POST do dashboard RC → consulta API RC → `sync_user_subscription_tier` |
+| `sync-subscription-tier` | ✅ | App autenticada → sync imediato pós-compra |
+
+### 8.2 Secrets Supabase (Dashboard → Edge Functions → Secrets)
+
+| Secret | Origem |
+|--------|--------|
+| `REVENUECAT_SECRET_API_KEY` | RevenueCat → Project → API keys → **Secret** (`sk_...`) |
+| `REVENUECAT_WEBHOOK_AUTHORIZATION` | String aleatória longa (ex. `Bearer aquanautix-rc-wh-...`) |
+| `REVENUECAT_ENTITLEMENT_PRO` | `pro` (opcional, default) |
+| `REVENUECAT_ENTITLEMENT_ELITE` | `elite` (opcional, default) |
+
+`SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY` são injectados automaticamente.
+
+### 8.3 Configurar webhook no RevenueCat
+
+1. [app.revenuecat.com](https://app.revenuecat.com) → Project → **Integrations** → **Webhooks**
+2. URL: `https://ycmvqokcfzxkpinvcyhk.supabase.co/functions/v1/revenuecat-webhook`
+3. **Authorization header:** mesmo valor que `REVENUECAT_WEBHOOK_AUTHORIZATION`
+4. Eventos: `INITIAL_PURCHASE`, `RENEWAL`, `CANCELLATION`, `EXPIRATION`, `UNCANCELLATION`, `BILLING_ISSUE`
+5. Ambiente: Production + Sandbox (testes)
+
+### 8.4 Fluxo na app
+
+1. Login Supabase → `SubscriptionAuthBridge` → `RC.logIn(userId)` → `sync-subscription-tier`
+2. Compra / restauro → `SubscriptionStore.syncFromRevenueCat()` → `sync-subscription-tier`
+3. Renovação / expiração → webhook RC → `revenuecat-webhook`
+
+### 8.5 Migration SQL
+
+`supabase/migrations/20260703120000_subscription_tier_sync.sql` — função `public.sync_user_subscription_tier` (só `service_role`).
+
+---
+
 ## Variáveis `.env` completas (referência)
 
 ```

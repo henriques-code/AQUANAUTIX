@@ -10,6 +10,7 @@ class HomeDashboardData {
     required this.featuredSpots,
     required this.communityActivities,
     required this.userDisplayName,
+    this.lastUpdated,
   });
 
   final WeatherData weather;
@@ -17,6 +18,7 @@ class HomeDashboardData {
   final List<FeaturedSpot> featuredSpots;
   final List<CommunityActivity> communityActivities;
   final String userDisplayName;
+  final DateTime? lastUpdated;
 }
 
 abstract class HomeRepository {

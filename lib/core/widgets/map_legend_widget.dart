@@ -1,6 +1,6 @@
 // lib/core/widgets/map_legend_widget.dart
 //
-// Legenda do mapa AQUANAUTIX — usa os CustomPainter reais de aquanautix_pins.dart
+// Legenda do mapa AQUANAUTIX — pins unificados [AqxUnifiedPin]
 // Toggle via ícone layers. Posição: canto inferior-esquerdo do mapa.
 
 import 'package:flutter/material.dart';
@@ -107,47 +107,69 @@ class _MapLegendWidgetState extends State<MapLegendWidget>
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           _LegendRow(
-                            painter: const AqxPinFree(),
+                            pin: const AqxUnifiedPin(
+                              kind: AqxPinKind.free,
+                              oracleScore: 58,
+                              size: Size(22, 26),
+                            ),
                             label: 'FREE',
                             sub: widget.isRiver ? 'Rios públicos' : 'Spots públicos',
                             color: aqxPinCyan,
                           ),
                           const SizedBox(height: 7),
                           _LegendRow(
-                            painter: const AqxPinPro(),
+                            pin: const AqxUnifiedPin(
+                              kind: AqxPinKind.pro,
+                              oracleScore: 72,
+                              locked: true,
+                              size: Size(22, 26),
+                            ),
                             label: 'PRO',
                             sub: 'Spots verificados',
                             color: aqxPinBlue,
                           ),
                           const SizedBox(height: 7),
                           _LegendRow(
-                            painter: const AqxPinElite(),
+                            pin: const AqxUnifiedPin(
+                              kind: AqxPinKind.elite,
+                              oracleScore: 88,
+                              locked: true,
+                              size: Size(22, 26),
+                            ),
                             label: 'ELITE',
                             sub: 'Spots premium',
                             color: aqxPinAmber,
                           ),
                           const SizedBox(height: 7),
                           _LegendRow(
-                            painter: const AqxPinSaved(),
+                            pin: const AqxUnifiedPin(
+                              kind: AqxPinKind.saved,
+                              size: Size(22, 26),
+                            ),
                             label: 'MEUS SPOTS',
                             sub: 'Os meus spots',
                             color: aqxPinRed,
                           ),
                           const SizedBox(height: 7),
                           _LegendRow(
-                            painter: const AqxPinBait(),
+                            pin: const AqxUnifiedPin(
+                              kind: AqxPinKind.baitShop,
+                              size: Size(22, 26),
+                            ),
                             label: 'LOJA ISCO',
                             sub: 'Loja de isco',
                             color: aqxPinGreen,
                           ),
                           const SizedBox(height: 7),
                           _LegendRow(
-                            painter: const AqxPinCommunity(),
+                            pin: const AqxUnifiedPin(
+                              kind: AqxPinKind.community,
+                              isLive: true,
+                              size: Size(22, 26),
+                            ),
                             label: 'COMUNIDADE',
                             sub: 'Ghost Mode · anónimo',
-                            color: aqxPinCyan,
-                            // Community é hexagonal — usar size quadrada
-                            pinSize: const Size(28, 28),
+                            color: aqxPinGold,
                           ),
                         ],
                       ),
@@ -163,18 +185,16 @@ class _MapLegendWidgetState extends State<MapLegendWidget>
 
 // ── Linha individual da legenda ───────────────────────────
 class _LegendRow extends StatelessWidget {
-  final CustomPainter painter;
+  final Widget pin;
   final String label;
   final String sub;
   final Color color;
-  final Size pinSize;
 
   const _LegendRow({
-    required this.painter,
+    required this.pin,
     required this.label,
     required this.sub,
     required this.color,
-    this.pinSize = const Size(22, 26),
   });
 
   @override
@@ -183,11 +203,10 @@ class _LegendRow extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        // Pin renderizado pelo CustomPainter real
         SizedBox(
           width: 28,
           height: 28,
-          child: CustomPaint(size: pinSize, painter: painter),
+          child: FittedBox(fit: BoxFit.contain, child: pin),
         ),
         const SizedBox(width: 8),
         Column(

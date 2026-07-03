@@ -4,11 +4,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 
-/// Barra de progresso animada para actividade solunar (0–100).
-///
-/// Gradiente amber (fraco) → cyan (excelente) com indicador com glow.
-/// Entrada animada via [TweenAnimationBuilder] em 1.2 s.
-/// Envolto em [RepaintBoundary] para isolar a animação.
+/// Barra de actividade piscatória — layout mockup Início.
 class SolunarProgressBar extends StatelessWidget {
   const SolunarProgressBar({
     super.key,
@@ -16,12 +12,28 @@ class SolunarProgressBar extends StatelessWidget {
     required this.qualityLabel,
     this.weakLabel = 'FRACA',
     this.excellentLabel = 'EXCELENTE',
+    this.showScoreBadge = true,
   });
 
   final int score;
   final String qualityLabel;
   final String weakLabel;
   final String excellentLabel;
+  final bool showScoreBadge;
+
+  static const _barHeight = 9.0;
+  static const _knobSize = 15.0;
+  static const _fishAreaHeight = 22.0;
+
+  static const _barGradient = LinearGradient(
+    colors: [
+      Color(0xFFFF5722),
+      Color(0xFFFFB300),
+      Color(0xFF4CAF50),
+      Color(0xFF00E5FF),
+    ],
+    stops: [0.0, 0.35, 0.72, 1.0],
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -36,6 +48,7 @@ class SolunarProgressBar extends StatelessWidget {
           qualityLabel: qualityLabel,
           weakLabel: weakLabel,
           excellentLabel: excellentLabel,
+          showScoreBadge: showScoreBadge,
         ),
       ),
     );
@@ -49,6 +62,7 @@ class _SolunarBarContent extends StatelessWidget {
     required this.qualityLabel,
     required this.weakLabel,
     required this.excellentLabel,
+    required this.showScoreBadge,
   });
 
   final double fraction;
@@ -56,6 +70,7 @@ class _SolunarBarContent extends StatelessWidget {
   final String qualityLabel;
   final String weakLabel;
   final String excellentLabel;
+  final bool showScoreBadge;
 
   Color get _badgeColor {
     if (score >= 65) return AppColors.accent;
@@ -68,174 +83,204 @@ class _SolunarBarContent extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       mainAxisSize: MainAxisSize.min,
       children: [
-        // Labels extremidades + título central
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Text(
-                  weakLabel,
-                  style: AppTextStyles.ibmSans(
-                    9,
-                    color: AppColors.amber,
-                    fw: FontWeight.w700,
-                    ls: 0.3,
-                  ),
-                ),
-                // Peixes iguais com degradê amber→cyan + bob escalonado
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    for (int i = 0; i < 3; i++) ...[
-                      ColorFiltered(
-                        colorFilter: ColorFilter.mode(
-                          Color.lerp(
-                            const Color(0xFF0055FF), // azul royal
-                            AppColors.accent,        // cyan #00F5FF
-                            i / 2.0,
-                          )!,
-                          BlendMode.srcIn,
-                        ),
-                        child: const Text(
-                          '🐟',
-                          style: TextStyle(fontSize: 15),
-                        ),
-                      )
-                          .animate(
-                            onPlay: (c) => c.repeat(reverse: true),
-                            delay: Duration(milliseconds: i * 280),
-                          )
-                          .moveY(
-                            begin: 2.0,
-                            end: -2.0,
-                            duration: 900.ms,
-                            curve: Curves.easeInOut,
-                          ),
-                      if (i < 2) const SizedBox(width: 4),
-                    ],
-                  ],
-                ),
-                Text(
-                  excellentLabel,
-                  style: AppTextStyles.ibmSans(
-                    9,
-                    color: AppColors.accent,
-                    fw: FontWeight.w700,
-                    ls: 0.3,
-                  ),
-                ),
-              ],
-            ),
-        const SizedBox(height: 4),
-
-        // Barra com gradiente + indicador com glow
         LayoutBuilder(
           builder: (context, constraints) {
-            const double dotSize = 10.0;
-            final double fillWidth =
-                (constraints.maxWidth * fraction).clamp(0.0, constraints.maxWidth);
+            final barWidth = constraints.maxWidth;
+            final knobCenter = (barWidth * fraction).clamp(
+              SolunarProgressBar._knobSize / 2,
+              barWidth - SolunarProgressBar._knobSize / 2,
+            );
+            final fillWidth = knobCenter + SolunarProgressBar._knobSize / 2;
+            const fishRowWidth = 54.0;
+            final fishLeft = (knobCenter - fishRowWidth / 2)
+                .clamp(0.0, barWidth - fishRowWidth);
 
             return SizedBox(
-              height: dotSize,
+              height: SolunarProgressBar._fishAreaHeight +
+                  SolunarProgressBar._barHeight +
+                  2,
               child: Stack(
                 clipBehavior: Clip.none,
                 children: [
-                  // Track (fundo)
+                  // Peixes acima do indicador
                   Positioned(
-                    top: (dotSize - 6) / 2,
-                    bottom: (dotSize - 6) / 2,
+                    left: fishLeft,
+                    top: 0,
+                    child: _FishCluster(),
+                  ),
+                  // Barra
+                  Positioned(
                     left: 0,
                     right: 0,
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: AppColors.surface,
-                        borderRadius: BorderRadius.circular(4),
-                        border: Border.all(
-                          color: AppColors.accent.withValues(alpha: 0.12),
-                        ),
-                      ),
-                    ),
-                  ),
-
-                  // Fill gradiente
-                  if (fillWidth > 0)
-                    Positioned(
-                  top: (dotSize - 6) / 2,
-                    bottom: (dotSize - 6) / 2,
-                    left: 0,
-                    width: fillWidth,
-                      child: Container(
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(4),
-                          gradient: const LinearGradient(
-                            colors: [AppColors.amber, AppColors.accent],
+                    bottom: 0,
+                    height: SolunarProgressBar._barHeight,
+                    child: Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        // Trilho escuro (zona não preenchida)
+                        Container(
+                          height: SolunarProgressBar._barHeight,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(99),
+                            color: const Color(0xFF0D1B2A).withValues(alpha: 0.85),
+                            border: Border.all(
+                              color: Colors.white.withValues(alpha: 0.06),
+                            ),
                           ),
                         ),
-                      ),
-                    ),
-
-                  // Indicador circular com glow
-                  if (fraction > 0)
-                    Positioned(
-                      left: (fillWidth - dotSize / 2)
-                          .clamp(0.0, constraints.maxWidth - dotSize),
-                      top: 0,
-                      child: Container(
-                        width: dotSize,
-                        height: dotSize,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: AppColors.accent,
-                          boxShadow: [
-                            BoxShadow(
-                              color: AppColors.accent.withValues(alpha: 0.65),
-                              blurRadius: 8,
-                              spreadRadius: 2,
+                        // Preenchimento gradiente até ao knob
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(99),
+                          child: Align(
+                            alignment: Alignment.centerLeft,
+                            child: Container(
+                              width: fillWidth.clamp(0.0, barWidth),
+                              height: SolunarProgressBar._barHeight,
+                              decoration: const BoxDecoration(
+                                gradient: SolunarProgressBar._barGradient,
+                              ),
                             ),
-                          ],
+                          ),
                         ),
-                      ),
+                        // Knob ciano com glow
+                        Positioned(
+                          left: knobCenter - SolunarProgressBar._knobSize / 2,
+                          top: (SolunarProgressBar._barHeight -
+                                  SolunarProgressBar._knobSize) /
+                              2,
+                          child: Container(
+                            width: SolunarProgressBar._knobSize,
+                            height: SolunarProgressBar._knobSize,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: AppColors.accent,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: AppColors.accent.withValues(alpha: 0.9),
+                                  blurRadius: 10,
+                                  spreadRadius: 1,
+                                ),
+                                BoxShadow(
+                                  color: AppColors.accent.withValues(alpha: 0.45),
+                                  blurRadius: 18,
+                                  spreadRadius: 3,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
+                  ),
                 ],
               ),
             );
           },
         ),
-
-        const SizedBox(height: 5),
-
-        // Score + badge de qualidade
+        const SizedBox(height: 6),
         Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              '$score',
-              style: AppTextStyles.orbitron(15, fw: FontWeight.w700),
-            ),
-            const SizedBox(width: 8),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-              decoration: BoxDecoration(
-                color: _badgeColor.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(6),
-                border: Border.all(
-                  color: _badgeColor.withValues(alpha: 0.45),
-                ),
+              weakLabel,
+              style: AppTextStyles.ibmSans(
+                11,
+                color: const Color(0xFFFF4C4C),
+                fw: FontWeight.w700,
+                ls: 0.5,
               ),
-              child: Text(
-                qualityLabel,
-                style: AppTextStyles.ibmSans(
-                  10,
-                  color: _badgeColor,
-                  fw: FontWeight.w700,
-                  ls: 0.4,
-                ),
+            ),
+            Text(
+              excellentLabel,
+              style: AppTextStyles.ibmSans(
+                11,
+                color: const Color(0xFF00C853),
+                fw: FontWeight.w700,
+                ls: 0.5,
               ),
             ),
           ],
         ),
+        if (showScoreBadge && qualityLabel.isNotEmpty) ...[
+          const SizedBox(height: 8),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text('$score', style: AppTextStyles.orbitron(15, fw: FontWeight.w700)),
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: _badgeColor.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(6),
+                  border: Border.all(color: _badgeColor.withValues(alpha: 0.45)),
+                ),
+                child: Text(
+                  qualityLabel,
+                  style: AppTextStyles.ibmSans(
+                    10,
+                    color: _badgeColor,
+                    fw: FontWeight.w700,
+                    ls: 0.4,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
       ],
     );
+  }
+}
+
+class _FishCluster extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        for (int i = 0; i < 3; i++) ...[
+          _FishIcon(
+            bright: i == 1,
+            delayMs: i * 200,
+          ),
+          if (i < 2) const SizedBox(width: 2),
+        ],
+      ],
+    );
+  }
+}
+
+class _FishIcon extends StatelessWidget {
+  const _FishIcon({required this.bright, required this.delayMs});
+
+  final bool bright;
+  final int delayMs;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = bright ? AppColors.accent : const Color(0xFF007BFF);
+
+    Widget fish = Container(
+      decoration: bright
+          ? BoxDecoration(
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.accent.withValues(alpha: 0.75),
+                  blurRadius: 8,
+                  spreadRadius: 1,
+                ),
+              ],
+            )
+          : null,
+      child: ColorFiltered(
+        colorFilter: ColorFilter.mode(color, BlendMode.srcIn),
+        child: const Text('🐟', style: TextStyle(fontSize: 16, height: 1)),
+      ),
+    );
+
+    return fish
+        .animate(onPlay: (c) => c.repeat(reverse: true), delay: Duration(milliseconds: delayMs))
+        .moveY(begin: 1.5, end: -1.5, duration: 900.ms, curve: Curves.easeInOut);
   }
 }
