@@ -1,7 +1,7 @@
 # AQUANAUTIX — Handoff para novo chat
 
 > Copia este ficheiro (ou a secção «Prompt rápido») para iniciar um chat Cursor/Claude com contexto completo.
-> **Última actualização:** 25 Jun 2026 · branch `feat/p5-golden-window-push` · 3 commits à frente de `main`
+> **Última actualização:** 3 Jul 2026 · branch `cursor/launch-beta-close-a1c8` · plano beta em `docs/LAUNCH_BETA_PLAN.md`
 
 ---
 

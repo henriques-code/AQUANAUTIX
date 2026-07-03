@@ -655,6 +655,82 @@ class AqxL10n {
   String get mapLegendEliteSpot =>
       es ? 'Spot ELITE' : 'Spot ELITE';
 
+  // ── Legal (login + perfil) ──────────────────────────────
+  String get legalPrivacyLink =>
+      _l(pt: 'Privacidade', es: 'Privacidad', en: 'Privacy');
+
+  String get legalTermsLink =>
+      _l(pt: 'Termos', es: 'Términos', en: 'Terms');
+
+  String get legalPrivacyTitle =>
+      _l(pt: 'Política de Privacidade', es: 'Política de Privacidad', en: 'Privacy Policy');
+
+  String get legalTermsTitle =>
+      _l(pt: 'Termos de Utilização', es: 'Términos de Uso', en: 'Terms of Service');
+
+  String get legalOpenFullVersion => _l(
+        pt: 'Abrir versão completa na web',
+        es: 'Abrir versión completa en la web',
+        en: 'Open full version on the web',
+      );
+
+  String get legalContact =>
+      _l(pt: 'contact@aquanautix.app', es: 'contact@aquanautix.app', en: 'contact@aquanautix.app');
+
+  String get legalLinkError => _l(
+        pt: 'Não foi possível abrir o link.',
+        es: 'No se pudo abrir el enlace.',
+        en: 'Could not open the link.',
+      );
+
+  String get legalSectionTitle =>
+      _l(pt: '// LEGAL', es: '// LEGAL', en: '// LEGAL');
+
+  String get legalPrivacySummary => es
+      ? 'AQUANAUTIX trata datos de ubicación (GPS) para el Oráculo y el mapa, fotos '
+          'que subes al Vision Scanner y Logbook, y datos de cuenta (email) vía Supabase.\n\n'
+          'Los spots de la comunidad usan Ghost Mode: no publicamos coordenadas exactas, '
+          'solo etiquetas de zona.\n\n'
+          'Las suscripciones PRO/ELITE se gestionan con Google Play y RevenueCat. '
+          'No vendemos datos personales a terceros.\n\n'
+          'Puedes solicitar eliminación de cuenta escribiendo a contact@aquanautix.app.'
+      : en
+          ? 'AQUANAUTIX processes location data (GPS) for Oracle and map features, '
+              'photos you upload to Vision Scanner and Logbook, and account data (email) via Supabase.\n\n'
+              'Community spots use Ghost Mode: we do not publish exact coordinates, '
+              'only zone labels.\n\n'
+              'PRO/ELITE subscriptions are handled by Google Play and RevenueCat. '
+              'We do not sell personal data to third parties.\n\n'
+              'You may request account deletion by emailing contact@aquanautix.app.'
+          : 'A AQUANAUTIX trata dados de localização (GPS) para o Oráculo e mapa, fotos '
+              'que carregas no Vision Scanner e Logbook, e dados de conta (email) via Supabase.\n\n'
+              'Spots da comunidade usam Ghost Mode: não publicamos coordenadas exactas, '
+              'apenas etiquetas de zona.\n\n'
+              'Subscrições PRO/ELITE são geridas via Google Play e RevenueCat. '
+              'Não vendemos dados pessoais a terceiros.\n\n'
+              'Podes solicitar eliminação de conta em contact@aquanautix.app.';
+
+  String get legalTermsSummary => es
+      ? 'Al usar AQUANAUTIX aceptas utilizar la app de forma responsable, respetando '
+          'la normativa de pesca de Portugal y España. Las previsiones del Oráculo son '
+          'orientativas, no garantía de captura.\n\n'
+          'Las suscripciones se renuevan automáticamente salvo cancelación en Google Play. '
+          'El trial gratuito, cuando esté disponible, sigue las condiciones de la tienda.\n\n'
+          'El contenido de spots PRO/ELITE es para uso personal del suscriptor.'
+      : en
+          ? 'By using AQUANAUTIX you agree to use the app responsibly and comply with '
+              'fishing regulations in Portugal and Spain. Oracle forecasts are indicative, '
+              'not a guarantee of catch.\n\n'
+              'Subscriptions renew automatically unless cancelled in Google Play. '
+              'Free trials, when available, follow store terms.\n\n'
+              'PRO/ELITE spot content is for the subscriber\'s personal use.'
+          : 'Ao usares a AQUANAUTIX aceitas utilizar a app de forma responsável, '
+              'respeitando a regulamentação de pesca em Portugal e Espanha. As previsões '
+              'do Oráculo são orientativas, não garantia de captura.\n\n'
+              'As subscrições renovam automaticamente salvo cancelamento na Google Play. '
+              'O trial gratuito, quando disponível, segue as condições da loja.\n\n'
+              'O conteúdo de spots PRO/ELITE é para uso pessoal do subscritor.';
+
   String get indexHelpBody => es
       ? 'El número de 0 a 100 es el Índice AQUANAUTIX de hoy: combina la marea '
           '(amplitud respecto a los días cercanos), la fase lunar y el comportamiento '
