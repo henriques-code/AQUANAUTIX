@@ -57,6 +57,8 @@ flutter test             # 1 teste pode falhar: vision_catalog_match (JSON espé
 
 **Site:** após `python3 -m http.server 8080` em `Site V2/`, validar `curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:8080/` → `200` e presença de `</html>` em `index.html`.
 
+**Beta / Play Store:** `./tools/launch_beta_verify.sh` — ver `docs/LAUNCH_BETA_PLAN.md`.
+
 ### Serviços em tmux (recomendado)
 
 Usar sessões com nomes descritivos, por exemplo:
