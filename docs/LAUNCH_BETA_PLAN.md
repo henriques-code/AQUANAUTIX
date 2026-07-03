@@ -23,8 +23,8 @@
 
 ## Definition of Done — Beta fechado
 
-- [ ] `main` contém P5, webhook tier, legal links, permissões limpas
-- [ ] `flutter analyze` → 0 issues · `flutter test` → 16/16
+- [ ] `main` contém P5, webhook tier, legal links, permissões limpas, pins unificados, oráculo por spot
+- [ ] `flutter analyze` → 0 issues · `flutter test` → 20/20
 - [ ] `./tools/launch_beta_verify.sh` → verde
 - [ ] Webhook RC configurado + teste manual de tier em `user_profiles`
 - [ ] Internal testing Play com compra license tester (quando P3)
@@ -40,8 +40,9 @@
 |---|--------|----------|--------|
 | 0.1 | Merge `feat/p5-golden-window-push` | Home v2, P5 push, RLS spots, 53 spots | ✅ PR #11 |
 | 0.2 | Webhook RevenueCat → `user_profiles.tier` | Edge Functions + migration | ✅ PR #12 |
-| 0.3 | Branch `cursor/launch-beta-close-a1c8` → `main` | Um PR consolidado | 🔄 |
-| 0.4 | `flutter analyze` + `flutter test` | Verde | 🔄 |
+| 0.3 | Branch consolidada → `main` | PR #16 (P5 + RC + pins + oráculo spot) | 🔄 |
+| 0.4 | `flutter analyze` + `flutter test` | Verde (20 testes) | 🔄 |
+| 0.5 | Pins unificados + oráculo ao vivo no mapa | PR #14 + #15 + #16 | ✅ |
 
 **Entregável:** PR único para `main` com todo o trabalho P5 + monetização backend.
 
@@ -53,11 +54,11 @@
 
 | # | Tarefa | Critério | Estado |
 |---|--------|----------|--------|
-| 1.1 | Remover `RECORD_AUDIO` do manifest | Permissão não usada eliminada | 🔄 |
-| 1.2 | Links Privacidade + Termos no login | Footer com `url_launcher` | 🔄 |
-| 1.3 | Secção legal no Perfil | Abrir documentos in-app | 🔄 |
-| 1.4 | Script `tools/launch_beta_verify.sh` | Auditoria automática pré-build | 🔄 |
-| 1.5 | Documentar assets em falta | Lista em `assets/README.md` | 🔄 |
+| 1.1 | Remover `RECORD_AUDIO` do manifest | Permissão não usada eliminada | ✅ |
+| 1.2 | Links Privacidade + Termos no login | Footer com `url_launcher` | ✅ |
+| 1.3 | Secção legal no Perfil | Abrir documentos in-app | ✅ |
+| 1.4 | Script `tools/launch_beta_verify.sh` | Auditoria automática pré-build | ✅ |
+| 1.5 | Documentar assets em falta | Lista em `assets/README.md` | ✅ |
 
 **Adiado (pós-beta, sem custo imediato):**
 - Storage privado + signed URLs (fotos)
@@ -166,7 +167,7 @@ cd /workspace
 P0 merge → P1 compliance → P2 secrets (manual) → [PAGAMENTO] → P3 Play → P4 beta → P5 produção
 ```
 
-**Próxima acção imediata (sem pagar):** merge PR launch-beta-close → configurar secrets P2 quando tiveres `REVENUECAT_SECRET_API_KEY`.
+**Próxima acção imediata (sem pagar):** merge PR #16 → `main` · configurar secrets P2 (`REVENUECAT_SECRET_API_KEY`).
 
 ---
 
@@ -175,3 +176,4 @@ P0 merge → P1 compliance → P2 secrets (manual) → [PAGAMENTO] → P3 Play �
 | Data | Alteração |
 |------|-----------|
 | 2026-07-03 | Plano inicial pós-auditoria + webhook tier |
+| 2026-07-03 | Pins unificados + fetchForSpot + integração mapa (PR #14–#16) |
