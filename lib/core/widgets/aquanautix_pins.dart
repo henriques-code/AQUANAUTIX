@@ -22,9 +22,314 @@ const Color aqxPinBlue  = Color(0xFF007BFF);
 const Color aqxPinAmber = Color(0xFFF3C64D);
 const Color aqxPinRed   = Color(0xFFFF2A2A);
 const Color aqxPinGreen = Color(0xFF00C853);
+const Color aqxPinGold  = Color(0xFFFFD600);
 
 // ═══════════════════════════════════════════════════════════
-// HELPERS INTERNOS — espaço de coordenadas 96×96
+// PIN UNIFICADO v3 — gota única · cor por tipo · oráculo no badge
+// ═══════════════════════════════════════════════════════════
+
+/// Tipos de pin no mapa — mesma silhueta, cor e conteúdo interior distintos.
+enum AqxPinKind {
+  free(aqxPinCyan),
+  pro(aqxPinBlue),
+  elite(aqxPinAmber),
+  saved(aqxPinRed),
+  baitShop(aqxPinGreen),
+  community(aqxPinGold);
+
+  const AqxPinKind(this.color);
+  final Color color;
+
+  static AqxPinKind fromTier({
+    required String tier,
+    bool elite = false,
+  }) {
+    final t = tier.toUpperCase();
+    if (elite || t == 'ELITE') return AqxPinKind.elite;
+    if (t == 'PRO') return AqxPinKind.pro;
+    return AqxPinKind.free;
+  }
+
+  IconData get fallbackIcon => switch (this) {
+        AqxPinKind.free => Icons.waves_rounded,
+        AqxPinKind.pro => Icons.gps_fixed_rounded,
+        AqxPinKind.elite => Icons.auto_awesome_rounded,
+        AqxPinKind.saved => Icons.bookmark_rounded,
+        AqxPinKind.baitShop => Icons.storefront_outlined,
+        AqxPinKind.community => Icons.groups_rounded,
+      };
+}
+
+Path _pinPathForSize(Size size) {
+  final path = _pin();
+  final matrix = Matrix4.diagonal3Values(size.width / 96, size.height / 96, 1);
+  return path.transform(matrix.storage);
+}
+
+/// Moldura gota (glow + borda) — conteúdo via [AqxUnifiedPin].
+class AqxUnifiedPinFramePainter extends CustomPainter {
+  const AqxUnifiedPinFramePainter({
+    required this.color,
+    this.livePulse = false,
+  });
+
+  final Color color;
+  final bool livePulse;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    canvas.save();
+    canvas.scale(size.width / 96, size.height / 96);
+
+    if (livePulse) {
+      canvas.drawPath(
+        _pin(),
+        Paint()
+          ..color = color.withValues(alpha: 0.45)
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 16),
+      );
+    }
+
+    _pinBase(canvas, color, const Color(0xFF020E15));
+    canvas.restore();
+  }
+
+  @override
+  bool shouldRepaint(covariant AqxUnifiedPinFramePainter old) =>
+      old.color != color || old.livePulse != livePulse;
+}
+
+class _PinShapeClipper extends CustomClipper<Path> {
+  const _PinShapeClipper(this.size);
+  final Size size;
+
+  @override
+  Path getClip(Size size) => _pinPathForSize(this.size);
+
+  @override
+  bool shouldReclip(covariant _PinShapeClipper old) => old.size != size;
+}
+
+/// Pin AQUANAUTIX Drop — forma única, cor por [kind], foto/avatar no interior.
+///
+/// Critérios produto (Jul 2026):
+/// - Oráculo visível no badge mesmo em spots PRO bloqueados (FOMO).
+/// - Comunidade «a pescar»: [avatarUrl] ou [image] com [isLive].
+/// - Loja isco: ícone casa no interior se sem foto.
+class AqxUnifiedPin extends StatelessWidget {
+  const AqxUnifiedPin({
+    super.key,
+    required this.kind,
+    this.oracleScore,
+    this.badgeLabel,
+    this.image,
+    this.avatarUrl,
+    this.locked = false,
+    this.isLive = false,
+    this.size = const Size(40, 47),
+    this.onTap,
+  });
+
+  final AqxPinKind kind;
+  final int? oracleScore;
+  final String? badgeLabel;
+  final ImageProvider? image;
+  final String? avatarUrl;
+  final bool locked;
+  final bool isLive;
+  final Size size;
+  final VoidCallback? onTap;
+
+  Color _scoreAccent(int score) {
+    if (score >= 75) return aqxPinGreen;
+    if (score >= 50) return aqxPinAmber;
+    return aqxPinRed;
+  }
+
+  Widget _innerContent() {
+    final icon = kind.fallbackIcon;
+    Widget core;
+
+    if (image != null) {
+      core = Image(
+        image: image!,
+        fit: BoxFit.cover,
+        width: size.width,
+        height: size.height,
+        errorBuilder: (_, __, ___) => _iconFallback(icon),
+      );
+    } else if (avatarUrl != null && avatarUrl!.isNotEmpty) {
+      core = Image.network(
+        avatarUrl!,
+        fit: BoxFit.cover,
+        width: size.width,
+        height: size.height,
+        errorBuilder: (_, __, ___) => _iconFallback(icon),
+      );
+    } else {
+      core = _iconFallback(icon);
+    }
+
+    if (locked) {
+      core = ImageFiltered(
+        imageFilter: const ColorFilter.matrix([
+          0.4, 0, 0, 0, 0,
+          0, 0.4, 0, 0, 0,
+          0, 0, 0.4, 0, 0,
+          0, 0, 0, 0.65, 0,
+        ]),
+        child: Opacity(opacity: 0.7, child: core),
+      );
+    }
+
+    return core;
+  }
+
+  Widget _iconFallback(IconData icon) {
+    return Container(
+      color: const Color(0xFF071428),
+      alignment: Alignment.center,
+      child: Icon(
+        icon,
+        color: kind.color.withValues(alpha: 0.9),
+        size: size.width * 0.38,
+      ),
+    );
+  }
+
+  Widget? _oracleBadge() {
+    final label = badgeLabel ?? (oracleScore != null ? '${oracleScore!}' : null);
+    if (label == null || label.isEmpty) return null;
+
+    final score = oracleScore;
+    final accent = score != null ? _scoreAccent(score) : kind.color;
+
+    return Positioned(
+      right: size.width * 0.06,
+      top: size.height * 0.20,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+        decoration: BoxDecoration(
+          color: const Color(0xE6000814),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: accent, width: 1.2),
+          boxShadow: [
+            BoxShadow(
+              color: accent.withValues(alpha: 0.35),
+              blurRadius: 4,
+            ),
+          ],
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: size.width * 0.22,
+            fontWeight: FontWeight.w800,
+            color: accent,
+            height: 1,
+            letterSpacing: -0.3,
+          ),
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final frame = CustomPaint(
+      size: size,
+      painter: AqxUnifiedPinFramePainter(
+        color: kind.color,
+        livePulse: isLive,
+      ),
+      child: ClipPath(
+        clipper: _PinShapeClipper(size),
+        child: SizedBox(width: size.width, height: size.height, child: _innerContent()),
+      ),
+    );
+
+    return GestureDetector(
+      onTap: onTap,
+      child: SizedBox(
+        width: size.width,
+        height: size.height,
+        child: Stack(
+          clipBehavior: Clip.none,
+          alignment: Alignment.bottomCenter,
+          children: [
+            frame,
+            if (_oracleBadge() != null) _oracleBadge()!,
+            if (locked)
+              Positioned(
+                right: -2,
+                top: -2,
+                child: Container(
+                  width: 16,
+                  height: 16,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF071428),
+                    shape: BoxShape.circle,
+                    border: Border.all(color: kind.color.withValues(alpha: 0.85)),
+                  ),
+                  child: Icon(Icons.lock_rounded, size: 10, color: kind.color),
+                ),
+              ),
+            if (isLive)
+              Positioned(
+                left: -1,
+                top: size.height * 0.14,
+                child: Container(
+                  width: 8,
+                  height: 8,
+                  decoration: BoxDecoration(
+                    color: aqxPinGreen,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: const Color(0xFF000814), width: 1),
+                    boxShadow: [
+                      BoxShadow(
+                        color: aqxPinGreen.withValues(alpha: 0.8),
+                        blurRadius: 6,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Resolve foto de spot (asset local ou URL remota).
+ImageProvider? aqxImageFromPhotoUrl(String? photoUrl) {
+  if (photoUrl == null || photoUrl.isEmpty) return null;
+  if (photoUrl.startsWith('assets/')) return AssetImage(photoUrl);
+  return NetworkImage(photoUrl);
+}
+
+/// Pin de spot curado no mapa — gota única, oráculo sempre visível no badge.
+Widget buildSpotMapPin({
+  required String tier,
+  bool elite = false,
+  int? oracleScore,
+  String? photoUrl,
+  bool locked = false,
+  Size size = const Size(40, 47),
+  VoidCallback? onTap,
+}) {
+  return AqxUnifiedPin(
+    kind: AqxPinKind.fromTier(tier: tier, elite: elite),
+    oracleScore: oracleScore,
+    image: aqxImageFromPhotoUrl(photoUrl),
+    locked: locked,
+    size: size,
+    onTap: onTap,
+  );
+}
+
+// ═══════════════════════════════════════════════════════════
+// LEGACY painters (Jul 2026) — preferir [AqxUnifiedPin]
 // ═══════════════════════════════════════════════════════════
 
 // Pin clássico: círculo-topo (centro 48,38 r≈30) + ponta (48,93)
@@ -473,113 +778,33 @@ class CatchPhotoPin extends StatelessWidget {
     super.key,
     required this.photoUrl,
     this.avatarUrl,
+    this.oracleScore,
     this.isOwn = false,
+    this.isLive = false,
     this.onTap,
   });
 
   final String photoUrl;
   final String? avatarUrl;
+  final int? oracleScore;
   final bool isOwn;
+  final bool isLive;
   final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
-    final borderColor = isOwn ? const Color(0xFFFF4444) : aqxPinCyan;
+    final useAvatarAsMain = isLive &&
+        avatarUrl != null &&
+        avatarUrl!.isNotEmpty;
 
-    return GestureDetector(
+    return AqxUnifiedPin(
+      kind: isOwn ? AqxPinKind.saved : AqxPinKind.community,
+      oracleScore: oracleScore,
+      image: useAvatarAsMain ? null : NetworkImage(photoUrl),
+      avatarUrl: useAvatarAsMain ? avatarUrl : null,
+      isLive: isLive,
+      size: const Size(44, 52),
       onTap: onTap,
-      child: SizedBox(
-        width: 56,
-        height: 68,
-        child: Stack(
-          clipBehavior: Clip.none,
-          children: [
-            Positioned(
-              top: 0,
-              left: 0,
-              right: 0,
-              child: Container(
-                width: 52,
-                height: 52,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(color: borderColor, width: 2.5),
-                  boxShadow: [
-                    BoxShadow(
-                      color: borderColor.withValues(alpha: 0.4),
-                      blurRadius: 8,
-                      spreadRadius: 1,
-                    ),
-                  ],
-                ),
-                child: ClipOval(
-                  child: Image.network(
-                    photoUrl,
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => Container(
-                      color: const Color(0xFF071428),
-                      child: Icon(Icons.set_meal_outlined, color: aqxPinCyan, size: 24),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            if (avatarUrl != null && avatarUrl!.isNotEmpty)
-              Positioned(
-                bottom: 12,
-                right: 0,
-                child: Container(
-                  width: 22,
-                  height: 22,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(color: const Color(0xFF000814), width: 1.5),
-                  ),
-                  child: ClipOval(
-                    child: Image.network(
-                      avatarUrl!,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => const CircleAvatar(
-                        backgroundColor: Color(0xFF071428),
-                        child: Icon(Icons.person, color: aqxPinCyan, size: 12),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            Positioned(
-              bottom: 0,
-              left: 0,
-              right: 0,
-              child: Center(
-                child: CustomPaint(
-                  size: const Size(12, 10),
-                  painter: _PinTailPainter(color: borderColor),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
-}
-
-class _PinTailPainter extends CustomPainter {
-  const _PinTailPainter({required this.color});
-
-  final Color color;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final path = Path()
-      ..moveTo(0, 0)
-      ..lineTo(size.width, 0)
-      ..lineTo(size.width / 2, size.height)
-      ..close();
-    canvas.drawPath(path, Paint()..color = color);
-  }
-
-  @override
-  bool shouldRepaint(covariant _PinTailPainter oldDelegate) => oldDelegate.color != color;
 }

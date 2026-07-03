@@ -48,6 +48,8 @@ class FishingSpot {
   final List<String> species;
   final List<String> bestSeason;
   final List<String> bestBait;
+  final String? technique;
+  final String? rodType;
   final double? depthMin;
   final double? depthMax;
   final String? bottomType;
@@ -70,6 +72,8 @@ class FishingSpot {
     this.species = const [],
     this.bestSeason = const [],
     this.bestBait = const [],
+    this.technique,
+    this.rodType,
     this.depthMin,
     this.depthMax,
     this.bottomType,
@@ -143,6 +147,8 @@ class FishingSpot {
       species: strList(j['species']),
       bestSeason: strList(j['best_season']),
       bestBait: strList(j['best_bait']),
+      technique: j['technique'] as String?,
+      rodType: j['rod_type'] as String?,
       depthMin: (j['depth_min'] as num?)?.toDouble(),
       depthMax: (j['depth_max'] as num?)?.toDouble(),
       bottomType: j['bottom_type'] as String?,
