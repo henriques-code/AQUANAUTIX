@@ -37,7 +37,7 @@ git add -A
 # Nunca commitar ficheiros sensíveis, mesmo que tenham entrado por engano no staging.
 $sensitivePatterns = @(".env", "local_secrets.ps1", ".pem", ".key", "sbp_", "sk_")
 
-$stagedFiles = git diff --cached --name-only
+$stagedFiles = @(git diff --cached --name-only)
 foreach ($file in $stagedFiles) {
     if ([string]::IsNullOrWhiteSpace($file)) { continue }
     foreach ($pattern in $sensitivePatterns) {
@@ -57,7 +57,7 @@ if ($LASTEXITCODE -eq 0) {
 }
 
 Write-Host "-> A criar commit..."
-git commit -m $Mensagem
+git commit -m "$Mensagem"
 
 Write-Host "-> A tentar push para origin/$branch..."
 $pushOutput = git push origin $branch 2>&1
@@ -78,6 +78,11 @@ if ($pushText -match "must be made through a pull request|protected branch|GH013
     git push origin $newBranch
     if ($LASTEXITCODE -eq 0) {
         $remoteUrl = (git remote get-url origin) -replace '\.git$', ''
+        if ($remoteUrl -match '^git@github\.com:(.+)$') {
+            $remoteUrl = "https://github.com/$($Matches[1])"
+        } elseif ($remoteUrl -match '^ssh://git@github\.com/(.+)$') {
+            $remoteUrl = "https://github.com/$($Matches[1])"
+        }
         Write-Host "OK: branch '$newBranch' enviado com sucesso."
         Write-Host "   Abre um Pull Request aqui:"
         Write-Host "   $remoteUrl/compare/$branch...$newBranch`?expand=1"

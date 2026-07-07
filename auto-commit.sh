@@ -84,6 +84,11 @@ if echo "$PUSH_OUTPUT" | grep -qi "must be made through a pull request\|protecte
   git branch "$NEW_BRANCH"
   if git push origin "$NEW_BRANCH"; then
     REMOTE_URL="$(git remote get-url origin | sed -E 's#\.git$##')"
+    if [[ "$REMOTE_URL" =~ ^git@github\.com:(.+)$ ]]; then
+      REMOTE_URL="https://github.com/${BASH_REMATCH[1]}"
+    elif [[ "$REMOTE_URL" =~ ^ssh://git@github\.com/(.+)$ ]]; then
+      REMOTE_URL="https://github.com/${BASH_REMATCH[1]}"
+    fi
     echo "✅ Branch '$NEW_BRANCH' enviado com sucesso."
     echo "   Abre um Pull Request aqui:"
     echo "   $REMOTE_URL/compare/$BRANCH...$NEW_BRANCH?expand=1"
