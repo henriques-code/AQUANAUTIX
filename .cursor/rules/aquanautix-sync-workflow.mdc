@@ -1,0 +1,37 @@
+---
+description: Sync fim de sessão — analyze, Supabase, docs, commit/push seguro
+alwaysApply: true
+---
+
+# AQUANAUTIX — Sincronização e segurança (agente)
+
+Referência completa: **`SYNC_WORKFLOW.md`** (versionado no repo).
+
+## Quando aplicar
+
+Pedidos como: «atualizar tudo», «sync», «fechar sessão», «commit e push», ou após **feature/fix significativo** em `lib/` ou `supabase/`.
+
+## Rotina (executar — não só descrever)
+
+1. `.\tools\sync_check.ps1` na raiz do repo.
+2. Corrigir falhas de `flutter analyze` antes de commit.
+3. Se migrations novas ou `migration list` desalinhado:
+   - `.\tools\supabase_with_env.ps1 db push --yes`
+4. Actualizar docs se mudou navegação, tabs, GPS, Supabase ou fluxos:
+   - `AQUANAUTIX_CONTEXT.md`, `HANDOFF.md` (mínimo).
+5. Commit conventional — **nunca** `.env`, `Imagens/`, secrets.
+6. `git push origin main` se utilizador pediu sync/commit ou «podes ser tu».
+
+## Segurança (inviolável)
+
+- **Nunca** ler, citar ou commitar `.env` / `local_secrets.ps1`.
+- **Nunca** `dart-define` com `SUPABASE_ACCESS_TOKEN` ou `sk_`.
+- **Site V2/** — zero alterações sem **AUTORIZO** explícito.
+- Pré-commit: confirmar staging sem `.env` nem chaves; hook `tools/hooks/pre-commit.ps1` activo após `install_git_hooks.ps1`.
+
+## Definition of Done
+
+- `flutter analyze lib/` limpo
+- `migration list`: Local = Remote
+- Docs coerentes · `git status` limpo (exceto `Imagens/` untracked)
+- Push feito ou motivo documentado

@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 
+import '../../../core/fishing/bait_technique_service.dart';
 import '../../../core/location/gps_access.dart';
 import '../../../core/supabase_bootstrap.dart';
 import '../../../core/state/fishing_context_store.dart';
@@ -7,8 +8,10 @@ import '../../../core/tides/marine_bundle.dart';
 import '../../../core/tides/moon_phase.dart';
 import '../../../core/tides/open_meteo_tides_repository.dart';
 import '../../../core/tides/oracle_data_service.dart';
-import '../../../core/tides/osm_place_search.dart';
 import '../../../core/tides/region_presets.dart';
+import '../../../core/tides/tide_analysis.dart';
+import '../../../core/tides/weather_details_snapshot.dart';
+import '../../../core/tides/osm_place_search.dart';
 import '../domain/entities/community_activity.dart';
 import '../domain/entities/featured_spot.dart';
 import '../domain/entities/hourly_condition.dart';
@@ -111,6 +114,18 @@ class HomeRepositoryImpl implements HomeRepository {
         moonPhase: 'Crescente',
         moonIcon: '🌙',
         solunarScore: OracleDataService.instance.lastBundle?.score ?? 49,
+        waterTempC: 17,
+        highTideTime: DateTime(now.year, now.month, now.day, 20, 15),
+        highTideHeightM: 1.6,
+        pressure: 1012,
+        pressureTrendDown: true,
+        sunset: DateTime(now.year, now.month, now.day, 20, 32),
+        fiveDayForecast: repo._fallbackFiveDay(now, score: 49),
+        recommendation: HomeRecommendation(
+          headline: 'Vai a ${preset.label} hoje às 18:00',
+          detail: 'Usa borracha 14 cm · Spinning em rocha',
+          footer: 'Maré enchente · SW protegido · Score 49',
+        ),
       ),
       hourlyConditions: repo._fallbackHourly(now),
       featuredSpots: _featuredSpotsBase,
@@ -191,7 +206,13 @@ class HomeRepositoryImpl implements HomeRepository {
       int? windDirDeg,
       double? waveHeightM,
       int? weatherCode,
+      double? waterTempC,
+      double? pressureHpa,
     })? cur;
+    DateTime? sunset;
+    DateTime? highTideTime;
+    double? highTideHeightM;
+    bool? pressureTrendDown;
     try {
       final tz = TideMapPreset.timezoneForCountry(ctx.country);
       final results = await Future.wait([
@@ -203,6 +224,22 @@ class HomeRepositoryImpl implements HomeRepository {
           pastDays: 0,
           forecastDays: 1,
         ),
+        _meteo.fetchWeatherDetails(
+          latitude: lat,
+          longitude: lon,
+          timezone: tz,
+          tideHeightM: bundle?.tideHeightM,
+          tideTrendPt: bundle?.tideTrendPt ?? '',
+          moonPct: bundle?.moonPct ?? 0,
+          moonPhaseLabel: bundle?.moonPhaseShortPt ?? '',
+        ),
+        _meteo.fetchSeries(
+          latitude: lat,
+          longitude: lon,
+          timezone: tz,
+          pastDays: 0,
+          forecastDays: 2,
+        ),
       ]);
       cur = results[0] as ({
         double? tempC,
@@ -210,10 +247,25 @@ class HomeRepositoryImpl implements HomeRepository {
         int? windDirDeg,
         double? waveHeightM,
         int? weatherCode,
+        double? waterTempC,
+        double? pressureHpa,
       })?;
       final series = results[1] as List<ForecastWeatherHour>;
       final mapped = _mapHourly(series, now);
       if (mapped.isNotEmpty) hourly = mapped;
+
+      final details = results[2] as WeatherDetailsSnapshot?;
+      sunset = details?.sunset;
+      if (details != null && details.pressureSparkline.length >= 2) {
+        final p0 = details.pressureSparkline.first;
+        final p1 = details.pressureSparkline.last;
+        pressureTrendDown = p1 < p0;
+      }
+
+      final marineSeries = results[3] as List<MarineHourPoint>;
+      final nextHigh = _nextHighTide(marineSeries, now);
+      highTideTime = nextHigh?.$1;
+      highTideHeightM = nextHigh?.$2;
     } catch (_) {
       try {
         cur = await _meteo.fetchCurrentConditions(
@@ -223,14 +275,26 @@ class HomeRepositoryImpl implements HomeRepository {
       } catch (_) {}
     }
 
+    final spots = _spotsWithDistance(lat, lon, waveHeightM: cur?.waveHeightM ?? 0.8);
+
     // 5. Monta WeatherData
-    final weather = _buildWeatherData(bundle, cur, now);
+    final weather = _buildWeatherData(
+      bundle,
+      cur,
+      now,
+      hourly: hourly,
+      sunset: sunset,
+      highTideTime: highTideTime,
+      highTideHeightM: highTideHeightM,
+      pressureTrendDown: pressureTrendDown,
+      topSpotName: spots.isNotEmpty ? spots.first.name : preset.label,
+    );
 
     return HomeDashboardData(
       userDisplayName: _getUserDisplayName(),
       weather: weather,
       hourlyConditions: hourly,
-      featuredSpots: _spotsWithDistance(lat, lon, waveHeightM: cur?.waveHeightM ?? 0.8),
+      featuredSpots: spots,
       communityActivities: _communityActivities(now),
       lastUpdated: now,
     );
@@ -245,9 +309,18 @@ class HomeRepositoryImpl implements HomeRepository {
       int? windDirDeg,
       double? waveHeightM,
       int? weatherCode,
+      double? waterTempC,
+      double? pressureHpa,
     })? cur,
-    DateTime now,
-  ) {
+    DateTime now, {
+    required List<HourlyCondition> hourly,
+    DateTime? sunset,
+    DateTime? highTideTime,
+    double? highTideHeightM,
+    bool? pressureTrendDown,
+    required String topSpotName,
+  }) {
+    final ctx = FishingContextStore.instance.value.value;
     // Temperatura: preferência bundle (Open-Meteo marine+weather) > current
     final tempC = bundle?.tempC ?? cur?.tempC ?? 18.0;
 
@@ -256,14 +329,12 @@ class HomeRepositoryImpl implements HomeRepository {
     if (bundle != null && bundle.locationHeadline.isNotEmpty) {
       location = bundle.locationHeadline;
     } else {
-      final preset = TideMapPreset.forRegion(
-        FishingContextStore.instance.value.value.region,
-      );
+      final preset = TideMapPreset.forRegion(ctx.region);
       location = preset.label;
     }
 
     // Pressão
-    final pressureHpa = bundle?.pressureHpa ?? cur?.tempC;
+    final pressureHpa = (bundle?.pressureHpa ?? cur?.pressureHpa)?.round();
 
     // Maré — MSL pode ser negativo; não usar tideHeight > 0 para visibilidade.
     final tideHeightOpt = bundle?.tideHeightM;
@@ -272,7 +343,8 @@ class HomeRepositoryImpl implements HomeRepository {
     final tideRising = bundle != null
         ? (bundle.tideTrendPt.contains('subir') ||
             bundle.tideTrendPt.contains('↑') ||
-            bundle.tideTrendPt.contains('creciente'))
+            bundle.tideTrendPt.contains('creciente') ||
+            bundle.tideTrendPt.contains('Enchente'))
         : true;
 
     // Lua
@@ -296,6 +368,32 @@ class HomeRepositoryImpl implements HomeRepository {
     final condIcon = _wmoIcon(cur?.weatherCode);
     final condText = _wmoText(cur?.weatherCode);
 
+    final fiveDay = bundle != null && bundle.forecast.isNotEmpty
+        ? [
+            for (var i = 0; i < bundle.forecast.length && i < 5; i++)
+              HomeDayForecastChip(
+                dayLabel: bundle.forecast[i].dayLabel,
+                score: bundle.forecast[i].score,
+                isHighlighted: i == 1,
+              ),
+          ]
+        : _fallbackFiveDay(now, score: solunarScore);
+
+    final bestHour = hourly.isNotEmpty
+        ? hourly.firstWhere((h) => h.isBestHour, orElse: () => hourly.first).hour
+        : '18:00';
+
+    final rig = BaitTechniqueService.recommend(
+      targetSpecies: ctx.species,
+      isRio: ctx.region.toLowerCase().contains('rio') ||
+          ctx.region.toLowerCase().contains('barra'),
+      month: now.month,
+      tideState: bundle?.tideTrendPt ?? (tideRising ? 'enchente' : 'vazante'),
+    );
+
+    final tideFooter = tideRising ? 'Maré enchente' : 'Maré vazante';
+    final windFooter = windDir != null ? '$windDir protegido' : 'Vento variável';
+
     return WeatherData(
       location: location,
       temperature: tempC,
@@ -310,8 +408,46 @@ class HomeRepositoryImpl implements HomeRepository {
       moonPhase: moonPhase,
       moonIcon: moonIcon,
       solunarScore: solunarScore,
-      pressure: pressureHpa?.round(),
+      pressure: pressureHpa,
+      waterTempC: cur?.waterTempC,
+      highTideTime: highTideTime,
+      highTideHeightM: highTideHeightM,
+      pressureTrendDown: pressureTrendDown,
+      sunset: sunset,
+      fiveDayForecast: fiveDay,
+      recommendation: HomeRecommendation(
+        headline: 'Vai a $topSpotName hoje às $bestHour',
+        detail: 'Usa ${rig.bait} · ${rig.technique}',
+        footer: '$tideFooter · $windFooter · Score $solunarScore',
+      ),
     );
+  }
+
+  List<HomeDayForecastChip> _fallbackFiveDay(DateTime now, {required int score}) {
+    const labels = ['QUA', 'QUI', 'SEX', 'SAB', 'DOM'];
+    return List.generate(5, (i) {
+      final s = (score + (i - 1) * 8).clamp(30, 85);
+      return HomeDayForecastChip(
+        dayLabel: labels[i],
+        score: s,
+        isHighlighted: i == 1,
+      );
+    });
+  }
+
+  (DateTime, double)? _nextHighTide(List<MarineHourPoint> series, DateTime now) {
+    if (series.isEmpty) return null;
+    for (var dayOffset = 0; dayOffset <= 1; dayOffset++) {
+      final day = now.add(Duration(days: dayOffset));
+      final hours = hoursForDay(series, day);
+      final extrema = detectTideExtrema(hours);
+      for (final e in extrema) {
+        if (e.isHigh && e.time.isAfter(now.subtract(const Duration(minutes: 5)))) {
+          return (e.time, e.heightM);
+        }
+      }
+    }
+    return null;
   }
 
   // ─── Condições horárias (score por hora) ────────────────────────────────────

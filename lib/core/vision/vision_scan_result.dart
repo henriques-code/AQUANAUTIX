@@ -29,9 +29,9 @@ class VisionScanResult {
     return VisionScanResult(
       matchedSpecies: species,
       rawScientific: species.cientifico,
-      lengthCm: 42,
-      weightKg: 1.2,
-      confidence: 98,
+      lengthCm: 58.0,
+      weightKg: 3.10,
+      confidence: 92,
       usedFallbackDemo: true,
     );
   }
@@ -43,9 +43,9 @@ class VisionScanResult {
     return VisionScanResult(
       matchedSpecies: demoSpecies,
       rawScientific: demoSpecies.cientifico,
-      lengthCm: 42,
-      weightKg: 1.2,
-      confidence: 72,
+      lengthCm: 58.0,
+      weightKg: 3.10,
+      confidence: 92,
       usedFallbackDemo: true,
       errorMessage: errorMessage,
     );

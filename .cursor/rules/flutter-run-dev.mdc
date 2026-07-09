@@ -1,0 +1,28 @@
+---
+description: Correr a app Flutter com tokens do .env via run_dev.ps1 — nunca flutter run a seco.
+globs:
+  - tools/run_dev.ps1
+  - tools/flutter_*_with_env.ps1
+alwaysApply: false
+---
+
+# AQUANAUTIX — Correr a app Flutter (dev)
+
+## Comando obrigatório
+
+**Sempre** usar o script com tokens do `.env` — **nunca** `flutter run` a seco:
+
+```powershell
+.\tools\run_dev.ps1 -d <DEVICE_ID>
+```
+
+Dispositivo de teste habitual: `WWZLYDXWYXT8PV5D` (Xiaomi 22031116BG).
+
+## Porquê
+
+- Injeta `--dart-define` para `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `MAPBOX_ACCESS_TOKEN`, `OPENAI_API_KEY`, RevenueCat, etc.
+- Sem isto: Supabase não inicializa, APIs falham, ecrã vermelho no Início.
+
+## Agente
+
+Ao pedir «run flutter», «correr app», «testar no Xiaomi», etc. → usar **sempre** `.\tools\run_dev.ps1 -d …`, não `flutter run` directo.

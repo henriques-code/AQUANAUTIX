@@ -1,0 +1,250 @@
+---
+description: Backlog completo AQUANAUTIX ordenado por impacto financeiro (P1–P17). Usar quando o utilizador pedir uma feature do backlog ou prioridades de produto.
+alwaysApply: false
+---
+
+# AQUANAUTIX — Backlog por Impacto Financeiro
+
+> Ordenado por: **virality → conversão FREE→PRO → retenção → receita passiva**
+> Quando o utilizador pedir qualquer uma destas features, confirmar qual e implementar.
+
+---
+
+## 🔴 P1 — ASSISTENTE IA DE PESCA (AQUANAUTIX AI)
+**Impacto: maior diferenciador, justifica PRO sozinho**
+
+Chat conversacional com contexto completo do pescador, spot e condições actuais.
+- Linguagem natural PT/EN/ES
+- **Contexto total**: GPS, spot, maré, espécie alvo, score Oráculo, histórico
+- Responde a: "Que isco uso agora?", "Vale a pena ficar mais?"
+- Sugere técnicas baseadas no histórico do utilizador
+- Analisa foto da captura e dá feedback técnico
+- Modo voz (speech-to-text) para usar sem tirar as luvas
+- Memória de conversas anteriores no spot
+
+```dart
+final response = await AIAssistantService.chat(
+  userMessage: message,
+  context: AssistantContext(
+    gpsLocation: currentGPS,
+    currentSpot: activeSpot,
+    tideData: currentTide,
+    oracleScore: oracleScore,
+    recentCatches: logbook.last7days,
+    targetSpecies: selectedSpecies,
+    weather: currentWeather,
+  ),
+);
+```
+**Stack:** OpenAI GPT-4o via Supabase Edge Function
+
+---
+
+## 🔴 P2 — VISION SCANNER ANIMADO
+**Impacto: feature mais viral, motor de aquisição orgânica**
+
+- Linha de scan animada a percorrer o viewfinder
+- Contador de confiança a subir 0% → 98% com efeito numérico
+- Haptic feedback + som ao identificar
+- Resultado aparece com slide-up suave
+- Cada identificação partilhável com marca de água AQUANAUTIX
+
+---
+
+## 🔴 P3 — RECOMENDAÇÃO DE ISCO + CANA + TÉCNICA DE PESCA
+**Impacto: uso diário, diferenciador ibérico forte, nenhum concorrente faz**
+
+O Oráculo analisa GPS + espécie alvo + maré + época e recomenda:
+- **Que isco usar** naquele spot naquele momento
+- **Que tipo de cana e linha** usar
+- **Que técnica** aplicar
+
+| Espécie  | Isco                          | Cana            | Técnica           |
+|----------|-------------------------------|-----------------|-------------------|
+| Robalo   | Lula, minhoca, borracha       | Spinning 9-12ft | Spinning / Jigging|
+| Dourada  | Minhoca, amêijoa, polvo       | Surf 3.9-4.2m   | Surfcasting       |
+| Corvina  | Rapete de peixe, calamar      | Bottom 4m       | Fundo             |
+| Sargo    | Caranguejo, mexilhão          | Rock 3-4m       | Rocha / Float     |
+| Cherne   | Polvo, isco natural           | Jigging 2m      | Jigging profundo  |
+| Linguado | Minhoca, amêijoa              | Surf 3.6-4.2m   | Fundo praia       |
+| Polvo    | Jigs, borracha                | Spinning 2-3m   | Jigging           |
+| Raia     | Sardinha, arenque             | Surf pesado     | Fundo arenoso     |
+| Barbo    | Milho, minhoca, massa         | Rio 3-4m        | Fundo rio / Float |
+| Achigã   | Jig, shad, popper             | Bait 6-8ft      | Spinning / Topwater|
+
+### Técnicas de pesca — definições
+- **Surfcasting**: lançamento de praia, pesos 60-200g, linha 0.28-0.35, distâncias >60m
+- **Jigging**: profundidade >15m, jig metálico 20-150g, acção vertical rápida
+- **Spinning**: costa rochosa, artificial 5-40g, pesca activa e exploratória
+- **Fundo (bottom)**: isco natural estático, chumbada, anzol duplo, espera
+- **Rocha / Rock fishing**: linha fina, anzol pequeno, precisão, posição elevada
+- **Float fishing**: bóia, isca a meio fundo, corrente lenta, suave
+- **Topwater**: superfície, popper/stickbait, manhã/entardecer, acção lenta
+- **Fly fishing**: rio, mosca seca/molhada, lançamento técnico, corrente viva
+
+Integra com o ecrã Oráculo (card "🎣 Isco + Técnica" abaixo da Janela de Ouro).
+
+---
+
+## 🟠 P4 — BLUR VISUAL NOS SPOTS PRO/ELITE NO MAPA
+**Impacto: FOMO visual, converte FREE→PRO melhor que texto**
+
+- FREE vê os spots no mapa mas **desfocados + cadeado**
+- Ao tocar num spot bloqueado: drawer com "Desbloqueia com PRO"
+- Spots ELITE têm anel dourado e são só visíveis para ELITE
+- Nunca remover o pin — só bloquear o conteúdo
+
+---
+
+## 🟠 P5 — NOTIFICAÇÃO PUSH JANELA DE OURO
+**Impacto: hábito diário, retém utilizadores, abre app sem esforço**
+
+```
+📍 Sesimbra · Score 79 amanhã 07:15
+⚡ Janela de Ouro — Maré + Solunar alinhados
+Abre o Oráculo →
+```
+- PRO recebe alertas do spot favorito
+- FREE recebe 1 alerta/semana (gatilho de upgrade)
+- Personalizável: espécie alvo + distância máxima do spot
+
+---
+
+## 🟠 P6 — TIER ELITE + ÂNCORA DE PREÇO
+**Impacto: aumenta ARPU, faz PRO parecer barato por comparação**
+
+```
+FREE €0      PRO €9.99/mês      ELITE €79/ano
+```
+- ELITE inclui: todos os spots, IA ilimitada, alertas push ilimitados,
+  exportação CSV, prioridade de suporte, badge no perfil
+- Presença do ELITE faz o PRO converter melhor (pricing psychology)
+
+---
+
+## 🟡 P7 — ESPÉCIES + MEDIDAS LEGAIS PT/ES
+**Impacto: confiança, compliance, diferenciador legal único no mercado ibérico**
+
+- 200+ espécies do Atlântico Ibérico catalogadas
+- Tamanho mínimo legal por espécie e país (PT/ES)
+- Épocas de veda por espécie e zona
+- Quota diária máxima
+- Verificação automática após Vision Scanner (legal / ilegal)
+- Alertas de veda na zona GPS actual
+- Regulamentações actualizadas (DGRM + MITERD)
+- Badge "✅ Legal PT" / "❌ Fora da época" visível no resultado da IA
+
+---
+
+## 🟡 P8 — AFILIADOS NO LOGBOOK
+**Impacto: receita passiva sem esforço, escala com utilizadores**
+
+- Cada entrada do Logbook já tem o isco usado ("Shad 14cm", "Minhoca")
+- Converter cada isco num link de afiliado para loja parceira
+- Card discreto: "🪝 Comprar Shad 14cm → Decathlon / Tackle Deals"
+- Comissão por clique/compra sem fricção no UX
+
+---
+
+## 🟡 P9 — COMUNIDADE GHOST MODE SOCIAL
+**Impacto: motor de crescimento orgânico, nunca expõe coordenadas**
+
+- Feed de capturas anónimas por zona (raio mínimo 5 km — nunca lat/lng exacto)
+- Tab "COMUNIDADE" no Logbook ao lado de "AS MINHAS"
+- Estrutura: `zone_id` (geohash 5 chars ≈ 5km×5km) — centróide público, ponto real privado
+- PRO vê raio 5km · FREE vê só nome da zona
+- Badge 👻 GHOST confirma anonimato em cada entrada
+
+---
+
+## 🟡 P10 — LOJAS DE ISCO POR GPS
+**Impacto: receita contextual, útil exactamente quando o pescador precisa**
+
+- Quando Janela de Ouro activa: "🪝 Comprar isco perto de mim (2 lojas · 1.2km)"
+- Mapa com pins de lojas de isco num raio configurável
+- Horários, contacto, especialidade (vivos / artificial)
+- Parceria de afiliado com lojas regionais
+
+---
+
+## 🟢 P11 — PARTILHA COM MARCA DE ÁGUA
+**Impacto: marketing orgânico gratuito, cada partilha = anúncio**
+
+- Botão PARTILHAR no Logbook gera imagem formatada com:
+  - Foto da captura + espécie + peso + spot (zona, sem coordenadas)
+  - Marca de água `AQUANAUTIX` discreta no canto
+  - Score do Oráculo naquele momento
+- Viral loop: cada post nas redes = novos utilizadores
+
+---
+
+## 🟢 P12 — DADOS DE RIOS IBÉRICOS (SNIRH/SAIH)
+**Estado: ✅ Toggle COSTA/RIO implementado no Oráculo**
+
+- SNIRH para Portugal — caudais, níveis, temperatura
+- SAIH/CEDEX para Espanha — rede hidrométrica
+- APIs públicas e gratuitas
+- Integrado no toggle do Oráculo (P1 já feito)
+- Próximo passo: pins de estações no Mapa
+
+---
+
+## 🟢 P13 — FILTROS DE ESPÉCIES NO MAPA
+**Impacto: UX, cross-sell com base de dados existente**
+
+- Chips de espécie no topo do sheet de Spots
+- Ao seleccionar: pins do mapa aumentam/diminuem conforme probabilidade
+- Cruza com sazonalidade + compliance PT/ES automaticamente
+
+---
+
+## 🟢 P14 — HISTÓRICO DE SCORE NO ORÁCULO
+**Impacto: vício/streak, retém utilizadores avançados**
+
+- Mini gráfico com scores dos últimos 30 dias
+- Lógica do streak diário (tipo Duolingo)
+- "Melhor semana do ano 🏆" quando score médio acima de X
+
+---
+
+## 🟠 P15 — AR MEASUREMENT NO VISION SCANNER
+**Impacto: feature mais viral depois do scan — diferenciador directo vs Fishbuddy**
+*(Inspirado na análise competitiva Fishbuddy, Maio 2026)*
+
+Após identificar a espécie, calcular comprimento e peso a partir da foto:
+- Utilizar ML Kit Pose Estimation ou MediaPipe como referência de escala (mão/dedos do utilizador ou objeto de referência)
+- Comprimento estimado em cm + peso calculado por fórmula por espécie (length-weight relationship)
+- Resultado integrado no Logbook automaticamente: espécie + comprimento + peso + foto
+- Verificação de legalidade imediata (tamanho mínimo legal PT/ES — liga ao P7)
+- Sem patente necessária — abordagem por referência de escala é diferente da abordagem AR do Fishbuddy
+
+---
+
+## 🟠 P16 — SPOTS AUTOMÁTICOS POR BATIMETRIA (IA)
+**Impacto: escala de conteúdo sem curadoria manual — Fishbuddy tem 750k spots assim**
+*(Inspirado na análise competitiva Fishbuddy, Maio 2026)*
+
+Gerar pins automáticos a partir dos dados GEBCO já no backlog:
+- Detectar drop-offs, picos subaquáticos, canais e fundos rochosos por análise de gradiente batimétrico
+- Gerar spots tier FREE com label automática ("Pico -18m", "Drop-off -32m")
+- Spots sem curadoria humana — marcados visualmente como "IA" no pin
+- Integra com P4 (blur/lock em spots PRO) — spots IA PRO têm dados de espécie estimada por GPS+época
+
+---
+
+## 🟡 P17 — ACHIEVEMENTS + XP + NÍVEIS
+**Impacto: retenção tipo Duolingo — Fishbuddy tem 20 níveis, criar sistema ibérico superior**
+*(Inspirado na análise competitiva Fishbuddy, Maio 2026)*
+
+Sistema de gamificação no Logbook + Perfil:
+- XP por captura registada (ponderado por espécie + comprimento + raridade)
+- 20+ níveis com nomes ibéricos ("Pescador de Costa", "Mestre das Marés", "Lenda do Atlântico")
+- Badges por milestones: 1ª captura, 10 espécies diferentes, streak 7 dias, captura acima do mínimo legal
+- Streak diário (abrir app + registar captura) com quebra visual se falhar
+- Badge "👻 Ghost" para utilizadores que partilham na Comunidade com privacidade total
+- Visível no Perfil; PRO vê ranking regional anónimo
+
+---
+
+## Regra de alerta
+Quando o utilizador mencionar qualquer feature desta lista, identificar o número da prioridade e confirmar antes de implementar.

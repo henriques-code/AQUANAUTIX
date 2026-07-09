@@ -1,0 +1,40 @@
+﻿# Segredos — nunca indexar
+.env
+.env.*
+tools/local_secrets.ps1
+credentials.json
+*.pem
+*.p12
+*Token*.txt
+*token*.txt
+*ghp_*.txt
+*github_pat_*.txt
+android/key.properties
+android/local.properties
+android/app/google-services.json
+client_secret*.json
+
+# Build / artefactos Flutter
+build/
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+windows/flutter/ephemeral/
+*.apk
+*.aab
+*.mp4
+
+# Binarios pesados e pasta local de imagens
+Imagens/
+assets/video_bg.mp4
+
+# Site V2 — app Flutter e prioridade; site so com AUTORIZO explicito
+Site V2/
+
+# Node / deploy local
+Site V2/node_modules/
+.vercel/
+Site V2/.vercel/
+
+# Supabase temp
+supabase/.temp/
