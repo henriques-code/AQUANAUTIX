@@ -139,6 +139,8 @@ class OpenMeteoTidesRepository {
         int? windDirDeg,
         double? waveHeightM,
         int? weatherCode,
+        double? waterTempC,
+        double? pressureHpa,
       })> fetchCurrentConditions({
     required double latitude,
     required double longitude,
@@ -147,16 +149,19 @@ class OpenMeteoTidesRepository {
       'latitude': latitude.toString(),
       'longitude': longitude.toString(),
       'current':
-          'temperature_2m,wind_speed_10m,wind_direction_10m,weather_code',
+          'temperature_2m,wind_speed_10m,wind_direction_10m,weather_code,'
+          'surface_pressure',
+      'daily': 'sunset',
+      'forecast_days': '1',
       'wind_speed_unit': 'kmh',
     });
     final marineUri = Uri.https(_marineHost, '/v1/marine', {
       'latitude': latitude.toString(),
       'longitude': longitude.toString(),
-      'current': 'wave_height',
+      'current': 'wave_height,sea_surface_temperature',
     });
 
-    double? tempC, windSpeedKmh, waveHeightM;
+    double? tempC, windSpeedKmh, waveHeightM, waterTempC, pressureHpa;
     int? windDirDeg, weatherCode;
 
     try {
@@ -172,11 +177,13 @@ class OpenMeteoTidesRepository {
         windSpeedKmh = (c?['wind_speed_10m'] as num?)?.toDouble();
         windDirDeg = (c?['wind_direction_10m'] as num?)?.toInt();
         weatherCode = (c?['weather_code'] as num?)?.toInt();
+        pressureHpa = (c?['surface_pressure'] as num?)?.toDouble();
       }
       if (mRes.statusCode == 200) {
         final m = jsonDecode(mRes.body) as Map<String, dynamic>;
         final c = m['current'] as Map<String, dynamic>?;
         waveHeightM = (c?['wave_height'] as num?)?.toDouble();
+        waterTempC = (c?['sea_surface_temperature'] as num?)?.toDouble();
       }
     } catch (_) {
       // best-effort — caller usa fallbacks
@@ -188,6 +195,8 @@ class OpenMeteoTidesRepository {
       windDirDeg: windDirDeg,
       waveHeightM: waveHeightM,
       weatherCode: weatherCode,
+      waterTempC: waterTempC,
+      pressureHpa: pressureHpa,
     );
   }
 

@@ -173,7 +173,7 @@ O `.env` na raiz do repo contém **todas** as chaves — nunca versionar. Ver ta
 
 ### 8.5 Migration SQL
 
-`supabase/migrations/20260703120000_subscription_tier_sync.sql` — função `public.sync_user_subscription_tier` (só `service_role`).
+`supabase/migrations/20260703142155_subscription_tier_sync.sql` — função `public.sync_user_subscription_tier` (só `service_role`).
 
 ---
 

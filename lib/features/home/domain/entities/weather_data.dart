@@ -1,3 +1,27 @@
+class HomeDayForecastChip {
+  const HomeDayForecastChip({
+    required this.dayLabel,
+    required this.score,
+    this.isHighlighted = false,
+  });
+
+  final String dayLabel;
+  final int score;
+  final bool isHighlighted;
+}
+
+class HomeRecommendation {
+  const HomeRecommendation({
+    required this.headline,
+    required this.detail,
+    required this.footer,
+  });
+
+  final String headline;
+  final String detail;
+  final String footer;
+}
+
 class WeatherData {
   const WeatherData({
     required this.location,
@@ -14,6 +38,13 @@ class WeatherData {
     this.solunarScore = 0,
     this.windDir,
     this.pressure,
+    this.waterTempC,
+    this.highTideTime,
+    this.highTideHeightM,
+    this.pressureTrendDown,
+    this.sunset,
+    this.fiveDayForecast = const [],
+    this.recommendation,
   });
 
   final String location;
@@ -31,4 +62,11 @@ class WeatherData {
   final int solunarScore;
   final String? windDir;
   final int? pressure;
+  final double? waterTempC;
+  final DateTime? highTideTime;
+  final double? highTideHeightM;
+  final bool? pressureTrendDown;
+  final DateTime? sunset;
+  final List<HomeDayForecastChip> fiveDayForecast;
+  final HomeRecommendation? recommendation;
 }

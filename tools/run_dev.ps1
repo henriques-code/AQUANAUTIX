@@ -43,20 +43,33 @@ function Restart-Adb {
     return $true
 }
 
-function Test-AdbDevice([string]$deviceId) {
+function Get-AdbDeviceState([string]$deviceId) {
+    # Devolve 'device', 'unauthorized', 'offline' ou $null (nao encontrado).
+    if (-not (Ensure-AdbPath)) { return $null }
     $lines = & adb devices 2>&1
     foreach ($line in $lines) {
-        if ($line -match '^\s*(\S+)\s+device') {
+        if ($line -match '^\s*(\S+)\s+(device|unauthorized|offline)\s*') {
             $id = $Matches[1]
-            if (-not $deviceId -or $id -eq $deviceId) { return $true }
+            $state = $Matches[2]
+            if (-not $deviceId -or $id -eq $deviceId) { return $state }
         }
     }
-    return $false
+    return $null
 }
 
-function Wait-AdbDevice([string]$deviceId, [int]$seconds = 20) {
+function Test-AdbDevice([string]$deviceId) {
+    return (Get-AdbDeviceState $deviceId) -eq 'device'
+}
+
+function Wait-AdbDevice([string]$deviceId, [int]$seconds = 25) {
+    $warnedUnauthorized = $false
     for ($i = 0; $i -lt $seconds; $i++) {
-        if (Test-AdbDevice $deviceId) { return $true }
+        $state = Get-AdbDeviceState $deviceId
+        if ($state -eq 'device') { return $true }
+        if ($state -eq 'unauthorized' -and -not $warnedUnauthorized) {
+            Write-Warning "Dispositivo $deviceId pediu autorizacao USB. Verifica o telemovel e aceita o popup 'Permitir depuracao USB' (marca 'sempre permitir')."
+            $warnedUnauthorized = $true
+        }
         Start-Sleep -Seconds 1
     }
     return $false
@@ -170,15 +183,39 @@ if ($Miui) {
 }
 
 if ($d) {
-    Restart-Adb | Out-Null
-    if (-not (Wait-AdbDevice $d 5)) {
-        Write-Warning "Device $d nao visivel no ADB."
+    Ensure-AdbPath | Out-Null
+    if (-not (Test-AdbDevice $d)) {
+        # So reiniciar o servidor ADB (disruptivo, pode desligar a ligacao USB
+        # por instantes) quando o dispositivo NAO esta ja visivel e a funcionar.
+        Write-Host "[ADB] $d nao esta visivel - a reiniciar servidor ADB e a aguardar..." -ForegroundColor Yellow
+        Restart-Adb | Out-Null
+        if (-not (Wait-AdbDevice $d 25)) {
+            $state = Get-AdbDeviceState $d
+            if (-not $state) { $state = 'nao detectado' }
+            Write-Error @"
+Dispositivo $d nao ficou disponivel no ADB apos 25s (estado: $state).
+Verifica:
+  1) Cabo USB liga dados (nao so carregamento) e a porta USB.
+  2) 'Depuracao USB' activa em Definicoes > Opcoes de programador.
+  3) Popup 'Permitir depuracao USB' aceite no telemovel (activa 'sempre permitir deste computador').
+  4) Se o problema persistir, tenta: .\tools\run_dev.ps1 -d $d -Miui
+"@
+            exit 1
+        }
     }
 }
 
 $deviceFlag = if ($d) { @('-d', $d) } else { @() }
+$apk = Join-Path $root "build\app\outputs\flutter-apk\app-debug.apk"
+
+if ($SkipBuild -and $d -and (Test-Path $apk)) {
+    Write-Host "[SkipBuild] APK existente - a saltar Gradle (arranque ~30-60s)" -ForegroundColor Cyan
+    & flutter run -d $d "--use-application-binary=$apk" @dartDefines
+    exit $LASTEXITCODE
+}
 
 Write-Host "flutter run $($deviceFlag -join ' ') [+ dart-defines]" -ForegroundColor Cyan
-Write-Host "Xiaomi lento? Use: .\tools\run_dev.ps1 -d $d -Miui" -ForegroundColor DarkGray
+Write-Host 'APK ja compilado? Use: .\tools\run_dev.ps1 -d <device> -SkipBuild' -ForegroundColor DarkGray
+Write-Host 'Xiaomi lento? Use: .\tools\run_dev.ps1 -d <device> -Miui -SkipBuild' -ForegroundColor DarkGray
 
 & flutter run @deviceFlag @dartDefines

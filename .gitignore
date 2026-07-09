@@ -23,7 +23,9 @@ windows/flutter/ephemeral/
 # IDE
 .idea/
 .vscode/
-.cursor/
+.cursor/*
+!.cursor/rules/
+!.cursor/rules/**
 
 # Android keystore (NEVER commit)
 android/key.properties

@@ -1,0 +1,59 @@
+---
+description: Comunidade Ghost + princípio de acções (nunca só leitura). Usar ao trabalhar Oráculo, Logbook, Comunidade ou CTAs de produto.
+alwaysApply: false
+---
+
+# AQUANAUTIX — Comunidade + Acções (não só leitura)
+
+## Princípio de produto (obrigatório)
+
+A app **não pode ser só consulta**. Cada ecrã principal deve ter **botões/acções** que o pescador pode executar — não apenas dados passivos.
+
+- **Errado:** score, gráficos e texto sem CTA
+- **Certo:** decisão + acção imediata (registar, partilhar, comparar, alertar, ir ao mapa, publicar na comunidade)
+
+## Comunidade — prioridade estratégica
+
+A **Comunidade Ghost** (P9 backlog) é **muito relevante** para retenção, viralidade e diferenciação ibérica. **Nunca esquecer** ao planear Oráculo, Mapa, Logbook ou Início.
+
+### Invariantes Ghost Mode
+- `zone_id` (geohash ~5 km) — nunca lat/lng exacto em público
+- Badge 👻 em entradas anónimas
+- Feed por zona; PRO vê raio 5 km · FREE vê nome da zona
+
+### Stack existente (usar, não reinventar)
+- `lib/core/community/` — `CommunityRepository`, `CommunityStore`, `CommunityPost`
+- Logbook tab **COMUNIDADE** — like, publicar (`PUBLICAR NA COMUNIDADE`)
+- Início — `CommunityActivityCard` (compacto)
+- Mapa — pin `communityHexAvatar` preparado
+
+## Oráculo — acções obrigatórias (além de leitura)
+
+Ao implementar Sprint Oráculo «Decisão», incluir CTAs:
+
+| Acção | Onde | Liga a |
+|-------|------|--------|
+| **Registar captura** | Card Decisão / pós-janela | Logbook novo registo |
+| **Partilhar na comunidade** | Após score alto ou captura | Logbook → COMUNIDADE (Ghost) |
+| **Ver actividade na zona** | Bloco comunidade no Oráculo | Feed filtrado por `zone_id` GPS |
+
+## Oráculo — 6 métricas pesca (fold visível, não só leitura)
+
+Grelha **2×3** no fold (meteorologia completa colapsada):
+
+| Maré | Vento | Ondas |
+| Temp. **água** | **Corrente** | Pressão |
+
+- **Temp. água** — Open-Meteo marine / bundle COSTA
+- **Corrente** — `ocean_current_velocity` + direcção (card Correntes actual, compacto no fold)
+| **Ir ao mapa** | Spots próximos com score | Tab Mapa |
+| **Comparar sítios** | Planeamento (PRO) | Segundo fetch Nominatim |
+| **Alertar janela** | Só quando push real; senão `[EM BREVE]` desactivado | PRO / notificações |
+
+## Critério de aceitação por ecrã
+
+Antes de dar feature por fechada: **≥1 botão primário + ≥1 secundário** com efeito real (navegação, persistência, ou estado). Snackbar «demo» sem badge EM BREVE = rejeitar.
+
+## Ordem no plano de execução
+
+Comunidade no Oráculo entra em **P1.4** (após Decisão + timeline): bloco «👻 Actividade na zona» + botão **Ver comunidade** / **Partilhar condições** (Ghost, sem coords).

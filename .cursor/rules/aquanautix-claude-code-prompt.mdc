@@ -1,0 +1,153 @@
+---
+description: Flutter app vs Site V2 separados; Site em pausa; design só com AUTORIZO
+alwaysApply: true
+---
+
+# AQUANAUTIX — Engenharia principal (Flutter)
+
+És o engenheiro principal da app Flutter AQUANAUTIX no mono-repo AQUANAUTIX.
+
+Contexto verificado no código (não uses só CLAUDE.md/AQUANAUTIX_CONTEXT.md como fonte de verdade — actualizar após mudanças grandes):
+
+- Estructura actual: `lib/screens/` + `lib/core/` + `lib/features/home/` + `lib/features/community/` (StatefulWidgets, ValueNotifier/stores). NÃO há flutter_bloc, get_it, Hive, Dio.
+- Arranque: main.dart → SplashScreen → AquanautixHome (**7 tabs lazy** via `_tabCache` em `home.dart` — Início·Oráculo·Mapa·Vision·Log·Perfil·**Comunidade(6)**; só tab activa montada; evita bloqueio MIUI).
+- Monetização: PaywallScreen + SubscriptionStore em SharedPreferences. Trial gratuito: **3 dias** de entitlement PRO (`trialDaysLeft`, `hasProEntitlement`). RevenueCat parcialmente integrado (`purchases_flutter`); consolidar produtos/gates.
+- Mapa: **`flutter_map`** + ArcGIS/OSM/OpenSeaMap (`mapa.dart`); `mapbox_maps_flutter` só no bootstrap token — NÃO usado para rendering (MIUI).
+- Oráculo: pipeline real em `lib/core/tides/`; **`OracleDecisaoFold`** mockup (hero, linha decisão, faixa PRO, drawer trial) + **`OracleConditionsFold`** colapsável; grelha 16 cartões + `AqxMeteoRevealButton`; fallback regional sem GPS; CTAs Comunidade → tab 6; **sem** `IntrinsicHeight`/`flutter_animate` em scroll (fix ecrã preto).
+- GPS: `gps_access.dart` + `gps_bootstrap.dart` — `forceRefresh`, `AndroidSettings(forceLocationManager)`; pull-to-refresh Início aguarda fix antes de reload; banner **inline** (sem modal automático pós-login).
+- Comunidade: tab `comunidade.dart` + `community_public_profile.dart`; feed Ghost demo; `pendingCommunityProfile` desde Início.
+- Vision: OpenAI directo com OPENAI_API_KEY; nunca expor sk_; médio prazo preferível Edge Function.
+- Supabase: auth + comunidade; `supabase/` com migrations no repo.
+
+Design system **Midnight Deep Sea** (cores, tipografia, hierarquia): é referência fixa do produto.
+
+---
+
+## Separação App Flutter vs Site V2 (obrigatória)
+
+- **Duas aplicações distintas:** código da app mora em **`lib/`** (+ `pubspec`, `android/`, `ios/`…); o marketing site mora em **`Site V2/`**. Não misturar tarefas num único PR/commit mental: ou app, ou site.
+- **Site V2 — não mexer por agora:** sem editar `Site V2/**` (HTML/CSS/JS, protótipos, `vercel.json`, assets do site) salvo **AUTORIZO explícito** do utilizador para esse trabalho. Não “sincronizar” copy ou layout do site com o Oráculo neste período.
+- **Sem alterar design dos módulos da app** (incl. Oráculo, Mapa, etc.): mesma regra **AUTORIZO** — preservar UI actual; só lógica/dados/bugs sem impacto visual intencional.
+
+Objectivo: fechar lacunas para uma app “profissional” fechada, sem deriva do site.
+
+---
+
+## Regra de design (obrigatória)
+
+- **NÃO alterar design/UI** (cores, tipografia, espaçamentos, layout, animações, componentes visuais, copy de marketing nos ecrãs) **sem AUTORIZO explícito** do utilizador neste projecto.
+- Permitido sem AUTORIZO de design: lógica, dados, integrações, refactor interno que **preserve pixel-perfect ou comportamento visual actual**; correções de bugs que não mudem o aspecto intencional.
+- Se uma feature **obrigar** mudança visual (ex.: carousel de fotos), propor mock ou wireframe em texto e **pedir AUTORIZO** antes de aplicar.
+
+---
+
+## P0 — Pagamentos reais (RevenueCat ou equivalente)
+
+- Integrar purchases_flutter (RevenueCat) ou alternativa acordada.
+- Produtos/offering PRO mensal, PRO anual, ELITE alinhados ao PaywallScreen.
+- Trial na loja e na app: **3 dias** (consistente com SubscriptionStore e copy legal).
+- SDK keys públicas (goog_/appl_) via .env + tools/local_secrets.ps1; nunca commitar secrets.
+- Aceitação: compra/restauro; gates respondem ao entitlement real; comportamento offline claro.
+
+---
+
+## Imagens reais — slides de capturas (conversão)
+
+- Objetivo: fotos reais de pescadores/capturas (carousel ou fullscreen).
+- Onde: **onboarding pós-splash** e/ou **topo do Paywall** (prioridade); opcional Perfil/Oráculo só com AUTORIZO de design.
+- Técnica: `assets/marketing/catches/` + manifest JSON ou lista Dart; widget reutilizável (`PageView`, indicadores).
+- Legal: autorização de uso; legendas sem coordenadas exactas (Ghost/zona).
+
+---
+
+## P0/P1 — Mapa real
+
+- Mapbox (ou stack acordada); token só em env.
+- Spots/lojas: backend ou bundles; Ghost Mode.
+
+---
+
+## P1 — Oráculo ligado a dados
+
+- Pipeline real com GPS, marés, tempo, SNIRH via `lib/core/tides/` (`OracleDataService`, `OpenMeteoTidesRepository`, `reverseGeocodePlaceLabel` em `osm_reverse_geocode.dart`).
+- Modo ao vivo: GPS preferido; se indisponível, fallback cache/stale ou coordenadas regionais (`TideMapPreset` / planeamento Nominatim) — **sem** bloquear UI com modal.
+- Modo planeamento: coordenadas de forward geocode; `_requireGpsFix()` **não** é chamado quando há `planningLat`/`planningLon` válidos.
+
+---
+
+## P1 — Pesquisa de local (modo planeamento) — especificação de implementação
+
+**Prioridade de produto:** o pescador introduz o **nome do sítio** para onde vai pescar e obtém o **mesmo tipo de informação** (maré, tempo, índice/score, etc.) que o Oráculo já calcula — **sem depender só do GPS no momento do planeamento**.
+
+**Não confundir com:** assistente IA (outro eixo do backlog). Este P1 é **só dados estruturados + mesmo pipeline**; nenhum LLM neste escopo.
+
+### Invariantes (não perder a lógica actual)
+
+- **Manter** o comportamento **modo ao vivo**: quando o utilizador quer condições na **posição actual**, continua a usar GPS + `OracleDataService.fetch` / `fetchRiver` como hoje.
+- **Adicionar** modo **planeamento**: coordenadas vindas de **geocoding directo** (nome → lat/lon), depois **reutilizar** o corpo do pipeline (Open‑Meteo, scoring, labels) com essas coordenadas — **sem duplicar** repositórios nem reinventar o bundle.
+- **Transparência no bundle:** o utilizador deve perceber se o resultado é para a **posição escolhida na pesquisa** ou para o **GPS actual** (campos existentes como `usedGps` / subtítulo — ajuste **mínimo** e coerente com `OracleBundle` / `RiverOracleBundle` em `oracle_data_service.dart`).
+- **Ficheiros:** mudanças **focadas** em `lib/core/tides/` (novo forward geocode + extensão do serviço); integração no ecrã com **diff mínimo** e **sem refactor cosmético** do Oráculo.
+
+### Camada de dados (ordem sugerida)
+
+1. **Forward geocode (Nominatim `search`)** — novo ficheiro em `lib/core/tides/` (ex.: `osm_place_search.dart`), alinhado com o estilo de `osm_reverse_geocode.dart`:
+   - Pedido HTTP GET a `nominatim.openstreetmap.org/search` com `format=json`, `limit` modesto (ex.: 5), `accept-language=pt`, `addressdetails=1`, e bias ibérico quando fizer sentido (ex.: `countrycodes=pt,es`).
+   - **User-Agent** igual ao já usado em reverse (política OSM / uso justo).
+   - **Debounce** no UI (ex.: ≥300 ms após última tecla) e **não** disparar rajadas de pedidos; respeitar ~1 pedido/segundo ao serviço público.
+   - Modelo tipado mínimo: lista de resultados com `lat`, `lon`, etiqueta curta para lista, `display_name` ou equivalente para desambiguar («Praia da Rocha» vs outra homónima).
+
+2. **`OracleDataService`** — alteração **aditiva**:
+   - Permitir obter `(lat, lon)` ou por **GPS** (fluxo actual) ou por **argumentos opcionais** de planeamento (ex.: `planningLat` / `planningLon` **ou** método `fetchForPlanning` que factoriza o código comum após ter coordenadas).
+   - Se existirem coordenadas de planeamento **válidas** escolhidas pelo utilizador, **não** chamar `_requireGpsFix()` para esse fetch; caso contrário, manter GPS obrigatório como hoje.
+   - **Cache:** chave de cache deve distinguir origem e coords (arredondadas como já fizeres), para não servir maré de Peniche quando o utilizador pediu GPS noutro sítio.
+
+3. **`fetchRiver`:** mesma regra de coordenadas opcionais de planeamento, se o modo COSTA/RIO e o ecrã aplicarem — **sem** mudar a semântica dos placeholders SNIRH.
+
+### UI / `lib/screens/oraculo.dart`
+
+- **Objectivo de engenharia:** integrar pesquisa + lista de resultados + «voltar à minha posição» com o **mínimo de alterações** ao ficheiro: estado local ou camada pequena reutilizável, **sem** redesenhar o ecrã inteiro.
+- **Design:** qualquer **novo** controlo visível (barra de pesquisa, lista) pode exigir **AUTORIZO explícito** de design no projecto; até lá, preferir padrões já usados no ecrã e alterações **funcionais** discretas.
+- **Não** apagar nem reestruturar blocos existentes «para limpar» — só o necessário para o modo planeamento.
+
+### Fora de âmbito deste P1
+
+- Site V2, RevenueCat, Vision, Mapbox.
+- Assistente IA (camada separada: síntese em linguagem natural por cima do mesmo bundle).
+- Guardar spots sensíveis ou partilhar coordenadas em público (Ghost / privacidade mantêm‑se).
+
+### Verificação antes de dar por fechado
+
+- `flutter analyze`
+- Cenários: pesquisa → escolher resultado → bundle coerente; limpar / «usar GPS» → regressão ao fluxo actual; permissão de localização negada em modo ao vivo continua a dar `OracleGpsRequiredException`; erro ou lista vazia de Nominatim tratado sem crash.
+
+---
+
+## P1 — Auth / onboarding
+
+- Fluxo claro FREE vs conta; alinhar com decisão de produto.
+
+---
+
+## P2 — Documentação
+
+- Actualizar contexto do repo; trial **3 dias**; assets de marketing.
+
+---
+
+## Disciplina geral
+
+- Mudanças focadas; `flutter analyze` após Flutter.
+- **Site V2 em pausa:** não abrir nem editar salvo pedido explícito do utilizador.
+- **Design (app e qualquer módulo):** só com **AUTORIZO explícito**.
+
+---
+
+## Economia de tokens (Claude Code / agentes)
+
+- Respostas **curtas**: bullets ou poucos parágrafos; **não** re-colar este briefing nem resumir o repo inteiro.
+- **Não** reler nem citar ficheiros longos na íntegra; usa referências por caminho + só o trecho mínimo necessário.
+- **Um escopo por vez**: se o prompt pede só C2, não implementar C3/C4 nem “melhorias extra”.
+- **Diff mínimo**: só ficheiros pedidos; sem refactor cosmético, sem `.md` novos não solicitados.
+- Confirmação final em **3–6 linhas** (o que mudou + comando de verificação), salvo o utilizador pedir detalhe.
+
+Começa por confirmar ficheiros actuais e propõe commits pequenos.

@@ -11,7 +11,7 @@ $envFile = Join-Path $root ".env"
 $projectRef = if ($env:SUPABASE_PROJECT_REF) { $env:SUPABASE_PROJECT_REF } else { "ycmvqokcfzxkpinvcyhk" }
 
 if (-not (Test-Path $envFile)) {
-    Write-Error ".env não encontrado em $root — coloca todas as chaves na raiz AQUANAUTIX."
+    Write-Error ".env nao encontrado em $root - coloca todas as chaves na raiz AQUANAUTIX."
 }
 
 $defines = @{}
@@ -32,7 +32,7 @@ $required = @(
 )
 foreach ($key in $required) {
     if (-not $defines[$key]) {
-        Write-Error "$key em falta no .env — corre .\tools\verify_p2_secrets.ps1"
+        Write-Error "$key em falta no .env - corre .\tools\verify_p2_secrets.ps1"
     }
 }
 
@@ -52,21 +52,20 @@ try {
     }
     Set-Content -Path $tmp -Value $lines -Encoding UTF8
 
-    Write-Host "A injectar secrets P2 no projecto $projectRef (valores não mostrados)…" -ForegroundColor Cyan
+    Write-Host "A injectar secrets P2 no projecto $projectRef (valores nao mostrados)..." -ForegroundColor Cyan
     Push-Location $root
     npx supabase secrets set --env-file $tmp --project-ref $projectRef --yes
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
     Pop-Location
 
-    Write-Host "`nOK: secrets Edge Functions actualizados." -ForegroundColor Green
-    Write-Host @"
-
-Passo manual no RevenueCat (uma vez):
-  1. app.revenuecat.com → Integrations → Webhooks
-  2. URL: https://$projectRef.supabase.co/functions/v1/revenuecat-webhook
-  3. Authorization header = mesmo valor que REVENUECAT_WEBHOOK_AUTHORIZATION no .env
-  4. Eventos: INITIAL_PURCHASE, RENEWAL, CANCELLATION, EXPIRATION, UNCANCELLATION, BILLING_ISSUE
-"@ -ForegroundColor Yellow
+    Write-Host ""
+    Write-Host "OK: secrets Edge Functions actualizados." -ForegroundColor Green
+    Write-Host ""
+    Write-Host "Passo manual no RevenueCat (uma vez):" -ForegroundColor Yellow
+    Write-Host "  1. app.revenuecat.com -> Integrations -> Webhooks" -ForegroundColor Yellow
+    Write-Host "  2. URL: https://$projectRef.supabase.co/functions/v1/revenuecat-webhook" -ForegroundColor Yellow
+    Write-Host "  3. Authorization header = mesmo valor que REVENUECAT_WEBHOOK_AUTHORIZATION no .env" -ForegroundColor Yellow
+    Write-Host "  4. Eventos: INITIAL_PURCHASE, RENEWAL, CANCELLATION, EXPIRATION, UNCANCELLATION, BILLING_ISSUE" -ForegroundColor Yellow
 }
 finally {
     Remove-Item -Force $tmp -ErrorAction SilentlyContinue
