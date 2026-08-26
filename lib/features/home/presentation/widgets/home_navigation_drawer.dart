@@ -5,6 +5,7 @@ import '../../../../core/supabase_bootstrap.dart';
 import '../../../../core/state/home_tab_index.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
+import '../../../../screens/affiliate_shop.dart';
 import '../../../../screens/especies.dart';
 
 class HomeNavigationDrawer extends StatelessWidget {
@@ -66,6 +67,12 @@ class HomeNavigationDrawer extends StatelessWidget {
               t.drawerTechniques,
               onTap: () => _openTechniques(context),
             ),
+            _item(
+              context,
+              Icons.storefront_outlined,
+              t.drawerAffiliateShop,
+              onTap: () => _openAffiliateShop(context),
+            ),
             const Spacer(),
             const Divider(height: 1, color: Color(0xFF1A3050)),
             ListTile(
@@ -104,6 +111,11 @@ class HomeNavigationDrawer extends StatelessWidget {
   void _openTechniques(BuildContext context) {
     Navigator.pop(context);
     onOpenTab(HomeTabIndex.oracleTabIndex);
+  }
+
+  void _openAffiliateShop(BuildContext context) {
+    Navigator.pop(context);
+    AffiliateShopScreen.open(context);
   }
 
   Widget _item(

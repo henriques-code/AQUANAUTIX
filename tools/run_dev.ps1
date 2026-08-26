@@ -1,78 +1,34 @@
-# run_dev.ps1 - Flutter com tokens do .env via --dart-define
-# Uso:
+# run_dev.ps1 - Flutter com tokens do .env + deploy MIUI-safe (Xiaomi)
+# Uso recomendado (1 comando, faz tudo):
+#   .\tools\run_dev.ps1
 #   .\tools\run_dev.ps1 -d WWZLYDXWYXT8PV5D
-#   .\tools\run_dev.ps1 -d WWZLYDXWYXT8PV5D -Miui
+# Forcar rebuild: .\tools\run_dev.ps1 -Rebuild
+# Saltar build (APK ja actual): .\tools\run_dev.ps1 -SkipBuild
 
 param(
     [string]$d = "",
     [switch]$Miui,
-    [switch]$SkipBuild
+    [switch]$NoMiui,
+    [switch]$SkipBuild,
+    [switch]$Rebuild,
+    [switch]$Fast,
+    [Parameter(ValueFromRemainingArguments = $true)]
+    [string[]]$FlutterArgs
 )
 
 $root = Split-Path $PSScriptRoot -Parent
-$envFile = Join-Path $root ".env"
+. (Join-Path $PSScriptRoot 'android_device.ps1')
 
+$envFile = Join-Path $root '.env'
 if (-not (Test-Path $envFile)) {
     Write-Error ".env nao encontrado em $root"
     exit 1
 }
 
-$jbr = "C:\Program Files\Android\Android Studio\jbr"
+$jbr = 'C:\Program Files\Android\Android Studio\jbr'
 if (Test-Path $jbr) {
     $env:JAVA_HOME = $jbr
     $env:PATH = "$jbr\bin;" + $env:PATH
-}
-
-function Ensure-AdbPath {
-    $adbPath = Join-Path $env:LOCALAPPDATA "Android\Sdk\platform-tools"
-    if (-not (Test-Path $adbPath)) {
-        Write-Warning "ADB nao encontrado em $adbPath"
-        return $false
-    }
-    if ($env:PATH -notlike "*platform-tools*") {
-        $env:PATH = $env:PATH + ";" + $adbPath
-    }
-    return $true
-}
-
-function Restart-Adb {
-    if (-not (Ensure-AdbPath)) { return $false }
-    & adb kill-server 2>$null
-    Start-Sleep -Milliseconds 600
-    & adb start-server 2>&1 | Out-Null
-    return $true
-}
-
-function Get-AdbDeviceState([string]$deviceId) {
-    # Devolve 'device', 'unauthorized', 'offline' ou $null (nao encontrado).
-    if (-not (Ensure-AdbPath)) { return $null }
-    $lines = & adb devices 2>&1
-    foreach ($line in $lines) {
-        if ($line -match '^\s*(\S+)\s+(device|unauthorized|offline)\s*') {
-            $id = $Matches[1]
-            $state = $Matches[2]
-            if (-not $deviceId -or $id -eq $deviceId) { return $state }
-        }
-    }
-    return $null
-}
-
-function Test-AdbDevice([string]$deviceId) {
-    return (Get-AdbDeviceState $deviceId) -eq 'device'
-}
-
-function Wait-AdbDevice([string]$deviceId, [int]$seconds = 25) {
-    $warnedUnauthorized = $false
-    for ($i = 0; $i -lt $seconds; $i++) {
-        $state = Get-AdbDeviceState $deviceId
-        if ($state -eq 'device') { return $true }
-        if ($state -eq 'unauthorized' -and -not $warnedUnauthorized) {
-            Write-Warning "Dispositivo $deviceId pediu autorizacao USB. Verifica o telemovel e aceita o popup 'Permitir depuracao USB' (marca 'sempre permitir')."
-            $warnedUnauthorized = $true
-        }
-        Start-Sleep -Seconds 1
-    }
-    return $false
 }
 
 $defines = @{}
@@ -121,42 +77,67 @@ $rcOptional = @(
     'SUPABASE_RESET_REDIRECT'
 )
 $optDefines = $rcOptional | ForEach-Object { "$_=$($defines[$_])" }
-
 $dartDefines = ($coreDefines + $optDefines) | ForEach-Object { "--dart-define=$_" }
 
-$mapboxDownloadsToken = $null
 if ($defines.ContainsKey('MAPBOX_DOWNLOADS_TOKEN') -and $defines['MAPBOX_DOWNLOADS_TOKEN']) {
-    $mapboxDownloadsToken = $defines['MAPBOX_DOWNLOADS_TOKEN']
+    $env:MAPBOX_DOWNLOADS_TOKEN = $defines['MAPBOX_DOWNLOADS_TOKEN']
+    $env:MAPBOX_DOWNLOAD_TOKEN = $defines['MAPBOX_DOWNLOADS_TOKEN']
 } elseif ($defines.ContainsKey('MAPBOX_DOWNLOAD_TOKEN') -and $defines['MAPBOX_DOWNLOAD_TOKEN']) {
-    $mapboxDownloadsToken = $defines['MAPBOX_DOWNLOAD_TOKEN']
-}
-
-if ($mapboxDownloadsToken) {
-    $env:MAPBOX_DOWNLOADS_TOKEN = $mapboxDownloadsToken
-    $env:MAPBOX_DOWNLOAD_TOKEN = $mapboxDownloadsToken
+    $env:MAPBOX_DOWNLOADS_TOKEN = $defines['MAPBOX_DOWNLOAD_TOKEN']
+    $env:MAPBOX_DOWNLOAD_TOKEN = $defines['MAPBOX_DOWNLOAD_TOKEN']
 }
 
 Set-Location $root
 
-if ($Miui) {
-    if (-not $d) {
-        Write-Error "Modo -Miui requer -d <device_id>"
-        exit 1
+$deviceId = Resolve-AndroidDeviceId $d
+$apk = Join-Path $root 'build\app\outputs\flutter-apk\app-debug.apk'
+
+$needsBuild = $false
+if ($Fast) {
+    $SkipBuild = $true
+    Write-Host '[run_dev] Modo -Fast: instalar APK existente (sem Gradle)' -ForegroundColor Green
+} elseif ($Rebuild) {
+    $needsBuild = $true
+} elseif (-not $SkipBuild) {
+    $needsBuild = Test-ApkNeedsRebuild $root $apk
+    if ($needsBuild) {
+        Write-Host '[run_dev] Codigo/assets mudaram — rebuild necessario. Para saltar: -Fast ou -SkipBuild' -ForegroundColor Yellow
     }
+}
 
-    Write-Host "[MIUI] Reiniciar ADB e verificar $d" -ForegroundColor Cyan
-    if (-not (Restart-Adb)) { exit 1 }
-    if (-not (Wait-AdbDevice $d)) {
-        Write-Error "Dispositivo $d nao detectado. USB debugging + autorizar PC + Instalar via USB (MIUI)."
-        exit 1
-    }
+# Build ANTES de exigir ADB (podes compilar enquanto religas o cabo).
+if ($needsBuild) {
+    Write-Host '[run_dev] flutter build apk --debug (inclui assets/species — 1a vez ~10-15 min)' -ForegroundColor Cyan
+    & flutter build apk --debug @dartDefines
+    if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+}
 
-    $apk = Join-Path $root "build\app\outputs\flutter-apk\app-debug.apk"
+if (-not (Ensure-AdbDevice $deviceId)) {
+    $state = Get-AdbDeviceState $deviceId
+    if (-not $state) { $state = 'nao detectado' }
+    Write-Error @"
+Dispositivo $deviceId indisponivel (estado: $state).
+Checklist:
+  1) Cabo USB com dados (nao so carregamento)
+  2) Depuracao USB ON (Opcoes de programador)
+  3) Aceitar popup 'Permitir depuracao USB' no telemovel
+  4) MIUI: 'Instalar via USB' ON
+  5) Testar: adb devices
+"@
+    exit 1
+}
 
-    if (-not $SkipBuild) {
-        Write-Host "[MIUI] flutter build apk --debug (1a build Mapbox pode demorar 10-15 min)" -ForegroundColor Cyan
-        & flutter build apk --debug --verbose @dartDefines
-        if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+$useMiuiPipeline = -not $NoMiui
+if ($useMiuiPipeline -and -not (Test-IsPhysicalAndroidDevice $deviceId)) {
+    $useMiuiPipeline = $false
+}
+if ($Miui) { $useMiuiPipeline = $true }
+
+if ($useMiuiPipeline) {
+    Write-Host "[run_dev] Modo Android fisico (MIUI-safe) -> $deviceId" -ForegroundColor Cyan
+
+    if (-not $needsBuild) {
+        Write-Host '[run_dev] APK actual - a saltar Gradle' -ForegroundColor Green
     }
 
     if (-not (Test-Path $apk)) {
@@ -164,58 +145,29 @@ if ($Miui) {
         exit 1
     }
 
-    Write-Host "[MIUI] adb push + install" -ForegroundColor Cyan
-    $pushOut = & adb -s $d push $apk /data/local/tmp/app-debug.apk 2>&1
-    if ($LASTEXITCODE -ne 0) {
-        Write-Host $pushOut
-        exit $LASTEXITCODE
-    }
-    if ($pushOut) { Write-Host $pushOut }
-    & adb -s $d shell pm install -r -t /data/local/tmp/app-debug.apk
-    if ($LASTEXITCODE -ne 0) {
-        Write-Error "Instalacao falhou. MIUI: desactivar optimizacao para a app."
+    if (-not (Install-ApkMiuiSafe -DeviceId $deviceId -ApkPath $apk)) {
         exit 1
     }
 
-    Write-Host "[MIUI] flutter run (APK pre-instalado)" -ForegroundColor Cyan
-    & flutter run -d $d "--use-application-binary=$apk" @dartDefines
-    exit $LASTEXITCODE
-}
-
-if ($d) {
-    Ensure-AdbPath | Out-Null
-    if (-not (Test-AdbDevice $d)) {
-        # So reiniciar o servidor ADB (disruptivo, pode desligar a ligacao USB
-        # por instantes) quando o dispositivo NAO esta ja visivel e a funcionar.
-        Write-Host "[ADB] $d nao esta visivel - a reiniciar servidor ADB e a aguardar..." -ForegroundColor Yellow
-        Restart-Adb | Out-Null
-        if (-not (Wait-AdbDevice $d 25)) {
-            $state = Get-AdbDeviceState $d
-            if (-not $state) { $state = 'nao detectado' }
-            Write-Error @"
-Dispositivo $d nao ficou disponivel no ADB apos 25s (estado: $state).
-Verifica:
-  1) Cabo USB liga dados (nao so carregamento) e a porta USB.
-  2) 'Depuracao USB' activa em Definicoes > Opcoes de programador.
-  3) Popup 'Permitir depuracao USB' aceite no telemovel (activa 'sempre permitir deste computador').
-  4) Se o problema persistir, tenta: .\tools\run_dev.ps1 -d $d -Miui
-"@
-            exit 1
-        }
+    if (-not (Assert-FlutterDevice $deviceId)) {
+        Write-Error "ADB OK mas Flutter nao ve $deviceId. Desliga/liga o cabo e corre de novo."
+        exit 1
     }
-}
 
-$deviceFlag = if ($d) { @('-d', $d) } else { @() }
-$apk = Join-Path $root "build\app\outputs\flutter-apk\app-debug.apk"
-
-if ($SkipBuild -and $d -and (Test-Path $apk)) {
-    Write-Host "[SkipBuild] APK existente - a saltar Gradle (arranque ~30-60s)" -ForegroundColor Cyan
-    & flutter run -d $d "--use-application-binary=$apk" @dartDefines
+    Write-Host '[run_dev] flutter attach (hot reload) com APK pre-instalado' -ForegroundColor Cyan
+    $runArgs = @('run', '-d', $deviceId, "--use-application-binary=$apk") + $dartDefines + $FlutterArgs
+    & flutter @runArgs
     exit $LASTEXITCODE
 }
 
-Write-Host "flutter run $($deviceFlag -join ' ') [+ dart-defines]" -ForegroundColor Cyan
-Write-Host 'APK ja compilado? Use: .\tools\run_dev.ps1 -d <device> -SkipBuild' -ForegroundColor DarkGray
-Write-Host 'Xiaomi lento? Use: .\tools\run_dev.ps1 -d <device> -Miui -SkipBuild' -ForegroundColor DarkGray
-
-& flutter run @deviceFlag @dartDefines
+# Emulador / desktop / fallback
+if ($needsBuild -and (Test-Path $apk)) {
+    & flutter run -d $deviceId "--use-application-binary=$apk" @dartDefines @FlutterArgs
+} elseif ($needsBuild) {
+    & flutter run -d $deviceId @dartDefines @FlutterArgs
+} elseif (Test-Path $apk) {
+    & flutter run -d $deviceId "--use-application-binary=$apk" @dartDefines @FlutterArgs
+} else {
+    & flutter run -d $deviceId @dartDefines @FlutterArgs
+}
+exit $LASTEXITCODE

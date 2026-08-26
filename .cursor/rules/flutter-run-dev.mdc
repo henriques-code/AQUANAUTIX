@@ -18,6 +18,12 @@ alwaysApply: false
 
 Dispositivo de teste habitual: `WWZLYDXWYXT8PV5D` (Xiaomi 22031116BG).
 
+**Comando único (recomendado):** `.\tools\run_dev.ps1` — detecta o Xiaomi, rebuild se código/assets mudaram, `adb push` + `pm install` (MIUI), hot reload.
+
+- `-SkipBuild` — não recompila (APK já actual)
+- `-Rebuild` — força `flutter build apk --debug`
+- `-NoMiui` — fluxo `flutter run` clássico (emulador)
+
 ## Porquê
 
 - Injeta `--dart-define` para `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `MAPBOX_ACCESS_TOKEN`, `OPENAI_API_KEY`, RevenueCat, etc.

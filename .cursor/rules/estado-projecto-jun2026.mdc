@@ -3,7 +3,18 @@ description: Estado AQUANAUTIX Jun 2026, bloqueio Play Console ($25) e sequênci
 alwaysApply: false
 ---
 
-# AQUANAUTIX — Estado do projecto (Jun 2026)
+# AQUANAUTIX — Estado do projecto (Jul 2026)
+
+## Sprint actual — P2 Vision animado (2 semanas)
+
+| Semana | Entrega |
+|--------|---------|
+| 1 | Linha de scan animada + contador confiança 0→% + haptic ao identificar |
+| 2 | Slide-up resultado + botão partilha (marca de água) + `flutter analyze` limpo |
+
+**Ficheiros:** `lib/screens/vision.dart` · `lib/screens/widgets/vision_mockup_ui.dart` · `lib/core/vision/`
+
+**Não neste sprint:** Comunidade seed, Play Console, IA chat P1.
 
 ## Bloqueio financeiro (retomar quando houver orçamento)
 
@@ -13,6 +24,22 @@ alwaysApply: false
 - Depois: 3 subscrições + internal testing + RevenueCat offering (guias prontos)
 - **Não pedir** implementação de compras reais até o utilizador confirmar conta Play activa
 - Guias: `tools/PLAY_CONSOLE_SETUP.md` · `REVENUECAT_SETUP.md` · `tools/verify_revenuecat.ps1`
+
+### Auditoria P0 monetização (código vs dashboard)
+
+| Passo | Repo | Tu (manual) |
+|-------|------|-------------|
+| SDK RC + paywall + gates | ✅ | — |
+| Auth bridge Supabase↔RC | ✅ | — |
+| `sync_user_subscription_tier` só service_role | ✅ Supabase | — |
+| Conta Play Developer $25 | — | ⏳ |
+| Produtos `aquanautix_pro_monthly/annual`, `aquanautix_elite_annual` | IDs no código/docs | ⏳ Play Console |
+| Entitlements RC `pro` + `elite` | docs | ⏳ Dashboard RC |
+| Offering `default` (3 packages) | docs | ⏳ Dashboard RC |
+| Service account JSON Play → RC | — | ⏳ |
+| AAB internal testing + license tester Gmail | `tools/PLAY_CONSOLE_SETUP.md` | ⏳ |
+| Compra + restauro no Xiaomi | — | ⏳ pós-upload |
+| Leaked password protection Auth | — | ⏳ Supabase Dashboard |
 
 ## Produto
 
@@ -38,7 +65,7 @@ App Flutter de pesca ibérica (PT+ES): Oráculo solunar, Mapa spots, Vision IA, 
 
 ## Pendente P0 (requer Play Console $25)
 
-1. Play Console: `aquanautix_pro_monthly` · `pro_annual` · `elite_annual`
+1. Play Console: `aquanautix_pro_monthly` · `aquanautix_pro_annual` · `aquanautix_elite_annual`
 2. Internal testing release + license testers
 3. RevenueCat: service account JSON + offering `default` (3 packages)
 4. Teste compra/restauro no Xiaomi

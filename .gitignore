@@ -82,3 +82,6 @@ Imagens/
 # Notas de trabalho locais (ficheiros .txt soltos na raiz)
 *.txt
 !README*.txt
+
+# Logos duplicados (cópia local, não versionar — usar Logo Aquanautix/ original)
+Logo Aquanautix - Cópia/
