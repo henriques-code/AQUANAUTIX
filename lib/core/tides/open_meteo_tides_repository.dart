@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 import 'marine_bundle.dart';
+import 'official_tides_repository.dart';
 import 'weather_details_snapshot.dart';
 
 /// Par (temperatura °C, pressão hPa) interpolado linearmente no tempo.
@@ -45,6 +46,10 @@ class OpenMeteoTidesRepository {
   OpenMeteoTidesRepository({http.Client? httpClient}) : _client = httpClient ?? http.Client();
 
   final http.Client _client;
+  final OfficialTidesRepository _officialTides = OfficialTidesRepository();
+
+  /// Última fonte de maré usada no [fetchSeries] (para metadados de cache).
+  String lastTideSource = 'open_meteo';
 
   static const _marineHost = 'marine-api.open-meteo.com';
   static const _weatherHost = 'api.open-meteo.com';
@@ -73,8 +78,12 @@ class OpenMeteoTidesRepository {
       'hourly': 'temperature_2m,surface_pressure',
     });
 
-    final marineRes = await _client.get(marineUri);
-    final weatherRes = await _client.get(weatherUri);
+    final marineRes = await _client
+        .get(marineUri)
+        .timeout(const Duration(seconds: 10));
+    final weatherRes = await _client
+        .get(weatherUri)
+        .timeout(const Duration(seconds: 10));
     if (marineRes.statusCode != 200) {
       throw Exception('Marine API ${marineRes.statusCode}');
     }
@@ -125,6 +134,35 @@ class OpenMeteoTidesRepository {
       ));
     }
     out.sort((a, b) => a.time.compareTo(b.time));
+
+    lastTideSource = 'open_meteo';
+    final official = await _officialTides.fetchHourly(
+      latitude: latitude,
+      longitude: longitude,
+      timezone: timezone,
+      pastDays: pastDays,
+      forecastDays: forecastDays,
+    );
+    if (official != null) {
+      lastTideSource = official.source;
+      return _officialTides.mergeSeaLevel(meteoSeries: out, tides: official);
+    }
+
+    final clientFallback = await _officialTides.fetchOpenMeteoFallback(
+      latitude: latitude,
+      longitude: longitude,
+      timezone: timezone,
+      pastDays: pastDays,
+      forecastDays: forecastDays,
+    );
+    if (clientFallback != null) {
+      lastTideSource = clientFallback.source;
+      return _officialTides.mergeSeaLevel(
+        meteoSeries: out,
+        tides: clientFallback,
+      );
+    }
+
     return out;
   }
 

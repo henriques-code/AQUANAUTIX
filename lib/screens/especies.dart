@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import '../core/species/species_photo.dart';
 import '_shared.dart';
 
 // ── Modelo ────────────────────────────────────────────────────────────
@@ -380,22 +381,22 @@ class _SpeciesCard extends StatelessWidget {
                 children: [
                   ClipRRect(
                     borderRadius: const BorderRadius.vertical(top: Radius.circular(14)),
-                    child: species.photoUrl.isNotEmpty
-                        ? Image.network(
-                            species.photoUrl,
+                    child: SpeciesPhoto.image(
+                            id: species.id,
+                            photoUrl: species.photoUrl,
+                            emoji: species.emoji,
                             width: double.infinity,
                             fit: BoxFit.cover,
-                            loadingBuilder: (_, child, progress) => progress == null
-                                ? child
-                                : Container(
-                                    color: const Color(0xFF0D1F35),
-                                    child: const Center(
-                                      child: CircularProgressIndicator(color: kCyan, strokeWidth: 1.5),
-                                    ),
-                                  ),
-                            errorBuilder: (_, __, ___) => _photoPlaceholder(),
-                          )
-                        : _photoPlaceholder(),
+                            loading: Container(
+                              color: const Color(0xFF0D1F35),
+                              child: const Center(
+                                child: CircularProgressIndicator(
+                                  color: kCyan,
+                                  strokeWidth: 1.5,
+                                ),
+                              ),
+                            ),
+                          ),
                   ),
                   // Habitat badge
                   Positioned(
@@ -466,13 +467,6 @@ class _SpeciesCard extends StatelessWidget {
       ).animate(delay: Duration(milliseconds: index * 40)).fadeIn(duration: 300.ms).slideY(begin: 0.1, end: 0),
     );
   }
-
-  Widget _photoPlaceholder() => Container(
-        color: const Color(0xFF0D1F35),
-        child: Center(
-          child: Text(species.emoji, style: const TextStyle(fontSize: 48)),
-        ),
-      );
 }
 
 class _MiniStat extends StatelessWidget {
@@ -556,10 +550,14 @@ class EspeciesDetailScreen extends StatelessWidget {
           background: Stack(
             fit: StackFit.expand,
             children: [
-              species.photoUrl.isNotEmpty
-                  ? Image.network(species.photoUrl, fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => _heroBg())
-                  : _heroBg(),
+              SpeciesPhoto.image(
+                id: species.id,
+                photoUrl: species.photoUrl,
+                emoji: species.emoji,
+                fit: BoxFit.cover,
+                height: double.infinity,
+                width: double.infinity,
+              ),
               // Gradiente overlay
               Container(
                 decoration: BoxDecoration(
@@ -607,11 +605,6 @@ class EspeciesDetailScreen extends StatelessWidget {
             ],
           ),
         ),
-      );
-
-  Widget _heroBg() => Container(
-        color: const Color(0xFF0D1F35),
-        child: Center(child: Text(species.emoji, style: const TextStyle(fontSize: 96))),
       );
 
   Widget _buildHeader() => Column(

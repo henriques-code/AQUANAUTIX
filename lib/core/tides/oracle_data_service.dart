@@ -16,6 +16,8 @@ import 'river_discharge_repository.dart';
 import 'species_tide_hints.dart';
 import 'spot_oracle_snapshot.dart';
 import 'tide_analysis.dart';
+import 'oracle_cache_models.dart';
+import 'oracle_cache_repository.dart';
 
 /// Não há coordenadas do utilizador — o índice exige GPS para a zona real de pesca.
 class OracleGpsRequiredException implements Exception {
@@ -345,15 +347,7 @@ class OracleDataService {
     }
 
     final t = AqxL10n(lang);
-    final series = await _repo.fetchSeries(
-      latitude: lat,
-      longitude: lon,
-      timezone: tz,
-      pastDays: 1,
-      forecastDays: 5,
-    );
     final placeLabel = geo?.label ?? '';
-
     final headline = isPlanning && planningPlace != null
         ? planningPlace.label
         : (placeLabel.isNotEmpty ? placeLabel : t.yourPosition);
@@ -364,7 +358,79 @@ class OracleDataService {
         ? planningPlace.label.split('·').first.trim()
         : 'ti';
 
-    final today = dateOnly(now);
+    final diskEntry = await _readDiskCosta(
+      lat: lat,
+      lon: lon,
+      lang: lang,
+      isPlanning: isPlanning,
+    );
+
+    try {
+      final series = await _repo.fetchSeries(
+        latitude: lat,
+        longitude: lon,
+        timezone: tz,
+        pastDays: 1,
+        forecastDays: 5,
+      );
+      final bundle = buildBundleFromSeries(
+        ctx: ctx,
+        lat: lat,
+        lon: lon,
+        series: series,
+        isPlanning: isPlanning,
+        headline: headline,
+        subtitle: subtitle,
+        placeShort: placeShort,
+        fetchedAt: now,
+        gpsCountryIso2: gpsCountryIso2,
+      );
+      await persistCostaCache(
+        meta: OracleCacheMeta(
+          lat: lat,
+          lon: lon,
+          lang: lang,
+          isPlanning: isPlanning,
+          label: headline,
+          fetchedAt: now,
+          validUntil: now.add(OracleCacheRepository.cacheTtl),
+          tideSource: _repo.lastTideSource,
+          priority: 'normal',
+        ),
+        bundle: bundle,
+        series: series,
+      );
+      _cache = bundle;
+      _cacheKey = key;
+      _cacheTime = now;
+      return bundle;
+    } catch (_) {
+      if (diskEntry != null) {
+        _cache = diskEntry.bundle;
+        _cacheKey = key;
+        _cacheTime = diskEntry.meta.fetchedAt;
+        return diskEntry.bundle;
+      }
+      rethrow;
+    }
+  }
+
+  /// Constrói [OracleBundle] COSTA a partir de série horária (rede ou cache).
+  OracleBundle buildBundleFromSeries({
+    required FishingContext ctx,
+    required double lat,
+    required double lon,
+    required List<MarineHourPoint> series,
+    required bool isPlanning,
+    required String headline,
+    required String subtitle,
+    required String placeShort,
+    required DateTime fetchedAt,
+    String? gpsCountryIso2,
+  }) {
+    final lang = AppLocaleStore.instance.locale.languageCode;
+    final t = AqxL10n(lang);
+    final today = dateOnly(fetchedAt);
     final dayScores = buildDayScoreMap(series);
     final todayHours = hoursForDay(series, today);
 
@@ -377,12 +443,15 @@ class OracleDataService {
     MarineHourPoint? closest;
     if (todayHours.isNotEmpty) {
       closest = todayHours.reduce((a, b) =>
-          a.time.difference(now).abs() < b.time.difference(now).abs() ? a : b);
+          a.time.difference(fetchedAt).abs() <
+                  b.time.difference(fetchedAt).abs()
+              ? a
+              : b);
     }
 
     final tempC = closest?.temperatureC;
     final pressureHpa = closest?.pressureHpa;
-    final moonPct = (moonFishingFactor(now) * 100).round().clamp(0, 100);
+    final moonPct = (moonFishingFactor(fetchedAt) * 100).round().clamp(0, 100);
 
     final extrema = detectTideExtrema(todayHours);
     var phaseLabel = t.tideActive;
@@ -395,7 +464,7 @@ class OracleDataService {
       phaseLabel = extrema[0].isHigh ? t.highTide : t.lowTide;
     }
 
-    final moonPhase = moonPhase01(now);
+    final moonPhase = moonPhase01(fetchedAt);
     final moonLabel = t.moonLong(moonPhase);
     final moonPhaseTile = t.moonTileShort(moonPhase);
 
@@ -462,7 +531,7 @@ class OracleDataService {
       );
     }
 
-    final bundle = OracleBundle(
+    return OracleBundle(
       locationHeadline: headline,
       locationSubtitle: subtitle,
       usedGps: !isPlanning,
@@ -481,15 +550,105 @@ class OracleDataService {
       tempTrendPt: tempTrendPt,
       forecast: forecastDays,
       janelaTexto: janelaTexto,
-      fetchedAt: now,
+      fetchedAt: fetchedAt,
       gpsCountryIso2: gpsCountryIso2,
     );
-
-    _cache = bundle;
-    _cacheKey = key;
-    _cacheTime = now;
-    return bundle;
   }
+
+  Future<void> persistCostaCache({
+    required OracleCacheMeta meta,
+    required OracleBundle bundle,
+    required List<MarineHourPoint> series,
+  }) async {
+    await OracleCacheRepository.instance.writeCostaJson(
+      meta: meta,
+      payload: {
+        'meta': meta.toJson(),
+        'bundle': _bundleToJson(bundle),
+        'marineSeries': series.map(marineHourPointToJson).toList(),
+      },
+    );
+  }
+
+  Future<({OracleCacheMeta meta, OracleBundle bundle})?> _readDiskCosta({
+    required double lat,
+    required double lon,
+    required String lang,
+    required bool isPlanning,
+  }) async {
+    final j = await OracleCacheRepository.instance.readCostaJson(
+      lat: lat,
+      lon: lon,
+      lang: lang,
+      isPlanning: isPlanning,
+    );
+    if (j == null) return null;
+    final meta = OracleCacheMeta.fromJson(j['meta'] as Map<String, dynamic>);
+    final bundle = _bundleFromJson(j['bundle'] as Map<String, dynamic>);
+    return (meta: meta, bundle: bundle);
+  }
+
+  Map<String, dynamic> _bundleToJson(OracleBundle b) => {
+        'locationHeadline': b.locationHeadline,
+        'locationSubtitle': b.locationSubtitle,
+        'usedGps': b.usedGps,
+        'score': b.score,
+        'statusLabel': b.statusLabel,
+        'statusDesc': b.statusDesc,
+        'windowHours': b.windowHours,
+        'moonPct': b.moonPct,
+        'forecast': b.forecast
+            .map(
+              (f) => {
+                'dayLabel': f.dayLabel,
+                'score': f.score,
+                'icon': f.icon,
+              },
+            )
+            .toList(),
+        'janelaTexto': b.janelaTexto,
+        'fetchedAt': b.fetchedAt.toIso8601String(),
+        'tideRangeM': b.tideRangeM,
+        'tempC': b.tempC,
+        'pressureHpa': b.pressureHpa,
+        'tideHeightM': b.tideHeightM,
+        'tideTrendPt': b.tideTrendPt,
+        'pressureTrendPt': b.pressureTrendPt,
+        'moonPhaseShortPt': b.moonPhaseShortPt,
+        'tempTrendPt': b.tempTrendPt,
+        'gpsCountryIso2': b.gpsCountryIso2,
+      };
+
+  OracleBundle _bundleFromJson(Map<String, dynamic> j) => OracleBundle(
+        locationHeadline: j['locationHeadline'] as String,
+        locationSubtitle: j['locationSubtitle'] as String,
+        usedGps: j['usedGps'] as bool,
+        score: j['score'] as int,
+        statusLabel: j['statusLabel'] as String,
+        statusDesc: j['statusDesc'] as String,
+        windowHours: j['windowHours'] as String,
+        moonPct: j['moonPct'] as int,
+        forecast: (j['forecast'] as List<dynamic>)
+            .map(
+              (e) => OracleDayForecast(
+                dayLabel: (e as Map)['dayLabel'] as String,
+                score: e['score'] as int,
+                icon: e['icon'] as String,
+              ),
+            )
+            .toList(),
+        janelaTexto: j['janelaTexto'] as String,
+        fetchedAt: DateTime.parse(j['fetchedAt'] as String),
+        tideRangeM: (j['tideRangeM'] as num?)?.toDouble(),
+        tempC: (j['tempC'] as num?)?.toDouble(),
+        pressureHpa: (j['pressureHpa'] as num?)?.toDouble(),
+        tideHeightM: (j['tideHeightM'] as num?)?.toDouble(),
+        tideTrendPt: j['tideTrendPt'] as String? ?? '',
+        pressureTrendPt: j['pressureTrendPt'] as String? ?? '',
+        moonPhaseShortPt: j['moonPhaseShortPt'] as String? ?? '',
+        tempTrendPt: j['tempTrendPt'] as String? ?? '',
+        gpsCountryIso2: j['gpsCountryIso2'] as String?,
+      );
 
   /// Tempo na posição GPS ou de planeamento (sem caudal oficial SNIRH — roadmap).
   Future<RiverOracleBundle> fetchRiver({

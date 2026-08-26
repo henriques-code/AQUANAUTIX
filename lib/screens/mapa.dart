@@ -38,6 +38,9 @@ import '../core/spots/bait_shop_repository.dart';
 import '../core/regulations/fishing_regulation_zone.dart';
 import '../core/community/community_heatmap_repository.dart';
 import '../core/supabase_bootstrap.dart';
+import '../core/map/caching_tile_provider.dart';
+import '../core/map/map_tile_cache_service.dart';
+import '../core/tides/oracle_prefetch_service.dart';
 
 // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 // P4 + P10 — ECRÃ 02 · MAPA + SPOTS + LOJAS
@@ -141,6 +144,7 @@ class _MapaScreenState extends State<MapaScreen> {
       unawaited(_loadCatchPhotos());
       unawaited(_loadSpots());
       unawaited(_loadBaitShops());
+      unawaited(_prefetchFavoriteSpotTiles());
     });
   }
 
@@ -437,6 +441,34 @@ class _MapaScreenState extends State<MapaScreen> {
     }
     final p = await SharedPreferences.getInstance();
     await p.setString(_prefsKeySavedSpotPhotos, jsonEncode(list));
+    unawaited(_prefetchFavoriteSpotTiles());
+    unawaited(OraclePrefetchService.prefetchSavedSpotPins());
+  }
+
+  Future<void> _prefetchFavoriteSpotTiles() async {
+    try {
+      final p = await SharedPreferences.getInstance();
+      final raw = p.getString(_prefsKeySavedSpotPhotos);
+      if (raw == null || raw.isEmpty) return;
+      final list = jsonDecode(raw) as List<dynamic>;
+      final spots = <({double lat, double lon})>[];
+      for (final e in list) {
+        final m = e as Map<String, dynamic>;
+        final lat = (m['lat'] as num?)?.toDouble();
+        final lon = (m['lon'] as num?)?.toDouble();
+        if (lat != null && lon != null) spots.add((lat: lat, lon: lon));
+      }
+      if (spots.isEmpty) return;
+      const arcgisSatellite =
+          'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
+      const osm = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
+      await MapTileCacheService.instance.prefetchSavedSpots(
+        spots: spots,
+        urlTemplate: _rioMode ? osm : arcgisSatellite,
+      );
+    } catch (e) {
+      debugPrint('MapTileCache prefetch: $e');
+    }
   }
 
   List<BaitShop> _nearbyBaitShops() {
@@ -1231,6 +1263,10 @@ class _MapaScreenState extends State<MapaScreen> {
     // Overlay de estradas/labels transparente sobre satélite (modo COSTA).
     const arcgisRoads =
         'https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}';
+    const osmTemplate = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
+    final baseTemplate = _rioMode ? osmTemplate : arcgisSatellite;
+    final baseCacheId =
+        MapTileCacheService.instance.cacheIdForUrl(baseTemplate);
 
     return FlutterMap(
       mapController: _mapController,
@@ -1250,9 +1286,8 @@ class _MapaScreenState extends State<MapaScreen> {
       children: [
         // Base: satélite (COSTA) ou OSM topográfico (RIO)
         TileLayer(
-          urlTemplate: _rioMode
-              ? 'https://tile.openstreetmap.org/{z}/{x}/{y}.png'
-              : arcgisSatellite,
+          urlTemplate: baseTemplate,
+          tileProvider: CachingTileProvider(cacheId: baseCacheId),
           userAgentPackageName: 'com.example.aquanautix',
           maxNativeZoom: 19,
         ),

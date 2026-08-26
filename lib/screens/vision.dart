@@ -15,10 +15,12 @@ import '../core/species/species_compliance.dart';
 import '../core/state/fishing_context_store.dart';
 import '../core/vision/vision_climate_service.dart';
 import '../core/vision/vision_climate_snapshot.dart';
+import '../core/vision/vision_share_payload.dart';
 import '../core/vision/vision_scan_result.dart';
 import '../core/vision/vision_scan_service.dart';
 import '../core/l10n/aqx_l10n.dart';
 import 'widgets/vision_mockup_ui.dart';
+import 'widgets/vision_share_sheet.dart';
 
 // ══════════════════════════════════════════════════════════
 // P2 — ECRÃ 03 · VISION SCANNER (mockup Jul 2026 + OpenAI)
@@ -36,7 +38,7 @@ class _VisionScreenState extends State<VisionScreen>
   static const _kMaxFreeScans = 3;
 
   int _freeScansUsed = 0;
-  VisionMockupScanState _state = VisionMockupScanState.result;
+  VisionMockupScanState _state = VisionMockupScanState.idle;
   VisionScanResult? _scan;
   Uint8List? _previewBytes;
   VisionClimateSnapshot? _climate;
@@ -45,7 +47,15 @@ class _VisionScreenState extends State<VisionScreen>
   late final AnimationController _scanCtrl;
   late final Animation<double> _scanLine;
   late final AnimationController _confCtrl;
-  late final Animation<double> _conf;
+  late Animation<double> _conf;
+  late final AnimationController _resultSlideCtrl;
+  late final Animation<double> _resultSlide;
+
+  void _setupConfidenceTween(double end, {double begin = 0}) {
+    _conf = Tween<double>(begin: begin, end: end).animate(
+      CurvedAnimation(parent: _confCtrl, curve: Curves.easeOut),
+    );
+  }
 
   @override
   void initState() {
@@ -61,26 +71,27 @@ class _VisionScreenState extends State<VisionScreen>
       vsync: this,
       duration: const Duration(milliseconds: 1200),
     );
-    _conf = Tween<double>(begin: 0, end: 92).animate(
-      CurvedAnimation(parent: _confCtrl, curve: Curves.easeOut),
+    _setupConfidenceTween(0);
+
+    _resultSlideCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 450),
     );
-    _confCtrl.value = 1.0;
+    _resultSlide = CurvedAnimation(
+      parent: _resultSlideCtrl,
+      curve: Curves.easeOutCubic,
+    );
 
     _loadFreeUsage();
     _loadClimate();
-    SpeciesCatalog.instance.ensureLoaded().then((_) {
-      if (!mounted) return;
-      final d = SpeciesCatalog.instance.byId(_demoSpeciesId);
-      setState(() {
-        if (d != null) _scan = VisionScanResult.demo(d);
-      });
-    });
+    unawaited(SpeciesCatalog.instance.ensureLoaded());
   }
 
   @override
   void dispose() {
     _scanCtrl.dispose();
     _confCtrl.dispose();
+    _resultSlideCtrl.dispose();
     super.dispose();
   }
 
@@ -148,12 +159,15 @@ class _VisionScreenState extends State<VisionScreen>
     HapticFeedback.mediumImpact();
     setState(() {
       _previewBytes = bytes;
+      _scan = null;
       _state = VisionMockupScanState.scanning;
     });
     _scanCtrl.reset();
     _confCtrl.reset();
+    _resultSlideCtrl.reset();
+    _setupConfidenceTween(68, begin: 0);
+    unawaited(_confCtrl.forward());
     await _scanCtrl.forward();
-    _confCtrl.forward();
     await Future.delayed(const Duration(milliseconds: 400));
 
     await SpeciesCatalog.instance.ensureLoaded();
@@ -189,20 +203,30 @@ class _VisionScreenState extends State<VisionScreen>
     }
 
     if (!mounted) return;
+
+    final targetConf = out.confidence.toDouble();
+    _setupConfidenceTween(targetConf, begin: _conf.value.clamp(0, targetConf));
+    await _confCtrl.forward(from: 0);
+
+    if (!mounted) return;
     HapticFeedback.heavyImpact();
     setState(() {
       _scan = out;
       _state = VisionMockupScanState.result;
     });
+    await _resultSlideCtrl.forward(from: 0);
     unawaited(_loadClimate());
   }
 
   void _reset() {
     _scanCtrl.reset();
     _confCtrl.reset();
+    _resultSlideCtrl.reset();
+    _setupConfidenceTween(0, begin: 0);
     setState(() {
       _state = VisionMockupScanState.idle;
       _previewBytes = null;
+      _scan = null;
     });
   }
 
@@ -257,6 +281,56 @@ class _VisionScreenState extends State<VisionScreen>
           style: ibm(13),
         ),
         backgroundColor: kCard,
+      ),
+    );
+  }
+
+  Future<void> _shareCapture() async {
+    final scan = _scan;
+    final species = scan?.matchedSpecies;
+    if (species == null) return;
+
+    final t = aqxL10nOf(context);
+    final cc = FishingContextStore.instance.value.value.country.toUpperCase();
+    final compliance = SpeciesCompliance.evaluateLength(
+      species: species,
+      country: cc,
+      measuredLengthCm: scan!.lengthCm,
+      measuredWeightG: scan.weightG,
+    );
+    final displayNome = species.nomeFor(es: t.es);
+    final zone = _climate?.locationLabel ?? 'Costa Ibérica';
+    final now = DateTime.now();
+    const months = [
+      'JAN', 'FEV', 'MAR', 'ABR', 'MAI', 'JUN',
+      'JUL', 'AGO', 'SET', 'OUT', 'NOV', 'DEZ',
+    ];
+    final dateLabel =
+        '${now.day.toString().padLeft(2, '0')} ${months[now.month - 1]} ${now.year}';
+
+    String? complianceLabel;
+    if (compliance.isLegal) {
+      complianceLabel = cc == 'ES' ? 'LEGAL ES' : 'LEGAL PT';
+    } else if (compliance.isIllegal) {
+      complianceLabel = cc == 'ES' ? 'FUERA TALLA' : 'FORA TAMANHO';
+    }
+
+    await showVisionShareSheet(
+      context,
+      payload: VisionSharePayload(
+        photoBytes: _previewBytes,
+        speciesEmoji: species.emoji,
+        speciesName: displayNome,
+        confidence: scan.confidence,
+        zoneLabel: zone,
+        weightLabel: scan.weightKg != null
+            ? '${scan.weightKg!.toStringAsFixed(1)} kg'
+            : null,
+        lengthLabel: scan.lengthCm != null
+            ? '${scan.lengthCm!.toStringAsFixed(0)} cm'
+            : null,
+        complianceLabel: complianceLabel,
+        captureDateLabel: dateLabel,
       ),
     );
   }
@@ -368,10 +442,12 @@ class _VisionScreenState extends State<VisionScreen>
             scanState: _state,
             scanLine: _scanLine,
             confidence: _conf,
+            resultSlide: _resultSlide,
             country: fishingCtx.country,
             onCameraTap: _showPickSource,
             onDiscard: _reset,
             onSave: _saveToLogbook,
+            onShare: _scan?.matchedSpecies != null ? _shareCapture : null,
             climate: _climate,
             climateLoading: _climateLoading,
           ),

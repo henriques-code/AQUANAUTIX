@@ -3,6 +3,37 @@
 ## Idioma
 - Respostas e documentação de trabalho em **Português de Portugal**.
 
+## 0. Estado actual / Sprint / NÃO fazer (Jul 2026)
+
+> Bloco de prioridade viva — actualizar no início de cada sprint. O agente lê isto antes de propor trabalho novo.
+
+### P0 — Receita (bloqueio humano — não código)
+- **Play Console pausado** (~25 USD) até o utilizador confirmar conta activa.
+- Código pronto: `RevenueCatService`, `PaywallScreen`, `SubscriptionGate`, `sync_user_subscription_tier` (só `service_role`).
+- **Não** pedir nem implementar fluxos de compra reais novos até P0 desbloqueado.
+- Guias: `tools/PLAY_CONSOLE_SETUP.md` · `REVENUECAT_SETUP.md` · `tools/verify_revenuecat.ps1`
+- Product IDs Play (exactos): `aquanautix_pro_monthly` · `aquanautix_pro_annual` · `aquanautix_elite_annual`
+
+### Sprint actual (2 semanas) — **P2 Vision animado**
+- Objectivo: loop viral fechado — scan → confiança 0→% → resultado → CTA partilha.
+- **Foco:** `lib/screens/vision.dart` + `lib/core/vision/` + widget de scan.
+- **Não** abrir neste sprint: P1 IA chat, P16 spots IA, refactors Oráculo/Mapa, Site V2.
+- **Design:** animações funcionais OK; mudar layout/copy visual só com **AUTORIZO** explícito.
+
+### NÃO fazer agora (agente)
+- `Site V2/**` sem **AUTORIZO**
+- Refactor cosmético em tabs já estáveis (Oráculo scroll, Mapa pins)
+- Nova stack (BLoC, Riverpod, Hive, Dio)
+- Migrations Supabase sem pedido explícito
+- `git commit` / `push` sem pedido do utilizador
+
+### Métricas beta (2 apenas)
+1. **Vision** — scans por sessão + conclusão até resultado
+2. **Oráculo** — aberturas na 1.ª semana (D7)
+
+### Sequência quando Play $25 estiver activo
+1. Criar app + 3 subscrições Play → 2. Internal testing (AAB) → 3. RevenueCat offering `default` → 4. Teste compra/restauro Xiaomi → 5. P4 blur mapa
+
 ## 1. Identidade do projecto
 - **Nome**: AQUANAUTIX (também referido como AQUADEX em alguns prompts internos).
 - **Objectivo**: app de pesca desportiva de elite — Oráculo solunar (score 0-100), mapa com spots e batimetria, identificação de espécies por IA (Vision), logbook de capturas, comunidade "Ghost Mode" (anónima) e monetização FREE/PRO/ELITE.

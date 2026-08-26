@@ -21,10 +21,12 @@ class VisionMockupLayout extends StatelessWidget {
     required this.scanState,
     required this.scanLine,
     required this.confidence,
+    required this.resultSlide,
     required this.country,
     required this.onCameraTap,
     required this.onDiscard,
     required this.onSave,
+    this.onShare,
     this.captureLocation = 'Cascais, Portugal',
     this.captureDateLabel,
     this.climate,
@@ -36,10 +38,12 @@ class VisionMockupLayout extends StatelessWidget {
   final VisionMockupScanState scanState;
   final Animation<double> scanLine;
   final Animation<double> confidence;
+  final Animation<double> resultSlide;
   final String country;
   final VoidCallback onCameraTap;
   final VoidCallback onDiscard;
   final VoidCallback onSave;
+  final VoidCallback? onShare;
   final String captureLocation;
   final String? captureDateLabel;
   final VisionClimateSnapshot? climate;
@@ -63,34 +67,49 @@ class VisionMockupLayout extends StatelessWidget {
           scanState: scanState,
           scanLine: scanLine,
           confidence: confidence,
-          confidenceValue: scan?.confidence ?? 92,
+          confidenceValue: scan?.confidence ?? 0,
           onCameraTap: onCameraTap,
         ),
-        if (showResult) ...[
-          const SizedBox(height: 14),
-          _VisionSpeciesHeader(species: species),
-          const SizedBox(height: 12),
-          _VisionStatsRow(
-            scan: scan!,
-            species: species,
-            country: country,
-          ),
-          const SizedBox(height: 12),
-          _VisionInfoGrid(
-            species: species,
-            captureLocation: locationLabel,
-            captureDateLabel: captureDateLabel ?? _defaultCaptureLabel(),
-            climate: climateSnap,
-            climateLoading: climateLoading,
-          ),
-          const SizedBox(height: 12),
-          _VisionEquipmentSection(species: species),
-          const SizedBox(height: 16),
-          _VisionActionButtons(
-            onDiscard: onDiscard,
-            onSave: onSave,
-          ),
-        ] else if (scanState == VisionMockupScanState.idle) ...[
+        if (showResult)
+          SlideTransition(
+            position: Tween<Offset>(
+              begin: const Offset(0, 0.14),
+              end: Offset.zero,
+            ).animate(resultSlide),
+            child: FadeTransition(
+              opacity: resultSlide,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const SizedBox(height: 14),
+                  _VisionSpeciesHeader(species: species),
+                  const SizedBox(height: 12),
+                  _VisionStatsRow(
+                    scan: scan!,
+                    species: species,
+                    country: country,
+                  ),
+                  const SizedBox(height: 12),
+                  _VisionInfoGrid(
+                    species: species,
+                    captureLocation: locationLabel,
+                    captureDateLabel: captureDateLabel ?? _defaultCaptureLabel(),
+                    climate: climateSnap,
+                    climateLoading: climateLoading,
+                  ),
+                  const SizedBox(height: 12),
+                  _VisionEquipmentSection(species: species),
+                  const SizedBox(height: 16),
+                  _VisionActionButtons(
+                    onDiscard: onDiscard,
+                    onSave: onSave,
+                    onShare: onShare,
+                  ),
+                ],
+              ),
+            ),
+          )
+        else if (scanState == VisionMockupScanState.idle) ...[
           const SizedBox(height: 16),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -761,44 +780,73 @@ class _VisionActionButtons extends StatelessWidget {
   const _VisionActionButtons({
     required this.onDiscard,
     required this.onSave,
+    this.onShare,
   });
 
   final VoidCallback onDiscard;
   final VoidCallback onSave;
+  final VoidCallback? onShare;
 
   @override
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Row(
+      child: Column(
         children: [
-          Expanded(
-            child: OutlinedButton.icon(
-              style: OutlinedButton.styleFrom(
-                side: BorderSide(color: kCyan.withValues(alpha: 0.5)),
-                foregroundColor: kCyan,
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  style: OutlinedButton.styleFrom(
+                    side: BorderSide(color: kCyan.withValues(alpha: 0.5)),
+                    foregroundColor: kCyan,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10)),
+                  ),
+                  onPressed: onDiscard,
+                  icon: const Icon(Icons.close_rounded, size: 18),
+                  label: Text('DESCARTAR',
+                      style: orb(9, c: kCyan, fw: FontWeight.w700, ls: 0.8)),
+                ),
               ),
-              onPressed: onDiscard,
-              icon: const Icon(Icons.close_rounded, size: 18),
-              label: Text('DESCARTAR', style: orb(9, c: kCyan, fw: FontWeight.w700, ls: 0.8)),
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: FilledButton.icon(
-              style: FilledButton.styleFrom(
-                backgroundColor: kCyan,
-                foregroundColor: Colors.black,
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              const SizedBox(width: 12),
+              Expanded(
+                child: FilledButton.icon(
+                  style: FilledButton.styleFrom(
+                    backgroundColor: kCyan,
+                    foregroundColor: Colors.black,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10)),
+                  ),
+                  onPressed: onSave,
+                  icon: const Icon(Icons.check_rounded, size: 18, color: Colors.black),
+                  label: Text('GUARDAR CAPTURA',
+                      style: orb(8, c: Colors.black, fw: FontWeight.w800, ls: 0.5)),
+                ),
               ),
-              onPressed: onSave,
-              icon: const Icon(Icons.check_rounded, size: 18, color: Colors.black),
-              label: Text('GUARDAR CAPTURA', style: orb(8, c: Colors.black, fw: FontWeight.w800, ls: 0.5)),
-            ),
+            ],
           ),
+          if (onShare != null) ...[
+            const SizedBox(height: 10),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                style: OutlinedButton.styleFrom(
+                  side: BorderSide(color: kAmber.withValues(alpha: 0.55)),
+                  foregroundColor: kAmber,
+                  padding: const EdgeInsets.symmetric(vertical: 13),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10)),
+                ),
+                onPressed: onShare,
+                icon: const Icon(Icons.ios_share_rounded, size: 17),
+                label: Text('PARTILHAR',
+                    style: orb(9, c: kAmber, fw: FontWeight.w700, ls: 0.8)),
+              ),
+            ),
+          ],
         ],
       ),
     );
