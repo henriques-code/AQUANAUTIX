@@ -78,13 +78,19 @@ class _CachedTileImage extends ImageProvider<_CachedTileImage> {
     ImageDecoderCallback decode,
   ) async {
     final cache = MapTileCacheService.instance;
-    final file = await cache.tileFile(
+    final hasCached = await cache.hasTile(
       cacheId: key.cacheId,
       z: key.z,
       x: key.x,
       y: key.y,
     );
-    if (await file.exists()) {
+    if (hasCached) {
+      final file = await cache.tileFile(
+        cacheId: key.cacheId,
+        z: key.z,
+        x: key.x,
+        y: key.y,
+      );
       final bytes = await file.readAsBytes();
       if (bytes.isNotEmpty) {
         final buffer = await ui.ImmutableBuffer.fromUint8List(bytes);
@@ -97,6 +103,12 @@ class _CachedTileImage extends ImageProvider<_CachedTileImage> {
       throw Exception('Tile ${key.z}/${key.x}/${key.y} HTTP ${res.statusCode}');
     }
     try {
+      final file = await cache.tileFile(
+        cacheId: key.cacheId,
+        z: key.z,
+        x: key.x,
+        y: key.y,
+      );
       await file.parent.create(recursive: true);
       await file.writeAsBytes(res.bodyBytes, flush: true);
     } catch (_) {}

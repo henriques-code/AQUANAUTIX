@@ -123,8 +123,9 @@ class OracleCacheRepository {
     final manifest = await _readManifest();
     if (manifest.length <= maxZones) return;
     manifest.sort((a, b) {
-      final pa = a['priority'] == 'favorite' ? 0 : 1;
-      final pb = b['priority'] == 'favorite' ? 0 : 1;
+      // Evict oldest normal zones first; keep favorites until last.
+      final pa = a['priority'] == 'favorite' ? 1 : 0;
+      final pb = b['priority'] == 'favorite' ? 1 : 0;
       if (pa != pb) return pa.compareTo(pb);
       return DateTime.parse(a['fetchedAt'] as String)
           .compareTo(DateTime.parse(b['fetchedAt'] as String));

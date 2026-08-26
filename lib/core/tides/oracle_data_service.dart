@@ -406,10 +406,25 @@ class OracleDataService {
       return bundle;
     } catch (_) {
       if (diskEntry != null) {
-        _cache = diskEntry.bundle;
+        final fallbackNow = DateTime.now();
+        final bundle = diskEntry.series.isNotEmpty
+            ? buildBundleFromSeries(
+                ctx: ctx,
+                lat: lat,
+                lon: lon,
+                series: diskEntry.series,
+                isPlanning: isPlanning,
+                headline: headline,
+                subtitle: subtitle,
+                placeShort: placeShort,
+                fetchedAt: fallbackNow,
+                gpsCountryIso2: gpsCountryIso2,
+              )
+            : diskEntry.bundle;
+        _cache = bundle;
         _cacheKey = key;
-        _cacheTime = diskEntry.meta.fetchedAt;
-        return diskEntry.bundle;
+        _cacheTime = fallbackNow;
+        return bundle;
       }
       rethrow;
     }
@@ -570,7 +585,12 @@ class OracleDataService {
     );
   }
 
-  Future<({OracleCacheMeta meta, OracleBundle bundle})?> _readDiskCosta({
+  Future<
+      ({
+        OracleCacheMeta meta,
+        OracleBundle bundle,
+        List<MarineHourPoint> series,
+      })?> _readDiskCosta({
     required double lat,
     required double lon,
     required String lang,
@@ -585,7 +605,14 @@ class OracleDataService {
     if (j == null) return null;
     final meta = OracleCacheMeta.fromJson(j['meta'] as Map<String, dynamic>);
     final bundle = _bundleFromJson(j['bundle'] as Map<String, dynamic>);
-    return (meta: meta, bundle: bundle);
+    final seriesJson = j['marineSeries'] as List<dynamic>?;
+    final series = seriesJson
+            ?.map(
+              (e) => marineHourPointFromJson(e as Map<String, dynamic>),
+            )
+            .toList() ??
+        const <MarineHourPoint>[];
+    return (meta: meta, bundle: bundle, series: series);
   }
 
   Map<String, dynamic> _bundleToJson(OracleBundle b) => {
