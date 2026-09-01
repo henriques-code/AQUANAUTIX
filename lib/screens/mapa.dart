@@ -2989,9 +2989,12 @@ class _CatchUploadSheetState extends State<_CatchUploadSheet> {
                   Text(widget.t.es ? 'Privacidad' : 'Privacidade', style: ibm(12, c: kHint)),
                   const SizedBox(height: 6),
                   Row(children: [
+                    // Opção "Amigos" oculta: catch_photos não tem policy RLS
+                    // nem tabela de amigos/follows — hoje comportar-se-ia
+                    // como Privado mas anunciando partilha que não existe
+                    // (Etapa 2, Prioridade 12). Reactivar apenas quando o
+                    // backend de amigos existir.
                     _privacyBtn(CatchPrivacy.public, '🌐', widget.t.es ? 'Público' : 'Público'),
-                    const SizedBox(width: 8),
-                    _privacyBtn(CatchPrivacy.friends, '👥', widget.t.es ? 'Amigos' : 'Amigos'),
                     const SizedBox(width: 8),
                     _privacyBtn(CatchPrivacy.private, '🔒', widget.t.es ? 'Privado' : 'Privado'),
                   ]),

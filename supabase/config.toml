@@ -27,5 +27,11 @@ verify_jwt = true
 [functions.oracle-tides]
 verify_jwt = false
 
+[functions.oracle]
+# Protótipo órfão de assistente IA (P1 backlog) sem chamador no cliente hoje.
+# verify_jwt=true corta o abuso público de créditos OpenAI — ver
+# supabase/functions/oracle/index.ts para detalhe.
+verify_jwt = true
+
 [functions.vision-scan]
 verify_jwt = false

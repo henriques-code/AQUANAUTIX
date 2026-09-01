@@ -1,5 +1,9 @@
+import 'dart:async';
+import 'dart:convert';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '_shared.dart';
 import 'login_module.dart';
@@ -27,6 +31,44 @@ class PerfilScreen extends StatefulWidget {
 
 class _PerfilScreenState extends State<PerfilScreen> {
   bool _logoutLoading = false;
+
+  // Mesma chave/formato do Logbook pessoal (lib/screens/logbook.dart,
+  // _prefsKey = 'logbook_capturas_v1'). Sem tabela Supabase própria — ver
+  // .cursorrules secção 4 (Logbook é local-only, SharedPreferences).
+  static const _logbookPrefsKey = 'logbook_capturas_v1';
+  int? _capturasCount;
+  double? _maiorPbKg;
+
+  @override
+  void initState() {
+    super.initState();
+    unawaited(_loadLogbookStats());
+  }
+
+  Future<void> _loadLogbookStats() async {
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getStringList(_logbookPrefsKey);
+    if (raw == null || raw.isEmpty) {
+      // Sem capturas guardadas ainda (o Logbook mostra 3 capturas de exemplo
+      // nesse caso, mas nunca as persiste) — reflectir 0 real, não inventar.
+      if (mounted) setState(() { _capturasCount = 0; _maiorPbKg = null; });
+      return;
+    }
+    double? maxKg;
+    for (final s in raw) {
+      try {
+        final m = jsonDecode(s) as Map<String, dynamic>;
+        final peso = m['peso'] as String? ?? '';
+        final match = RegExp(r'[\d]+[.,]?[\d]*').firstMatch(peso);
+        if (match == null) continue;
+        final kg = double.tryParse(match.group(0)!.replaceAll(',', '.'));
+        if (kg != null && (maxKg == null || kg > maxKg)) maxKg = kg;
+      } catch (_) {
+        // entrada corrompida/ilegível — ignora, não deve rebentar o Perfil.
+      }
+    }
+    if (mounted) setState(() { _capturasCount = raw.length; _maiorPbKg = maxKg; });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -130,11 +172,17 @@ class _PerfilScreenState extends State<PerfilScreen> {
               border: Border.all(color: kCyan.withValues(alpha: 0.1)),
             ),
             child: Row(children: [
+              // TODO(sessões reais): sem definição/tracking de "sessão" ainda
+              // implementado (nem local nem Supabase) — mantido como estava
+              // para não inventar uma métrica falsa. Ver relatório Etapa 2 P11.
               _stat('23', t.es ? 'SESIONES' : 'SESSÕES'),
               Container(width: 1, height: 32, color: kCyan.withValues(alpha: 0.1)),
-              _stat('41', 'CAPTURAS'),
+              _stat(_capturasCount?.toString() ?? '—', 'CAPTURAS'),
               Container(width: 1, height: 32, color: kCyan.withValues(alpha: 0.1)),
-              _stat('4.2kg', t.es ? 'MAYOR PB' : 'MAIOR PB'),
+              _stat(
+                _maiorPbKg != null ? '${_maiorPbKg!.toStringAsFixed(1)}kg' : '—',
+                t.es ? 'MAYOR PB' : 'MAIOR PB',
+              ),
             ]),
           ),
 
