@@ -1,0 +1,23 @@
+version: 2
+updates:
+  # App Flutter (lib/, pubspec.yaml) — só alertas de segurança + PRs de
+  # actualização; não activa upgrades em massa (isso é decidido manualmente).
+  - package-ecosystem: "pub"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+
+  # Workflows de CI (.github/workflows)
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+
+  # Site V2 (package.json — só puppeteer-core para screenshots)
+  - package-ecosystem: "npm"
+    directory: "/Site V2"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
