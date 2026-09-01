@@ -1,0 +1,69 @@
+name: Flutter CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+concurrency:
+  group: flutter-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  analyze_test:
+    name: analyze + test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      # assets/video_bg.mp4 é gitignored (ficheiro grande) mas é um asset
+      # declarado no pubspec.yaml — sem placeholder, analyze/test falham
+      # a tentar resolver o asset bundle. Ver AGENTS.md.
+      - name: Placeholder assets/video_bg.mp4 (gitignored)
+        run: |
+          mkdir -p assets
+          ffmpeg -y -f lavfi -i color=c=black:s=64x64:d=0.5 \
+            -c:v libx264 -pix_fmt yuv420p assets/video_bg.mp4
+
+      - run: flutter pub get
+
+      - name: flutter analyze
+        run: flutter analyze
+
+      - name: flutter test
+        run: flutter test
+
+  # Build Android informativo — não bloqueia merge (ver required checks em
+  # branch protection). Gradle/Android SDK tornam este job lento; mantém-se
+  # separado do gate obrigatório de analyze+test.
+  build_apk_debug:
+    name: build apk --debug (informativo)
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Placeholder assets/video_bg.mp4 (gitignored)
+        run: |
+          mkdir -p assets
+          ffmpeg -y -f lavfi -i color=c=black:s=64x64:d=0.5 \
+            -c:v libx264 -pix_fmt yuv420p assets/video_bg.mp4
+
+      - run: flutter pub get
+      - run: flutter build apk --debug
