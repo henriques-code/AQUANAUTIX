@@ -46,7 +46,6 @@ $coreDefines = @(
     "MAPBOX_ACCESS_TOKEN=$($defines['MAPBOX_ACCESS_TOKEN'])",
     "SUPABASE_URL=$($defines['SUPABASE_URL'])",
     "SUPABASE_ANON_KEY=$($defines['SUPABASE_ANON_KEY'])",
-    "OPENAI_API_KEY=$($defines['OPENAI_API_KEY'])",
     "REVENUECAT_API_KEY_ANDROID=$($defines['REVENUECAT_API_KEY_ANDROID'])"
 )
 

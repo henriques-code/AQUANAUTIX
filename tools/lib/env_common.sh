@@ -6,11 +6,12 @@ ENV_REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 ENV_FILE="${ENV_REPO_ROOT}/.env"
 
 # Chaves injectadas na app via --dart-define (run_dev.ps1)
+# OPENAI_API_KEY não entra aqui de propósito — vive só como secret da Edge
+# Function `vision-scan` no Supabase, nunca no cliente/APK (ver ENV_BOOTSTRAP_KEYS).
 ENV_CORE_KEYS=(
   MAPBOX_ACCESS_TOKEN
   SUPABASE_URL
   SUPABASE_ANON_KEY
-  OPENAI_API_KEY
   REVENUECAT_API_KEY_ANDROID
 )
 
