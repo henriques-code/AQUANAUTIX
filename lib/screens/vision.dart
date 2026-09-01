@@ -7,12 +7,12 @@ import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '_shared.dart';
-import '../core/config/openai_config.dart';
 import '../core/monetization/subscription_gate.dart';
 import '../core/state/subscription_store.dart';
 import '../core/species/species_catalog.dart';
 import '../core/species/species_compliance.dart';
 import '../core/state/fishing_context_store.dart';
+import '../core/supabase_bootstrap.dart';
 import '../core/vision/vision_climate_service.dart';
 import '../core/vision/vision_climate_snapshot.dart';
 import '../core/vision/vision_share_payload.dart';
@@ -175,7 +175,7 @@ class _VisionScreenState extends State<VisionScreen>
 
     VisionScanResult out;
     try {
-      if (isOpenAiConfigured) {
+      if (canUseSupabase) {
         out = await VisionScanService.instance.analyzeImageBytes(
           imageBytes: bytes,
           mimeType: mime,
@@ -184,7 +184,7 @@ class _VisionScreenState extends State<VisionScreen>
         if (demo == null) throw StateError('Catálogo vazio');
         out = VisionScanResult.withDemoFallback(
           demoSpecies: demo,
-          errorMessage: 'OPENAI_API_KEY não definida — resultado de referência.',
+          errorMessage: 'Supabase não configurado — resultado de referência.',
         );
       }
     } catch (e) {

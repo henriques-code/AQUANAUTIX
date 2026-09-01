@@ -26,8 +26,9 @@ Dispositivo de teste habitual: `WWZLYDXWYXT8PV5D` (Xiaomi 22031116BG).
 
 ## Porquê
 
-- Injeta `--dart-define` para `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `MAPBOX_ACCESS_TOKEN`, `OPENAI_API_KEY`, RevenueCat, etc.
+- Injeta `--dart-define` para `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `MAPBOX_ACCESS_TOKEN`, RevenueCat, etc.
 - Sem isto: Supabase não inicializa, APIs falham, ecrã vermelho no Início.
+- `OPENAI_API_KEY` **não** é (e não deve ser) injectada aqui — o Vision chama a Edge Function `vision-scan`, que usa a chave só server-side (secret do projeto Supabase). Nunca reintroduzir este dart-define no cliente.
 
 ## Agente
 
