@@ -1,0 +1,806 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AQUANAUTIX — Oráculo · Mockup Interativo</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=IBM+Plex+Sans:wght@300;400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#000814; --bg2:#040f24; --bg3:#071428; --bg4:#0a1c35; --bg5:#0d2644;
+  --cyan:#00F5FF; --cyan2:#00c8d4; --amber:#F3C64D; --hint:#8AADBE;
+  --green:#00E676; --red:#FF4D6D; --elite:#c084fc; --card:#0c1e34;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{background:var(--bg);}
+body{
+  min-height:100vh; font-family:'IBM Plex Sans',sans-serif; color:#fff;
+  display:flex; flex-direction:column; align-items:center;
+  overflow-x:hidden; position:relative;
+}
+.orb{font-family:'Orbitron',sans-serif;} .mono{font-family:'Share Tech Mono',monospace;}
+
+/* ── FUNDO OCEÂNICO ANIMADO ── */
+#ocean-canvas{position:fixed; inset:0; width:100%; height:100%; z-index:0; pointer-events:none;}
+.caustics{
+  position:fixed; inset:0; z-index:0; pointer-events:none; mix-blend-mode:screen; opacity:.35;
+  background:
+    radial-gradient(ellipse 60% 40% at 20% 15%, rgba(0,245,255,.10), transparent 60%),
+    radial-gradient(ellipse 50% 35% at 80% 30%, rgba(243,198,77,.08), transparent 60%),
+    radial-gradient(ellipse 55% 45% at 50% 85%, rgba(0,245,255,.07), transparent 60%);
+  animation: causticsDrift 18s ease-in-out infinite alternate;
+}
+@keyframes causticsDrift{
+  0%{transform:translate(0,0) scale(1);}
+  100%{transform:translate(-2%,3%) scale(1.08);}
+}
+
+/* ── HEADER DA PÁGINA ── */
+.page-head{position:relative; z-index:2; text-align:center; padding:2.4rem 1.2rem .6rem;}
+.tagline{
+  font-family:'Share Tech Mono',monospace; font-size:.65rem; letter-spacing:.28em;
+  color:var(--amber); border:1px solid rgba(243,198,77,.35); display:inline-block;
+  padding:.3rem .9rem; border-radius:100px; margin-bottom:1rem; background:rgba(243,198,77,.06);
+}
+.page-title{
+  font-family:'Orbitron',sans-serif; font-weight:900; font-size:clamp(1.4rem,4vw,2.3rem);
+  letter-spacing:.06em; background:linear-gradient(90deg,var(--cyan),#7be6ff 40%,var(--amber));
+  -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;
+  margin-bottom:.5rem;
+}
+.page-sub{color:var(--hint); font-size:.85rem; max-width:520px; margin:0 auto; line-height:1.5;}
+
+/* ── SELECTOR FREE / PRO (demo de monetização) ── */
+.view-switch{
+  position:relative; z-index:2; display:flex; align-items:center; gap:.6rem;
+  margin:1.4rem 0 .4rem; font-family:'Share Tech Mono',monospace; font-size:.68rem;
+  letter-spacing:.12em; color:var(--hint);
+}
+.vs-track{
+  position:relative; width:132px; height:34px; border-radius:100px;
+  background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.14);
+  display:flex; cursor:pointer; overflow:hidden;
+}
+.vs-thumb{
+  position:absolute; top:2px; left:2px; width:64px; height:28px; border-radius:100px;
+  background:linear-gradient(90deg,var(--cyan),var(--cyan2));
+  box-shadow:0 0 14px rgba(0,245,255,.5); transition:transform .32s cubic-bezier(.4,0,.2,1), background .3s;
+}
+.vs-track.is-pro .vs-thumb{ transform:translateX(64px); background:linear-gradient(90deg,var(--amber),#ffdd8a); box-shadow:0 0 14px rgba(243,198,77,.5); }
+.vs-opt{flex:1; display:flex; align-items:center; justify-content:center; z-index:1; font-weight:700; color:rgba(255,255,255,.45); transition:color .3s;}
+.vs-track:not(.is-pro) .vs-opt.free{color:#001018;}
+.vs-track.is-pro .vs-opt.pro{color:#001018;}
+
+/* ── PALCO DO TELEMÓVEL ── */
+.stage{position:relative; z-index:2; display:flex; flex-direction:column; align-items:center; padding:1.4rem 1rem 3rem;}
+.phone{
+  width:390px; height:844px; background:#03070f; border-radius:52px;
+  border:2px solid rgba(255,255,255,.14); position:relative; overflow:hidden;
+  box-shadow:0 40px 90px rgba(0,0,0,.75), 0 0 60px rgba(0,245,255,.06), inset 0 0 0 6px #000;
+  display:flex; flex-direction:column;
+}
+.island{
+  position:absolute; top:14px; left:50%; transform:translateX(-50%);
+  width:110px; height:28px; background:#000; border-radius:20px; z-index:50;
+}
+.pstatus{
+  display:flex; justify-content:space-between; align-items:center; padding:.55rem 1.4rem .3rem;
+  font-family:'Share Tech Mono',monospace; font-size:.72rem; color:#fff; flex-shrink:0; position:relative; z-index:20;
+}
+.pstatus .sig{letter-spacing:.05em; color:rgba(255,255,255,.85);}
+
+/* ── APP CONTENT ── */
+.app{flex:1; overflow-y:auto; overflow-x:hidden; scrollbar-width:none; position:relative;
+  background:linear-gradient(180deg,#00101f 0%,#000814 55%,#000610 100%);}
+.app::-webkit-scrollbar{display:none;}
+.app-pad{padding:.4rem .85rem 1.2rem;}
+
+/* location + toggle row */
+.loc-row{display:flex; align-items:center; justify-content:space-between; gap:.5rem; padding:.3rem 0 .6rem;}
+.loc-info{display:flex; align-items:center; gap:.5rem; min-width:0;}
+.loc-dot{width:8px; height:8px; border-radius:50%; background:var(--green); box-shadow:0 0 8px var(--green); flex-shrink:0; animation:pulseDot 1.8s ease-in-out infinite;}
+@keyframes pulseDot{0%,100%{opacity:1; transform:scale(1);}50%{opacity:.45; transform:scale(1.3);}}
+.loc-text{min-width:0;}
+.loc-text .l1{font-size:.78rem; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.loc-text .l2{font-family:'Share Tech Mono',monospace; font-size:.6rem; color:var(--hint);}
+
+.mode-toggle{position:relative; display:flex; background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.1); border-radius:100px; padding:2px; flex-shrink:0;}
+.mode-toggle .mt-bg{position:absolute; top:2px; left:2px; width:60px; height:26px; border-radius:100px; background:linear-gradient(90deg,var(--cyan),var(--cyan2)); transition:transform .3s cubic-bezier(.4,0,.2,1); box-shadow:0 0 12px rgba(0,245,255,.45);}
+.mode-toggle.is-rio .mt-bg{transform:translateX(60px); background:linear-gradient(90deg,#2ee6a8,#17c98a); box-shadow:0 0 12px rgba(46,230,168,.45);}
+.mt-opt{position:relative; z-index:1; width:60px; text-align:center; font-family:'Share Tech Mono',monospace; font-size:.62rem; font-weight:700; letter-spacing:.05em; padding:.4rem 0; color:var(--hint); cursor:pointer; transition:color .3s;}
+.mode-toggle:not(.is-rio) .mt-opt.costa{color:#001018;}
+.mode-toggle.is-rio .mt-opt.rio{color:#001018;}
+
+/* HERO SCORE CARD */
+.hero{position:relative; border-radius:20px; overflow:hidden; padding:1rem .9rem 1.1rem; margin-bottom:.7rem;
+  background:radial-gradient(120% 100% at 15% 0%, rgba(0,245,255,.14), transparent 55%), linear-gradient(155deg,#0a1d33,#071223 70%);
+  border:1px solid rgba(0,245,255,.16); box-shadow:0 10px 30px rgba(0,0,0,.4);}
+.hero-fish{position:absolute; right:-18px; bottom:-14px; font-size:5.6rem; opacity:.08; transform:scaleX(-1); pointer-events:none;}
+.hero-top{display:flex; align-items:center; gap:.9rem;}
+.gauge-wrap{position:relative; width:104px; height:104px; flex-shrink:0;}
+.gauge-wrap svg{width:100%; height:100%; transform:rotate(-90deg);}
+.gauge-track{fill:none; stroke:rgba(255,255,255,.08); stroke-width:9;}
+.gauge-fill{fill:none; stroke:var(--cyan); stroke-width:9; stroke-linecap:round; filter:drop-shadow(0 0 6px rgba(0,245,255,.7)); transition:stroke-dashoffset 1s cubic-bezier(.4,0,.2,1), stroke .5s;}
+.gauge-fill.good{stroke:var(--green); filter:drop-shadow(0 0 6px rgba(0,230,118,.7));}
+.gauge-fill.mid{stroke:var(--cyan);}
+.gauge-fill.low{stroke:var(--hint); filter:none;}
+.gauge-center{position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center;}
+.gauge-num{font-family:'Orbitron',sans-serif; font-weight:900; font-size:1.9rem; line-height:1;}
+.gauge-lbl{font-family:'Share Tech Mono',monospace; font-size:.5rem; color:var(--hint); letter-spacing:.1em; margin-top:.1rem;}
+.hero-info{flex:1; min-width:0;}
+.status-chip{display:inline-flex; align-items:center; gap:.3rem; font-family:'Share Tech Mono',monospace; font-size:.6rem; font-weight:700; letter-spacing:.08em; padding:.25rem .6rem; border-radius:100px; margin-bottom:.4rem;}
+.status-chip.good{background:rgba(0,230,118,.14); color:var(--green); border:1px solid rgba(0,230,118,.4);}
+.status-chip.mid{background:rgba(0,245,255,.12); color:var(--cyan); border:1px solid rgba(0,245,255,.4);}
+.window-lbl{font-size:.68rem; color:var(--hint); margin-bottom:.15rem;}
+.window-val{font-weight:700; font-size:.86rem;}
+.decision-txt{font-size:.76rem; line-height:1.45; color:rgba(255,255,255,.82); margin-top:.7rem; min-height:2.6em;}
+.decision-txt b{color:var(--cyan);}
+
+/* SPECIES CHIPS */
+.sp-row{display:flex; gap:.45rem; overflow-x:auto; padding:.15rem 0 .7rem; scrollbar-width:none;}
+.sp-row::-webkit-scrollbar{display:none;}
+.sp-chip{flex-shrink:0; font-family:'Share Tech Mono',monospace; font-size:.64rem; font-weight:700; letter-spacing:.05em; padding:.45rem .85rem; border-radius:100px; border:1px solid rgba(255,255,255,.14); background:rgba(255,255,255,.04); color:var(--hint); cursor:pointer; transition:all .2s;}
+.sp-chip.active{background:rgba(0,245,255,.14); border-color:var(--cyan); color:var(--cyan); box-shadow:0 0 10px rgba(0,245,255,.25);}
+
+.bait-card{display:flex; align-items:flex-start; gap:.6rem; background:var(--card); border:1px solid rgba(255,255,255,.08); border-radius:14px; padding:.7rem .8rem; margin-bottom:.7rem;}
+.bait-ic{font-size:1.2rem; flex-shrink:0;}
+.bait-txt .bt1{font-size:.6rem; font-family:'Share Tech Mono',monospace; color:var(--hint); letter-spacing:.08em; margin-bottom:.15rem;}
+.bait-txt .bt2{font-size:.78rem; font-weight:600;}
+.bait-txt .bt3{font-size:.68rem; color:var(--hint); margin-top:.1rem;}
+
+/* CTAs */
+.cta-row{display:flex; gap:.6rem; margin-bottom:.8rem;}
+.btn{flex:1; text-align:center; font-family:'Share Tech Mono',monospace; font-weight:700; font-size:.72rem; letter-spacing:.06em; padding:.75rem .5rem; border-radius:12px; cursor:pointer; position:relative; overflow:hidden; border:none; transition:transform .15s;}
+.btn:active{transform:scale(.96);}
+.btn-primary{background:linear-gradient(90deg,var(--cyan),var(--cyan2)); color:#001018; box-shadow:0 6px 18px rgba(0,245,255,.35);}
+.btn-ghost{background:rgba(255,255,255,.05); color:#fff; border:1px solid rgba(255,255,255,.16);}
+.ripple{position:absolute; border-radius:50%; background:rgba(255,255,255,.5); transform:scale(0); animation:rippleAnim .55s ease-out; pointer-events:none;}
+@keyframes rippleAnim{to{transform:scale(3.2); opacity:0;}}
+
+/* GOLDEN WINDOW BANNER */
+.golden{position:relative; display:flex; align-items:center; gap:.7rem; background:linear-gradient(90deg,rgba(243,198,77,.12),rgba(243,198,77,.03)); border:1px solid rgba(243,198,77,.35); border-radius:14px; padding:.7rem .8rem; margin-bottom:.8rem;}
+.golden-ic{font-size:1.3rem;}
+.golden .gt1{font-size:.6rem; font-family:'Share Tech Mono',monospace; color:var(--amber); letter-spacing:.08em;}
+.golden .gt2{font-size:.78rem; font-weight:600;}
+.golden .countdown{font-family:'Orbitron',sans-serif; font-weight:700; font-size:.82rem; color:var(--amber); letter-spacing:.05em;}
+.bell{width:32px; height:32px; border-radius:50%; background:rgba(255,255,255,.06); display:flex; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0; transition:all .25s; font-size:.95rem;}
+.bell.on{background:rgba(0,245,255,.18); box-shadow:0 0 10px rgba(0,245,255,.4);}
+
+/* TIMELINE 12H */
+.section-lbl{font-family:'Share Tech Mono',monospace; font-size:.62rem; color:var(--hint); letter-spacing:.1em; margin:.2rem 0 .5rem;}
+.timeline{display:flex; gap:.35rem; overflow-x:auto; padding:.2rem .1rem .8rem; scrollbar-width:none;}
+.timeline::-webkit-scrollbar{display:none;}
+.tl-item{flex-shrink:0; width:34px; display:flex; flex-direction:column; align-items:center; gap:.3rem; cursor:pointer;}
+.tl-bar-wrap{width:14px; height:56px; background:rgba(255,255,255,.06); border-radius:8px; display:flex; align-items:flex-end; overflow:hidden; position:relative;}
+.tl-bar{width:100%; border-radius:8px; background:linear-gradient(180deg,var(--cyan),var(--cyan2)); transition:height .6s ease;}
+.tl-bar.gold{background:linear-gradient(180deg,var(--amber),#ffdd8a);}
+.tl-item.now .tl-bar-wrap{box-shadow:0 0 0 2px var(--cyan);}
+.tl-h{font-family:'Share Tech Mono',monospace; font-size:.52rem; color:var(--hint);}
+.tl-item.now .tl-h{color:var(--cyan); font-weight:700;}
+.tl-tooltip{position:absolute; bottom:100%; margin-bottom:6px; background:#0a1a2c; border:1px solid rgba(0,245,255,.35); border-radius:6px; padding:.2rem .4rem; font-size:.55rem; font-family:'Share Tech Mono',monospace; white-space:nowrap; opacity:0; transform:translateY(4px); transition:all .18s; pointer-events:none; left:50%; translate:-50% 0;}
+.tl-item.show-tip .tl-tooltip{opacity:1; transform:translateY(0);}
+
+/* WEATHER GRID */
+.wgrid{display:grid; grid-template-columns:repeat(3,1fr); gap:.5rem; margin-bottom:.8rem;}
+.wtile{background:var(--card); border:1px solid rgba(255,255,255,.07); border-radius:12px; padding:.55rem .5rem; display:flex; flex-direction:column; align-items:center; gap:.25rem; min-height:84px; justify-content:center; position:relative; overflow:hidden;}
+.wtile .wl{font-family:'Share Tech Mono',monospace; font-size:.5rem; color:var(--hint); letter-spacing:.06em;}
+.wtile .wv{font-weight:700; font-size:.82rem;}
+.wtile .ws{font-size:.56rem; color:var(--hint);}
+/* tide wave */
+.wave-box{width:34px; height:24px; position:relative; overflow:hidden; border-radius:4px; background:rgba(0,245,255,.05);}
+.wave-fill{position:absolute; bottom:0; left:0; width:100%; background:linear-gradient(180deg,rgba(0,245,255,.35),rgba(0,245,255,.6)); transition:height .8s ease;}
+.wave-svg{position:absolute; top:-4px; left:-10%; width:120%; height:12px; animation:waveMove 3.2s linear infinite;}
+@keyframes waveMove{from{transform:translateX(0);}to{transform:translateX(-20px);}}
+/* wind compass */
+.compass{width:30px; height:30px; border-radius:50%; border:1.5px solid rgba(255,255,255,.18); position:relative;}
+.needle{position:absolute; top:50%; left:50%; width:2px; height:12px; background:var(--cyan); transform-origin:bottom center; margin-left:-1px; margin-top:-12px; animation:needleWobble 4s ease-in-out infinite;}
+@keyframes needleWobble{0%,100%{filter:drop-shadow(0 0 2px var(--cyan));}50%{filter:drop-shadow(0 0 5px var(--cyan));}}
+/* moon */
+.moon{width:26px; height:26px; border-radius:50%; background:#e8eef2; position:relative; box-shadow:0 0 10px rgba(232,238,242,.35); overflow:hidden;}
+.moon .shadow{position:absolute; top:0; height:100%; background:#0a1626; border-radius:50%;}
+
+/* PRO GATE CARD */
+.pro-card{position:relative; border-radius:16px; overflow:hidden; margin-bottom:.8rem; border:1px solid rgba(243,198,77,.3); background:linear-gradient(135deg,rgba(243,198,77,.08),rgba(0,0,0,.2));}
+.pro-inner{padding:.85rem .9rem; transition:filter .35s;}
+.pro-card.locked .pro-inner{filter:blur(7px) brightness(.7); user-select:none;}
+.pro-lock-overlay{position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:.4rem; opacity:1; transition:opacity .3s; background:rgba(3,7,15,.25);}
+.pro-card:not(.locked) .pro-lock-overlay{opacity:0; pointer-events:none;}
+.lock-ic{font-size:1.4rem; filter:drop-shadow(0 0 8px rgba(243,198,77,.6));}
+.pro-unlock-btn{font-family:'Share Tech Mono',monospace; font-weight:700; font-size:.68rem; letter-spacing:.05em; color:#1a1300; background:linear-gradient(90deg,var(--amber),#ffdd8a); padding:.5rem 1rem; border-radius:100px; cursor:pointer; box-shadow:0 4px 16px rgba(243,198,77,.4); position:relative; overflow:hidden;}
+.pro-title{font-size:.6rem; font-family:'Share Tech Mono',monospace; color:var(--amber); letter-spacing:.08em; margin-bottom:.3rem;}
+.pro-body{font-size:.8rem; font-weight:600;}
+.pro-sub{font-size:.68rem; color:var(--hint); margin-top:.15rem;}
+.shimmer{position:absolute; inset:0; background:linear-gradient(110deg,transparent 30%,rgba(255,255,255,.18) 50%,transparent 70%); background-size:200% 100%; animation:shimmerMove 2.6s linear infinite;}
+@keyframes shimmerMove{from{background-position:200% 0;}to{background-position:-200% 0;}}
+
+/* COMMUNITY GHOST STRIP */
+.ghost-head{display:flex; align-items:center; justify-content:space-between; margin-bottom:.4rem;}
+.ghost-title{font-family:'Share Tech Mono',monospace; font-size:.62rem; color:var(--hint); letter-spacing:.08em; display:flex; align-items:center; gap:.35rem;}
+.live-dot{width:6px; height:6px; border-radius:50%; background:var(--red); animation:pulseDot 1.4s ease-in-out infinite;}
+.ghost-track-wrap{overflow:hidden; margin:0 -.85rem; padding:0 .85rem;}
+.ghost-track{display:flex; gap:.55rem; width:max-content; animation:ghostScroll 16s linear infinite;}
+.ghost-track-wrap:hover .ghost-track{animation-play-state:paused;}
+@keyframes ghostScroll{from{transform:translateX(0);}to{transform:translateX(-50%);}}
+.ghost-card{flex-shrink:0; width:118px; background:var(--card); border:1px solid rgba(255,255,255,.08); border-radius:12px; padding:.5rem; position:relative;}
+.ghost-avatar{width:22px; height:22px; border-radius:50%; background:linear-gradient(135deg,var(--cyan),var(--elite)); display:flex; align-items:center; justify-content:center; font-size:.6rem; margin-bottom:.3rem; filter:blur(2.5px); opacity:.85;}
+.ghost-sp{font-size:.68rem; font-weight:700;}
+.ghost-w{font-size:.6rem; color:var(--hint);}
+.ghost-loc{font-size:.52rem; color:var(--hint); margin-top:.2rem; filter:blur(2px);}
+
+/* BOTTOM NAV */
+.bottom-nav{display:flex; border-top:1px solid rgba(255,255,255,.07); background:#03070f; flex-shrink:0; position:relative; z-index:20;}
+.bnav-item{flex:1; display:flex; flex-direction:column; align-items:center; gap:.15rem; padding:.5rem 0 .65rem; font-family:'Share Tech Mono',monospace; font-size:.42rem; letter-spacing:.04em; color:rgba(255,255,255,.35); cursor:pointer;}
+.bnav-item .bi{font-size:1rem;}
+.bnav-item.active{color:var(--cyan);}
+.bnav-item.active .bi-dot{width:3px; height:3px; border-radius:50%; background:var(--cyan); margin-top:.05rem;}
+
+/* TOAST */
+.toast{position:absolute; bottom:78px; left:50%; transform:translateX(-50%) translateY(10px); background:#0d2036; border:1px solid rgba(0,245,255,.35); color:#fff; font-size:.7rem; padding:.55rem 1rem; border-radius:100px; opacity:0; transition:all .3s; z-index:80; white-space:nowrap; box-shadow:0 8px 24px rgba(0,0,0,.5); pointer-events:none;}
+.toast.show{opacity:1; transform:translateX(-50%) translateY(0);}
+
+/* PAYWALL SHEET */
+.sheet-overlay{position:absolute; inset:0; background:rgba(0,4,10,.55); z-index:90; opacity:0; pointer-events:none; transition:opacity .3s;}
+.sheet-overlay.show{opacity:1; pointer-events:auto;}
+.sheet{position:absolute; left:0; right:0; bottom:0; background:linear-gradient(180deg,#0a1c30,#040e1c); border-radius:22px 22px 0 0; border:1px solid rgba(0,245,255,.2); padding:1rem 1.1rem 1.3rem; transform:translateY(100%); transition:transform .38s cubic-bezier(.32,.72,0,1); z-index:91; max-height:78%; overflow-y:auto;}
+.sheet-overlay.show .sheet{transform:translateY(0);}
+.sheet-handle{width:36px; height:4px; border-radius:4px; background:rgba(255,255,255,.2); margin:0 auto .8rem;}
+.sheet-close{position:absolute; top:14px; right:16px; width:26px; height:26px; border-radius:50%; background:rgba(255,255,255,.08); display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:.8rem;}
+.sheet h3{font-family:'Orbitron',sans-serif; font-size:1rem; background:linear-gradient(90deg,var(--cyan),var(--amber)); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; margin-bottom:.2rem;}
+.sheet p.sub{font-size:.72rem; color:var(--hint); margin-bottom:.9rem;}
+.plans{display:flex; flex-direction:column; gap:.5rem; margin-bottom:1rem;}
+.plan{display:flex; align-items:center; justify-content:space-between; padding:.65rem .8rem; border-radius:12px; border:1px solid rgba(255,255,255,.1); background:rgba(255,255,255,.03);}
+.plan.hi{border-color:rgba(0,245,255,.5); background:rgba(0,245,255,.07);}
+.plan .pn{font-weight:700; font-size:.8rem;}
+.plan .pf{font-size:.62rem; color:var(--hint);}
+.plan .pp{font-family:'Share Tech Mono',monospace; font-size:.78rem; color:var(--cyan); font-weight:700;}
+
+/* FEATURE BADGES BELOW PHONE */
+.badges{position:relative; z-index:2; display:flex; flex-wrap:wrap; justify-content:center; gap:.55rem; max-width:640px; margin-top:1.6rem; padding:0 1rem 3rem;}
+.badge{font-family:'Share Tech Mono',monospace; font-size:.64rem; color:var(--hint); border:1px solid rgba(255,255,255,.12); background:rgba(255,255,255,.03); padding:.4rem .8rem; border-radius:100px; display:flex; align-items:center; gap:.4rem;}
+.badge b{color:var(--cyan); font-weight:700;}
+
+@media(max-width:460px){
+  .phone{transform:scale(.86); transform-origin:top center;}
+  .stage{padding-bottom:1rem;}
+}
+</style>
+</head>
+<body>
+
+<canvas id="ocean-canvas"></canvas>
+<div class="caustics"></div>
+
+<div class="page-head">
+  <div class="tagline">PROTÓTIPO INTERATIVO · MOCKUP</div>
+  <div class="page-title orb">ORÁCULO AQUANAUTIX</div>
+  <p class="page-sub">Simulação animada e funcional do ecrã principal da app — score em tempo real, alertas de Janela de Ouro, monetização PRO e comunidade Ghost. Dados de demonstração.</p>
+</div>
+
+<div class="view-switch">
+  <span>VER COMO</span>
+  <div class="vs-track" id="viewSwitch" onclick="toggleViewMode()">
+    <div class="vs-thumb"></div>
+    <div class="vs-opt free">FREE</div>
+    <div class="vs-opt pro">PRO</div>
+  </div>
+</div>
+
+<div class="stage">
+  <div class="phone" id="phoneRoot">
+    <div class="island"></div>
+    <div class="pstatus">
+      <span id="clock" class="mono">09:41</span>
+      <span class="sig mono">●●● 5G 🔋 92%</span>
+    </div>
+
+    <div class="app" id="appMode" data-mode="costa">
+      <div class="app-pad">
+
+        <div class="loc-row">
+          <div class="loc-info">
+            <span class="loc-dot"></span>
+            <div class="loc-text">
+              <div class="l1" id="locName">Sesimbra, Setúbal</div>
+              <div class="l2 mono" id="locCoords">38.4419°N, 9.1010°W · GPS live</div>
+            </div>
+          </div>
+          <div class="mode-toggle" id="modeToggle" onclick="null">
+            <div class="mt-bg"></div>
+            <div class="mt-opt costa" onclick="setMode('costa')">COSTA</div>
+            <div class="mt-opt rio" onclick="setMode('rio')">RIO</div>
+          </div>
+        </div>
+
+        <!-- HERO SCORE -->
+        <div class="hero">
+          <div class="hero-fish">🐟</div>
+          <div class="hero-top">
+            <div class="gauge-wrap">
+              <svg viewBox="0 0 150 150">
+                <circle class="gauge-track" cx="75" cy="75" r="64"></circle>
+                <circle class="gauge-fill" id="gaugeFill" cx="75" cy="75" r="64"></circle>
+              </svg>
+              <div class="gauge-center">
+                <div class="gauge-num" id="gaugeNum">0</div>
+                <div class="gauge-lbl">SCORE</div>
+              </div>
+            </div>
+            <div class="hero-info">
+              <div class="status-chip good" id="statusChip">⚡ EXCELENTE</div>
+              <div class="window-lbl">Melhor janela hoje:</div>
+              <div class="window-val mono" id="windowVal">07:00 → 09:30</div>
+            </div>
+          </div>
+          <div class="decision-txt" id="decisionTxt"></div>
+        </div>
+
+        <!-- SPECIES -->
+        <div class="section-lbl">ESPÉCIE ALVO</div>
+        <div class="sp-row" id="spRow"></div>
+
+        <div class="bait-card">
+          <div class="bait-ic">🪱</div>
+          <div class="bait-txt">
+            <div class="bt1">ISCO + TÉCNICA</div>
+            <div class="bt2" id="baitVal">Isco vivo — choco</div>
+            <div class="bt3" id="techVal">Fundo · Cana 3m · Chumbo 60g</div>
+          </div>
+        </div>
+
+        <div class="cta-row">
+          <button class="btn btn-primary" onclick="ripple(event); toast('🗺️ A abrir mapa do spot…')">IR PESCAR →</button>
+          <button class="btn btn-ghost" onclick="ripple(event); toast('📓 A abrir registo de captura…')">REGISTAR</button>
+        </div>
+
+        <!-- GOLDEN WINDOW -->
+        <div class="golden">
+          <div class="golden-ic">👑</div>
+          <div style="flex:1;">
+            <div class="gt1">PRÓXIMA JANELA DE OURO EM</div>
+            <div class="countdown mono" id="countdown">--:--:--</div>
+          </div>
+          <div class="bell" id="bell" onclick="toggleBell()">🔕</div>
+        </div>
+
+        <!-- TIMELINE -->
+        <div class="section-lbl">PRÓXIMAS 12H · SCORE + MARÉ</div>
+        <div class="timeline" id="timeline"></div>
+
+        <!-- WEATHER GRID -->
+        <div class="section-lbl">CONDIÇÕES COMPLETAS</div>
+        <div class="wgrid">
+          <div class="wtile">
+            <div class="wl">MARÉ</div>
+            <div class="wave-box"><div class="wave-fill" id="tideFill" style="height:62%;">
+              <svg class="wave-svg" viewBox="0 0 40 12" preserveAspectRatio="none"><path d="M0 6 Q5 2 10 6 T20 6 T30 6 T40 6 V12 H0 Z" fill="rgba(255,255,255,.25)"/></svg>
+            </div></div>
+            <div class="wv" id="tideVal">1.8 m</div>
+            <div class="ws" id="tideSub">↑ a subir</div>
+          </div>
+          <div class="wtile">
+            <div class="wl">VENTO</div>
+            <div class="compass"><div class="needle" id="needle" style="transform:rotate(230deg);"></div></div>
+            <div class="wv" id="windVal">14 km/h</div>
+            <div class="ws">SW</div>
+          </div>
+          <div class="wtile">
+            <div class="wl">PRESSÃO</div>
+            <div class="wv" style="font-size:1.1rem;">📈</div>
+            <div class="wv" id="pressVal">1015 hPa</div>
+            <div class="ws">estável</div>
+          </div>
+          <div class="wtile">
+            <div class="wl">LUA</div>
+            <div class="moon"><div class="shadow" id="moonShadow" style="width:22%; left:0; border-radius:50% 0 0 50%;"></div></div>
+            <div class="wv" id="moonVal">78%</div>
+            <div class="ws" id="moonSub">Gibosa Cresc.</div>
+          </div>
+          <div class="wtile">
+            <div class="wl">TEMP. ÁGUA</div>
+            <div class="wv" style="font-size:1.1rem;">🌡️</div>
+            <div class="wv" id="tempVal">18.4°C</div>
+            <div class="ws">+0.3° / dia</div>
+          </div>
+          <div class="wtile">
+            <div class="wl">ONDULAÇÃO</div>
+            <div class="wv" style="font-size:1.1rem;">🌊</div>
+            <div class="wv" id="waveVal">0.6 m</div>
+            <div class="ws">6s período</div>
+          </div>
+        </div>
+
+        <!-- PRO GATE -->
+        <div class="pro-card locked" id="proCard">
+          <div class="pro-inner">
+            <div class="pro-title">👑 SPOT PRO A 1.2 KM</div>
+            <div class="pro-body">Score <b style="color:var(--amber);">92</b> amanhã às 07:00 — melhor que este spot</div>
+            <div class="pro-sub">Comparar 3 sítios · Alertas ilimitados · Ghost Mode completo</div>
+          </div>
+          <div class="pro-lock-overlay">
+            <div class="lock-ic">🔒</div>
+            <div class="pro-unlock-btn" onclick="event.stopPropagation(); openSheet();"><span class="shimmer"></span>PRO 3 dias grátis →</div>
+          </div>
+        </div>
+
+        <!-- GHOST COMMUNITY -->
+        <div class="ghost-head">
+          <div class="ghost-title"><span class="live-dot"></span>GHOST ATIVIDADE NA ZONA</div>
+          <div class="ghost-title" style="cursor:pointer; color:var(--cyan);" onclick="toast('👥 A abrir comunidade…')">VER TUDO →</div>
+        </div>
+        <div class="ghost-track-wrap">
+          <div class="ghost-track" id="ghostTrack"></div>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <div class="sheet-overlay" id="sheetOverlay" onclick="closeSheetBg(event)">
+      <div class="sheet" onclick="event.stopPropagation()">
+        <div class="sheet-handle"></div>
+        <div class="sheet-close" onclick="closeSheet()">✕</div>
+        <h3 class="orb">Desbloqueia o Oráculo PRO</h3>
+        <p class="sub">Vê os melhores spots da região, compara locais e recebe alertas ilimitados da Janela de Ouro.</p>
+        <div class="plans">
+          <div class="plan"><div><div class="pn">FREE</div><div class="pf">1 spot · 1 alerta/semana</div></div><div class="pp">€0</div></div>
+          <div class="plan hi"><div><div class="pn">PRO</div><div class="pf">Comparar 3 spots · alertas diários</div></div><div class="pp">€4.99/mês</div></div>
+          <div class="plan"><div><div class="pn">ELITE</div><div class="pf">Tudo + Ghost Mode + IA Vision</div></div><div class="pp">€59.99/ano</div></div>
+        </div>
+        <button class="btn btn-primary" style="width:100%;" onclick="ripple(event); activatePro();">COMEÇAR TESTE GRÁTIS DE 3 DIAS</button>
+      </div>
+    </div>
+
+    <div class="bottom-nav">
+      <div class="bnav-item" onclick="navToast('Início')"><span class="bi">🏠</span>INÍCIO</div>
+      <div class="bnav-item active"><span class="bi">🔮</span>ORÁCULO<span class="bi-dot"></span></div>
+      <div class="bnav-item" onclick="navToast('Mapa')"><span class="bi">🗺️</span>MAPA</div>
+      <div class="bnav-item" onclick="navToast('Vision')"><span class="bi">📷</span>VISION</div>
+      <div class="bnav-item" onclick="navToast('Log')"><span class="bi">📓</span>LOG</div>
+      <div class="bnav-item" onclick="navToast('Perfil')"><span class="bi">👤</span>PERFIL</div>
+    </div>
+  </div>
+</div>
+
+<div class="badges">
+  <div class="badge">✓ <b>Score</b> em tempo real</div>
+  <div class="badge">✓ <b>Countdown</b> Janela de Ouro ao vivo</div>
+  <div class="badge">✓ Alternância <b>Costa / Rio</b></div>
+  <div class="badge">✓ Simulador <b>FREE vs PRO</b></div>
+  <div class="badge">✓ Feed <b>Ghost</b> da comunidade</div>
+  <div class="badge">✓ Fundo oceânico <b>animado em canvas</b></div>
+</div>
+
+<script>
+/* ═══════════════════ DADOS DE DEMONSTRAÇÃO ═══════════════════ */
+const DATA = {
+  costa: {
+    loc:{name:'Sesimbra, Setúbal', coords:'38.4419°N, 9.1010°W · GPS live'},
+    window:'07:00 → 09:30',
+    species:{
+      ROBALO:{score:84, bait:'Isco vivo — choco', tech:'Fundo · Cana 3m · Chumbo 60g'},
+      SARGO:{score:71, bait:'Camarão fresco', tech:'Chumbada corrida · Cana 4.2m'},
+      DOURADA:{score:66, bait:'Lula em tiras', tech:'Fundo leve · Cana 3.6m'},
+    },
+    tide:{val:'1.8 m', sub:'↑ a subir', pct:62},
+    wind:{val:'14 km/h', deg:230},
+    press:'1015 hPa',
+    moon:{pct:78, sub:'Gibosa Cresc.'},
+    temp:'18.4°C',
+    wave:'0.6 m',
+    hours:[42,48,55,63,71,84,91,88,76,60,48,39],
+    goldIdx:[5,6,7],
+  },
+  rio: {
+    loc:{name:'Rio Tejo, Abrantes', coords:'39.4633°N, 8.1978°W · GPS live'},
+    window:'06:30 → 08:45',
+    species:{
+      BARBO:{score:77, bait:'Massa + milho', tech:'Feeder · Cana 3.9m'},
+      ACHIGA:{score:69, bait:'Isco artificial — soft plastic', tech:'Casting leve · Cana 2.1m'},
+    },
+    tide:{val:'2.4 m³/s', sub:'→ estável', pct:44},
+    wind:{val:'9 km/h', deg:120},
+    press:'1017 hPa',
+    moon:{pct:78, sub:'Gibosa Cresc.'},
+    temp:'21.1°C',
+    wave:'—',
+    hours:[38,44,52,66,79,86,82,70,58,46,40,35],
+    goldIdx:[4,5,6],
+  }
+};
+const GHOSTS = [
+  {sp:'Robalo', w:'2.4 kg', loc:'~1.8 km'},
+  {sp:'Sargo', w:'1.1 kg', loc:'~3.2 km'},
+  {sp:'Dourada', w:'0.9 kg', loc:'~0.6 km'},
+  {sp:'Robalo', w:'3.6 kg', loc:'~2.1 km'},
+];
+
+let mode = 'costa';
+let species = 'ROBALO';
+let isPro = false;
+let displayedScore = 0;
+let bellOn = false;
+
+const R = 64, C = 2*Math.PI*R;
+const gaugeFill = document.getElementById('gaugeFill');
+gaugeFill.style.strokeDasharray = `${C} ${C}`;
+
+function statusFor(score){
+  if(score>=80) return {label:'⚡ EXCELENTE', cls:'good', gclass:'good'};
+  if(score>=65) return {label:'✓ BOM', cls:'mid', gclass:'mid'};
+  if(score>=45) return {label:'~ MODERADO', cls:'mid', gclass:'mid'};
+  return {label:'▽ FRACO', cls:'mid', gclass:'low'};
+}
+
+function animateScore(target){
+  const start = displayedScore;
+  const dur = 850;
+  const t0 = performance.now();
+  const gaugeNum = document.getElementById('gaugeNum');
+  const st = statusFor(target);
+  gaugeFill.classList.remove('good','mid','low');
+  gaugeFill.classList.add(st.gclass);
+  gaugeFill.style.strokeDashoffset = C * (1 - target/100);
+  const chip = document.getElementById('statusChip');
+  chip.className = 'status-chip ' + st.cls;
+  chip.textContent = st.label;
+  function step(now){
+    const p = Math.min(1,(now-t0)/dur);
+    const eased = 1 - Math.pow(1-p,3);
+    const val = Math.round(start + (target-start)*eased);
+    gaugeNum.textContent = val;
+    displayedScore = val;
+    if(p<1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+
+function decisionSentence(d, sp){
+  const s = d.species[sp].score;
+  const level = s>=80?'excelente':s>=65?'boa':s>=45?'razoável':'fraca';
+  return `Score <b>${s}</b> — atividade ${level} hoje. Vai a <b>${d.loc.name.split(',')[0]}</b> até às <b>${d.window.split(' → ')[1]}</b> para aproveitar a janela.`;
+}
+
+function renderSpeciesChips(d){
+  const row = document.getElementById('spRow');
+  row.innerHTML = '';
+  const keys = Object.keys(d.species);
+  if(!keys.includes(species)) species = keys[0];
+  keys.forEach(k=>{
+    const chip = document.createElement('div');
+    chip.className = 'sp-chip' + (k===species?' active':'');
+    chip.textContent = k.charAt(0)+k.slice(1).toLowerCase();
+    chip.onclick = ()=> selectSpecies(k);
+    row.appendChild(chip);
+  });
+}
+
+function selectSpecies(k){
+  species = k;
+  const d = DATA[mode];
+  renderSpeciesChips(d);
+  document.getElementById('baitVal').textContent = d.species[k].bait;
+  document.getElementById('techVal').textContent = d.species[k].tech;
+  document.getElementById('decisionTxt').innerHTML = decisionSentence(d,k);
+  animateScore(d.species[k].score);
+}
+
+function renderTimeline(d){
+  const tl = document.getElementById('timeline');
+  tl.innerHTML = '';
+  const now = new Date();
+  d.hours.forEach((score,i)=>{
+    const item = document.createElement('div');
+    item.className = 'tl-item' + (i===0?' now':'');
+    const label = i===0 ? 'agora' : '+'+i+'h';
+    const isGold = d.goldIdx.includes(i);
+    item.innerHTML = `
+      <div class="tl-bar-wrap">
+        <div class="tl-tooltip">Score ${score}</div>
+        <div class="tl-bar ${isGold?'gold':''}" style="height:${Math.max(8,score)}%;"></div>
+      </div>
+      <div class="tl-h">${label}</div>`;
+    item.addEventListener('click', ()=>{
+      document.querySelectorAll('.tl-item').forEach(el=>el.classList.remove('show-tip'));
+      item.classList.add('show-tip');
+      setTimeout(()=>item.classList.remove('show-tip'), 1600);
+    });
+    tl.appendChild(item);
+  });
+}
+
+function renderGhosts(){
+  const track = document.getElementById('ghostTrack');
+  const list = [...GHOSTS, ...GHOSTS];
+  track.innerHTML = list.map(g=>`
+    <div class="ghost-card">
+      <div class="ghost-avatar">🎣</div>
+      <div class="ghost-sp">${g.sp}</div>
+      <div class="ghost-w">${g.w}</div>
+      <div class="ghost-loc">📍 ${g.loc}</div>
+    </div>`).join('');
+}
+
+function renderWeather(d){
+  document.getElementById('tideVal').textContent = d.tide.val;
+  document.getElementById('tideSub').textContent = d.tide.sub;
+  document.getElementById('tideFill').style.height = d.tide.pct + '%';
+  document.getElementById('windVal').textContent = d.wind.val;
+  document.getElementById('needle').style.transform = `rotate(${d.wind.deg}deg)`;
+  document.getElementById('pressVal').textContent = d.press;
+  document.getElementById('moonVal').textContent = d.moon.pct + '%';
+  document.getElementById('moonSub').textContent = d.moon.sub;
+  document.getElementById('moonShadow').style.width = (100-d.moon.pct) + '%';
+  document.getElementById('tempVal').textContent = d.temp;
+  document.getElementById('waveVal').textContent = d.wave;
+}
+
+function setMode(m){
+  if(m===mode) return;
+  mode = m;
+  const toggle = document.getElementById('modeToggle');
+  toggle.classList.toggle('is-rio', m==='rio');
+  const app = document.getElementById('appMode');
+  app.style.opacity = 0;
+  app.style.transform = 'translateY(6px)';
+  setTimeout(()=>{
+    const d = DATA[m];
+    document.getElementById('locName').textContent = d.loc.name;
+    document.getElementById('locCoords').textContent = d.loc.coords;
+    document.getElementById('windowVal').textContent = d.window;
+    species = Object.keys(d.species)[0];
+    renderSpeciesChips(d);
+    document.getElementById('baitVal').textContent = d.species[species].bait;
+    document.getElementById('techVal').textContent = d.species[species].tech;
+    document.getElementById('decisionTxt').innerHTML = decisionSentence(d,species);
+    animateScore(d.species[species].score);
+    renderTimeline(d);
+    renderWeather(d);
+    app.style.transition = 'opacity .28s ease, transform .28s ease';
+    app.style.opacity = 1;
+    app.style.transform = 'translateY(0)';
+  }, 180);
+}
+
+/* ── PRO / FREE VIEW ── */
+function toggleViewMode(){
+  isPro = !isPro;
+  document.getElementById('viewSwitch').classList.toggle('is-pro', isPro);
+  document.getElementById('proCard').classList.toggle('locked', !isPro);
+  if(isPro) toast('👑 A ver como utilizador PRO');
+  else toast('Free — algumas funcionalidades bloqueadas');
+}
+function activatePro(){
+  isPro = true;
+  document.getElementById('viewSwitch').classList.add('is-pro');
+  document.getElementById('proCard').classList.remove('locked');
+  closeSheet();
+  toast('✅ PRO ativo — 3 dias grátis!');
+}
+
+/* ── SHEET / PAYWALL ── */
+function openSheet(){
+  if(isPro){ toast('Já tens acesso PRO ✓'); return; }
+  document.getElementById('sheetOverlay').classList.add('show');
+}
+function closeSheet(){ document.getElementById('sheetOverlay').classList.remove('show'); }
+function closeSheetBg(e){ if(e.target.id==='sheetOverlay') closeSheet(); }
+
+/* ── BELL / ALERTS ── */
+function toggleBell(){
+  if(!isPro){ openSheet(); return; }
+  bellOn = !bellOn;
+  const b = document.getElementById('bell');
+  b.classList.toggle('on', bellOn);
+  b.textContent = bellOn ? '🔔' : '🔕';
+  toast(bellOn ? '🔔 Alerta ativado — 07:00 diariamente' : 'Alerta desativado');
+}
+
+/* ── TOASTS ── */
+let toastTimer;
+function toast(msg){
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>el.classList.remove('show'), 2200);
+}
+function navToast(name){ toast(`${name} — disponível no ecrã completo da app`); }
+
+/* ── RIPPLE ── */
+function ripple(e){
+  const btn = e.currentTarget;
+  const r = document.createElement('span');
+  r.className = 'ripple';
+  const rect = btn.getBoundingClientRect();
+  const size = Math.max(rect.width, rect.height);
+  r.style.width = r.style.height = size+'px';
+  r.style.left = (e.clientX - rect.left - size/2)+'px';
+  r.style.top = (e.clientY - rect.top - size/2)+'px';
+  btn.appendChild(r);
+  setTimeout(()=>r.remove(), 600);
+}
+
+/* ── COUNTDOWN JANELA DE OURO ── */
+function updateCountdown(){
+  const now = new Date();
+  const target = new Date(now);
+  target.setHours(7,0,0,0);
+  if(now >= target) target.setDate(target.getDate()+1);
+  let diff = Math.floor((target-now)/1000);
+  const hh = String(Math.floor(diff/3600)).padStart(2,'0');
+  const mm = String(Math.floor((diff%3600)/60)).padStart(2,'0');
+  const ss = String(diff%60).padStart(2,'0');
+  document.getElementById('countdown').textContent = `${hh}:${mm}:${ss}`;
+}
+setInterval(updateCountdown, 1000);
+updateCountdown();
+
+/* ── RELÓGIO STATUS BAR ── */
+function updateClock(){
+  const now = new Date();
+  document.getElementById('clock').textContent =
+    String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');
+}
+updateClock();
+setInterval(updateClock, 15000);
+
+/* ═══════════════════ FUNDO: OCEANO ANIMADO (canvas) ═══════════════════ */
+const canvas = document.getElementById('ocean-canvas');
+const ctx = canvas.getContext('2d');
+let W,H,particles=[];
+function resize(){
+  W = canvas.width = window.innerWidth;
+  H = canvas.height = window.innerHeight;
+}
+window.addEventListener('resize', resize);
+resize();
+function initParticles(){
+  particles = [];
+  const count = Math.min(70, Math.floor(W/18));
+  for(let i=0;i<count;i++){
+    particles.push({
+      x: Math.random()*W,
+      y: H + Math.random()*H,
+      r: 1 + Math.random()*3,
+      speed: .25 + Math.random()*.9,
+      drift: (Math.random()-.5)*.4,
+      alpha: .08 + Math.random()*.25,
+    });
+  }
+}
+initParticles();
+function drawOcean(){
+  ctx.clearRect(0,0,W,H);
+  const grad = ctx.createLinearGradient(0,0,0,H);
+  grad.addColorStop(0,'#000814');
+  grad.addColorStop(.55,'#020d1f');
+  grad.addColorStop(1,'#000610');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0,0,W,H);
+  particles.forEach(p=>{
+    p.y -= p.speed;
+    p.x += p.drift;
+    if(p.y < -10){ p.y = H+10; p.x = Math.random()*W; }
+    ctx.beginPath();
+    ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+    ctx.fillStyle = `rgba(0,245,255,${p.alpha})`;
+    ctx.fill();
+  });
+  requestAnimationFrame(drawOcean);
+}
+drawOcean();
+
+/* ═══════════════════ INIT ═══════════════════ */
+renderSpeciesChips(DATA.costa);
+document.getElementById('decisionTxt').innerHTML = decisionSentence(DATA.costa, species);
+document.getElementById('baitVal').textContent = DATA.costa.species[species].bait;
+document.getElementById('techVal').textContent = DATA.costa.species[species].tech;
+renderTimeline(DATA.costa);
+renderWeather(DATA.costa);
+renderGhosts();
+setTimeout(()=>animateScore(DATA.costa.species[species].score), 250);
+</script>
+
+</body>
+</html>
