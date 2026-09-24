@@ -80,3 +80,7 @@ Imagens/
 # Notas de trabalho locais (ficheiros .txt soltos na raiz)
 *.txt
 !README*.txt
+
+# Cópias locais de assets (não versionar)
+Imagens - Cópia*/
+Logo Aquanautix - Cópia*/
