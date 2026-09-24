@@ -1,0 +1,37 @@
+---
+description: Rigor técnico Flutter/Dart + Supabase (complementa aquanautix-claude-code-prompt)
+globs: ["lib/**/*.dart", "test/**/*.dart", "supabase/**", "pubspec.yaml"]
+alwaysApply: false
+---
+
+# Flutter / Dart
+- Estado com ValueNotifier/stores como já existe. Não introduzir BLoC, Riverpod, get_it ou outra gestão de estado.
+- Null safety rigoroso: evitar `!` salvo quando garantido.
+- `const` sempre que possível. Nada de rede ou lógica de negócio dentro de `build()`.
+- Verificar `mounted` antes de usar `context` depois de um `await`.
+- `dispose()` de controllers, listeners, streams e subscriptions.
+- Cores e estilos só via tokens (AppColors, AppTextStyles, AppSpacing); `withValues(alpha:)`, nunca `withOpacity()`.
+- Estados de loading, erro e vazio sempre tratados (uso no mar e em zonas com rede fraca).
+- `flutter analyze` sem warnings novos.
+
+# Supabase
+- RLS ativo em todas as tabelas; tabela nova vem com as políticas na mesma migração.
+- Alterações de esquema só por migrações em `supabase/`; nunca editar produção à mão. Mudanças sensíveis (REVOKE, extensões, tabelas de sistema) testar primeiro numa branch dev.
+- `service_role` e chaves privadas (Anthropic, OpenAI) nunca na app; lógica privilegiada em Edge Functions.
+- Limites FREE/PRO/ELITE validados também no servidor, não só na UI.
+- Selecionar só as colunas necessárias; paginar listas; índices para filtros frequentes.
+
+# Dados e privacidade
+- Localizações de pesqueiros e dados pessoais são sensíveis (RGPD, Ghost Mode): minimizar o que se guarda e expõe.
+
+# Estado de segurança Supabase (24 Set 2026) — não desfazer
+Corrigido e aplicado em produção (migrações 20260924151706 e 20260924152102):
+- `tier` em user_profiles só muda via service_role (`sync_user_subscription_tier`, webhook RevenueCat). O trigger lê `request.jwt.claims`. Nunca actualizar `tier` a partir da app.
+- `private.analytics_events_set_user_id()` força `user_id` e `created_at` no servidor. Não recriar a cópia em `public`.
+- `spatial_ref_sys` bloqueada para escritas por trigger. `pg_graphql` desactivado: usar só REST/RPC.
+Pendente (cada ponto numa sessão própria, com alteração Flutter + teste no dispositivo):
+1. `catch_photos` públicas expõem `lat`/`lng`/`location` a anon (contraria Ghost Mode).
+2. Bucket `catch-photos` público e sem limites de tamanho/MIME → privado + signed URLs.
+3. `user_profiles` legível por anon (username, tier, país).
+4. `analytics_events`: INSERT authenticated sem restrições.
+Não agravar nenhum destes pontos. Antes de mexer em base de dados, confirmar o estado real com o MCP `supabase-readonly`.
