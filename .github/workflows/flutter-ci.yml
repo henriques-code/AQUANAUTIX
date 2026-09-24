@@ -27,6 +27,8 @@ jobs:
       # a tentar resolver o asset bundle. Ver AGENTS.md.
       - name: Placeholder assets/video_bg.mp4 (gitignored)
         run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq ffmpeg
           mkdir -p assets
           ffmpeg -y -f lavfi -i color=c=black:s=64x64:d=0.5 \
             -c:v libx264 -pix_fmt yuv420p assets/video_bg.mp4
@@ -61,6 +63,8 @@ jobs:
 
       - name: Placeholder assets/video_bg.mp4 (gitignored)
         run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq ffmpeg
           mkdir -p assets
           ffmpeg -y -f lavfi -i color=c=black:s=64x64:d=0.5 \
             -c:v libx264 -pix_fmt yuv420p assets/video_bg.mp4
