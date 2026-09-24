@@ -23,7 +23,9 @@ windows/flutter/ephemeral/
 # IDE
 .idea/
 .vscode/
-.cursor/
+.cursor/*
+!.cursor/rules/
+!.cursor/rules/**
 
 # Android keystore (NEVER commit)
 android/key.properties
@@ -80,3 +82,6 @@ Imagens/
 # Notas de trabalho locais (ficheiros .txt soltos na raiz)
 *.txt
 !README*.txt
+
+# Logos duplicados (cópia local, não versionar — usar Logo Aquanautix/ original)
+Logo Aquanautix - Cópia/

@@ -486,6 +486,8 @@ class AqxL10n {
 
   String get drawerTechniques => es ? 'Técnicas' : 'Técnicas';
 
+  String get drawerAffiliateShop => es ? 'Tienda afiliada' : 'Loja afiliada';
+
   String get homeVerTodas => es ? 'Ver todas >' : 'Ver todas >';
 
   String get homeVerMapa => es ? 'Ver mapa >' : 'Ver mapa >';

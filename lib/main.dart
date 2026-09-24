@@ -15,6 +15,7 @@ import 'core/monetization/subscription_auth_bridge.dart';
 import 'core/config/mapbox_config.dart';
 import 'core/notifications/golden_window_notification_service.dart';
 import 'core/species/species_catalog.dart';
+import 'core/tides/oracle_prefetch_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -35,6 +36,7 @@ Future<void> main() async {
   await SubscriptionStore.instance.init();
   SubscriptionAuthBridge.init();
   unawaited(GoldenWindowNotificationService.instance.init());
+  unawaited(OraclePrefetchService.onAppStart());
   if (kDebugMode && RevenueCatService.instance.isSdkReady) {
     final d = await RevenueCatService.instance.diagnostics();
     debugPrint(

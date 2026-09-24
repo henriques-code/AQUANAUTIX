@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 import 'marine_bundle.dart';
+import 'official_tides_repository.dart';
 import 'weather_details_snapshot.dart';
 
 /// Par (temperatura °C, pressão hPa) interpolado linearmente no tempo.
@@ -45,6 +46,10 @@ class OpenMeteoTidesRepository {
   OpenMeteoTidesRepository({http.Client? httpClient}) : _client = httpClient ?? http.Client();
 
   final http.Client _client;
+  final OfficialTidesRepository _officialTides = OfficialTidesRepository();
+
+  /// Última fonte de maré usada no [fetchSeries] (para metadados de cache).
+  String lastTideSource = 'open_meteo';
 
   static const _marineHost = 'marine-api.open-meteo.com';
   static const _weatherHost = 'api.open-meteo.com';
@@ -73,8 +78,12 @@ class OpenMeteoTidesRepository {
       'hourly': 'temperature_2m,surface_pressure',
     });
 
-    final marineRes = await _client.get(marineUri);
-    final weatherRes = await _client.get(weatherUri);
+    final marineRes = await _client
+        .get(marineUri)
+        .timeout(const Duration(seconds: 10));
+    final weatherRes = await _client
+        .get(weatherUri)
+        .timeout(const Duration(seconds: 10));
     if (marineRes.statusCode != 200) {
       throw Exception('Marine API ${marineRes.statusCode}');
     }
@@ -125,6 +134,35 @@ class OpenMeteoTidesRepository {
       ));
     }
     out.sort((a, b) => a.time.compareTo(b.time));
+
+    lastTideSource = 'open_meteo';
+    final official = await _officialTides.fetchHourly(
+      latitude: latitude,
+      longitude: longitude,
+      timezone: timezone,
+      pastDays: pastDays,
+      forecastDays: forecastDays,
+    );
+    if (official != null) {
+      lastTideSource = official.source;
+      return _officialTides.mergeSeaLevel(meteoSeries: out, tides: official);
+    }
+
+    final clientFallback = await _officialTides.fetchOpenMeteoFallback(
+      latitude: latitude,
+      longitude: longitude,
+      timezone: timezone,
+      pastDays: pastDays,
+      forecastDays: forecastDays,
+    );
+    if (clientFallback != null) {
+      lastTideSource = clientFallback.source;
+      return _officialTides.mergeSeaLevel(
+        meteoSeries: out,
+        tides: clientFallback,
+      );
+    }
+
     return out;
   }
 
@@ -139,6 +177,8 @@ class OpenMeteoTidesRepository {
         int? windDirDeg,
         double? waveHeightM,
         int? weatherCode,
+        double? waterTempC,
+        double? pressureHpa,
       })> fetchCurrentConditions({
     required double latitude,
     required double longitude,
@@ -147,16 +187,19 @@ class OpenMeteoTidesRepository {
       'latitude': latitude.toString(),
       'longitude': longitude.toString(),
       'current':
-          'temperature_2m,wind_speed_10m,wind_direction_10m,weather_code',
+          'temperature_2m,wind_speed_10m,wind_direction_10m,weather_code,'
+          'surface_pressure',
+      'daily': 'sunset',
+      'forecast_days': '1',
       'wind_speed_unit': 'kmh',
     });
     final marineUri = Uri.https(_marineHost, '/v1/marine', {
       'latitude': latitude.toString(),
       'longitude': longitude.toString(),
-      'current': 'wave_height',
+      'current': 'wave_height,sea_surface_temperature',
     });
 
-    double? tempC, windSpeedKmh, waveHeightM;
+    double? tempC, windSpeedKmh, waveHeightM, waterTempC, pressureHpa;
     int? windDirDeg, weatherCode;
 
     try {
@@ -172,11 +215,13 @@ class OpenMeteoTidesRepository {
         windSpeedKmh = (c?['wind_speed_10m'] as num?)?.toDouble();
         windDirDeg = (c?['wind_direction_10m'] as num?)?.toInt();
         weatherCode = (c?['weather_code'] as num?)?.toInt();
+        pressureHpa = (c?['surface_pressure'] as num?)?.toDouble();
       }
       if (mRes.statusCode == 200) {
         final m = jsonDecode(mRes.body) as Map<String, dynamic>;
         final c = m['current'] as Map<String, dynamic>?;
         waveHeightM = (c?['wave_height'] as num?)?.toDouble();
+        waterTempC = (c?['sea_surface_temperature'] as num?)?.toDouble();
       }
     } catch (_) {
       // best-effort — caller usa fallbacks
@@ -188,6 +233,8 @@ class OpenMeteoTidesRepository {
       windDirDeg: windDirDeg,
       waveHeightM: waveHeightM,
       weatherCode: weatherCode,
+      waterTempC: waterTempC,
+      pressureHpa: pressureHpa,
     );
   }
 

@@ -53,4 +53,6 @@ END;
 $$;
 
 REVOKE ALL ON FUNCTION public.sync_user_subscription_tier(uuid, text) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.sync_user_subscription_tier(uuid, text) FROM anon;
+REVOKE ALL ON FUNCTION public.sync_user_subscription_tier(uuid, text) FROM authenticated;
 GRANT EXECUTE ON FUNCTION public.sync_user_subscription_tier(uuid, text) TO service_role;

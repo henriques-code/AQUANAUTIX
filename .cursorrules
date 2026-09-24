@@ -3,6 +3,216 @@
 ## Idioma
 - Respostas e documentação de trabalho em **Português de Portugal**.
 
+## 0. Estado actual / Sprint / NÃO fazer (Jul 2026)
+
+> Bloco de prioridade viva — actualizar no início de cada sprint. O agente lê isto antes de propor trabalho novo.
+
+### P0 — Receita (bloqueio humano — não código)
+- **Play Console pausado** (~25 USD) até o utilizador confirmar conta activa.
+- Código pronto: `RevenueCatService`, `PaywallScreen`, `SubscriptionGate`, `sync_user_subscription_tier` (só `service_role`).
+- **Não** pedir nem implementar fluxos de compra reais novos até P0 desbloqueado.
+- Guias: `tools/PLAY_CONSOLE_SETUP.md` · `REVENUECAT_SETUP.md` · `tools/verify_revenuecat.ps1`
+- Product IDs Play (exactos): `aquanautix_pro_monthly` · `aquanautix_pro_annual` · `aquanautix_elite_annual`
+
+### Sprint actual (2 semanas) — **P2 Vision animado**
+- Objectivo: loop viral fechado — scan → confiança 0→% → resultado → CTA partilha.
+- **Foco:** `lib/screens/vision.dart` + `lib/core/vision/` + widget de scan.
+- **Não** abrir neste sprint: P1 IA chat, P16 spots IA, refactors Oráculo/Mapa, Site V2.
+- **Design:** animações funcionais OK; mudar layout/copy visual só com **AUTORIZO** explícito.
+
+### NÃO fazer agora (agente)
+- `Site V2/**` sem **AUTORIZO**
+- Refactor cosmético em tabs já estáveis (Oráculo scroll, Mapa pins)
+- Nova stack (BLoC, Riverpod, Hive, Dio)
+- Migrations Supabase sem pedido explícito
+- `git commit` / `push` sem pedido do utilizador
+
+### Métricas beta (2 apenas)
+1. **Vision** — scans por sessão + conclusão até resultado
+2. **Oráculo** — aberturas na 1.ª semana (D7)
+
+### Sequência quando Play $25 estiver activo
+1. Criar app + 3 subscrições Play → 2. Internal testing (AAB) → 3. RevenueCat offering `default` → 4. Teste compra/restauro Xiaomi → 5. P4 blur mapa
+
+## 1. Identidade do projecto
+- **Nome**: AQUANAUTIX (também referido como AQUADEX em alguns prompts internos).
+- **Objectivo**: app de pesca desportiva de elite — Oráculo solunar (score 0-100), mapa com spots e batimetria, identificação de espécies por IA (Vision), logbook de capturas, comunidade "Ghost Mode" (anónima) e monetização FREE/PRO/ELITE.
+- **Foco geográfico**: mercado ibérico — Portugal e Espanha (dados, regulamentos, espécies e zonas PT+ES).
+- **Público-alvo**: pescadores desportivos (costa, rio, barragem) que quiram planear saídas com dados reais (maré, solunar, meteorologia) e registar/partilhar capturas.
+- **Duas aplicações distintas no mono-repo**: `lib/` (app Flutter, prioridade) e `Site V2/` (landing de marketing, secundário, **não mexer sem AUTORIZO**).
+
+## 2. Stack tecnológica completa (App Flutter)
+- **Flutter** SDK `>=3.3.0 <4.0.0` · Dart · Material 3, tema escuro fixo (`ThemeData.dark`).
+- **Backend/BD**: Supabase (Postgres + PostGIS + Auth + Storage + RLS) via `supabase_flutter: ^2.12.4`. Sem ORM — acesso directo via SDK (`.from(table).select/insert/update/delete`).
+- **Sem** flutter_bloc, get_it, Hive, Dio, Riverpod — gestão de estado por `StatefulWidget` + `ValueNotifier`/`ChangeNotifier` (stores em `lib/core/state/`).
+- **Mapas**: `mapbox_maps_flutter ^2.23.0` (só bootstrap do token; **não usado para render** por causa de ecrã preto em MIUI) + `flutter_map ^7.0.0` + `latlong2 ^0.9.1` (renderer real, tiles ArcGIS/OSM/OpenSeaMap).
+- **Monetização**: `purchases_flutter ^9.15.0` (RevenueCat) + `SubscriptionStore` local (SharedPreferences) como fallback/trial 3 dias.
+- **Marés / meteorologia**: Open-Meteo (forecast + marine) via `http ^1.2.2`, sem chave de API.
+- **Geocoding**: Nominatim/OSM (`osm_reverse_geocode.dart`, `osm_place_search.dart`) — respeitar User-Agent e limite ~1 pedido/seg.
+- **Localização**: `geolocator ^13.0.2` (+ workaround MIUI `forceLocationManager`).
+- **Vision (IA)**: OpenAI directo via `image_picker ^1.1.2` + `core/vision/` (chave em `.env`, nunca hardcoded).
+- **Notificações**: `flutter_local_notifications ^22.0.1` + `timezone ^0.11.0`.
+- **Auth social**: `google_sign_in ^6.2.1`.
+- **Outros**: `google_fonts ^6.2.1` (Orbitron/IBM Plex Sans), `flutter_animate ^4.5.2` (evitar em `SingleChildScrollView` no Oráculo — ecrã preto), `video_player ^2.9.2` (splash/login), `package_info_plus ^8.1.2`, `shared_preferences ^2.5.5`, `url_launcher ^6.3.1`.
+- **Lint**: `flutter_lints ^6.0.0`; correr `flutter analyze` após qualquer alteração Dart.
+- **Site V2** (secundário): HTML + CSS + JS puro, Mapbox GL JS v3.3.0, SunCalc — ver secções dedicadas abaixo.
+
+## 3. Estrutura de pastas e responsabilidades
+```
+AQUANAUTIX/
+├── lib/
+│   ├── main.dart              → bootstrap: Mapbox token, Analytics, Supabase, contexto de pesca,
+│   │                             locale, RevenueCat, SubscriptionStore, notificações Janela de Ouro
+│   ├── app.dart                → MaterialApp raiz, tema Midnight Deep Sea, locale, listener de
+│   │                             password-recovery (deep link → ResetPasswordScreen)
+│   ├── screens/                → 7 ecrãs principais + widgets de suporte
+│   │   ├── home.dart            → shell com 7 tabs lazy (_tabCache) + navegação/histórico
+│   │   ├── oraculo.dart         → Oráculo (score solunar/maré/meteo, modo GPS + planeamento)
+│   │   ├── mapa.dart            → flutter_map, pins custom, spots PT/ES, blur PRO/ELITE
+│   │   ├── vision.dart          → scanner de espécies por IA + compliance
+│   │   ├── logbook.dart         → tabs "AS MINHAS" / "COMUNIDADE" / "TROFÉUS"
+│   │   ├── perfil.dart          → perfil, planos FREE/PRO/ELITE, logout
+│   │   ├── comunidade.dart      → tab dedicado Ghost Mode (feed, perfis públicos)
+│   │   ├── login_module.dart    → login/registo Supabase + Google Sign-In
+│   │   ├── especies.dart        → biblioteca de espécies + ficha detalhe
+│   │   ├── paywall.dart         → ecrã de compra/upgrade
+│   │   ├── onboarding.dart      → onboarding pós-splash
+│   │   ├── splash_screen.dart, reset_password_screen.dart
+│   │   └── widgets/             → cards e sub-componentes do Oráculo (oracle_*.dart)
+│   ├── features/
+│   │   ├── home/                → Clean-ish layering (domain/entities, data, presentation) só
+│   │   │                          para o dashboard "Início" (InicioDashboardScreen)
+│   │   └── community/           → sheets/perfis públicos da Comunidade Ghost
+│   └── core/                    → lógica de negócio, sem UI (excepto core/widgets/)
+│       ├── auth/                 → sessão local (LoginSessionStore), recuperação de password
+│       ├── tides/                → pipeline do Oráculo: Open-Meteo, scoring solunar, geocode,
+│       │                          rios (SNIRH/SAIH), presets regionais, cache
+│       ├── species/               → catálogo de espécies, compliance legal PT/ES, rig/isco
+│       ├── spots/                → fishing_spot(_repository), bait_shop(_repository)
+│       ├── community/             → CommunityPost/Store/Repository (feed Ghost, Supabase)
+│       ├── catch_photos/          → CatchPhoto/Repository (fotos de capturas georreferenciadas)
+│       ├── monetization/          → SubscriptionGate, bridge de auth↔RevenueCat, sync de tier
+│       ├── state/                 → stores globais (FishingContextStore, SubscriptionStore,
+│       │                          AppLocaleStore, HomeTabIndex, LogbookTabIndex, FishingModeStore)
+│       ├── location/               → gps_access.dart, gps_bootstrap.dart (workarounds MIUI)
+│       ├── notifications/          → GoldenWindowNotificationService (P5 push Janela de Ouro)
+│       ├── regulations/            → zonas/regras de pesca PT/ES
+│       ├── legal/                  → URLs legais, sheet de documentos legais
+│       ├── l10n/                   → aqx_l10n.dart (PT/ES/EN)
+│       ├── theme/                  → cores, tipografia, espaçamento (Midnight Deep Sea)
+│       ├── config/                 → mapbox_config.dart, openai_config.dart
+│       ├── services/                → analytics (AnalyticsService/Context), app_insights,
+│       │                             revenue_cat_service
+│       ├── widgets/                  → componentes reutilizáveis (pins do mapa, cards, badges)
+│       └── supabase_bootstrap.dart   → init condicional do Supabase (`canUseSupabase`)
+├── assets/                     → species_ibero.json, regulamentos GeoJSON, imagens, vídeo splash
+├── supabase/migrations/        → schema SQL versionado (ver secção 4)
+├── tools/                      → scripts PowerShell (.ps1) de env/build/sync/segredos
+├── android/, ios/, windows/    → plataformas nativas Flutter
+├── Site V2/                    → landing HTML/CSS/JS (index.html ~4900 linhas) — não mexer sem AUTORIZO
+├── CLAUDE.md, AGENTS.md, AQUANAUTIX_CONTEXT.md, SYNC_WORKFLOW.md → documentação de contexto
+└── .cursorrules                → este ficheiro (memória permanente do agente)
+```
+
+## 4. Base de dados (Supabase — Postgres + PostGIS + RLS)
+
+**Importante — duas naturezas de "captura" no código, não confundir:**
+- **Logbook pessoal (`_Captura` em `lib/screens/logbook.dart`)** — é **local only**, guardado em `SharedPreferences` (`logbook_capturas_v1`), com campos `emoji, nome, peso, tag, tagColor, details, isco, temFoto`. **Não está ligado a nenhuma tabela Supabase.** Se for pedido "ligar capturas ao perfil do utilizador", isto implica migrar este modelo para uma tabela Supabase (ainda não existe) — confirmar com o utilizador antes de criar schema novo.
+- **`catch_photos`** e **`community_posts`** (abaixo) são as únicas capturas efectivamente persistidas no backend, sempre ligadas a `user_id`.
+
+### `user_profiles` (perfil público do pescador)
+| Campo | Tipo | Notas |
+|---|---|---|
+| `id` | uuid PK | `REFERENCES auth.users(id) ON DELETE CASCADE` |
+| `username` | text UNIQUE NOT NULL | gerado automaticamente (`angler_<8hex>`) se não fornecido |
+| `tier` | text | `FREE` \| `PRO` \| `ELITE` (default `FREE`) |
+| `avatar_url` | text | opcional |
+| `country` | text | `PT` \| `ES` (default `PT`) |
+| `created_at` | timestamptz | default `now()` |
+
+RLS: leitura pública; insert/update só pelo próprio (`auth.uid() = id`). Tier real só é escrito via função `sync_user_subscription_tier(uuid, text)` (`SECURITY DEFINER`, só `service_role`/Edge Function) — **nunca** actualizar `tier` directamente do cliente (anti-escalação de privilégio).
+
+### `catch_photos` (capturas com foto e localização exacta — privadas por default de visibilidade)
+| Campo | Tipo | Notas |
+|---|---|---|
+| `id` | uuid PK | |
+| `user_id` | uuid FK → `auth.users(id)` | dono da captura |
+| `photo_url` | text NOT NULL | Storage bucket `catch-photos` |
+| `species` | text | nome livre |
+| `weight_kg` | numeric(6,3) | |
+| `length_cm` | numeric(6,1) | |
+| `notes` | text | |
+| `lure_type` | text | isco/técnica |
+| `technique` | text | |
+| `privacy` | text | `public` \| `friends` \| `private` (default `public`) |
+| `location` | `geometry(Point,4326)` | trigger `trg_set_catch_location` a partir de `lat`/`lng` no insert (ver `CatchPhoto.toInsert`) |
+| `created_at` | timestamptz | |
+
+RLS: select público (`true`); insert/update/delete só do próprio (`auth.uid() = user_id`). Índice GIST em `location` + índice em `user_id`.
+
+### `community_posts` (feed "Ghost Mode" — zona aproximada, nunca coordenadas exactas)
+| Campo | Tipo | Notas |
+|---|---|---|
+| `id` | uuid PK | |
+| `user_id` | uuid FK → `user_profiles(id)` | |
+| `zone_label` | text NOT NULL | ex.: "Zona de Sesimbra" — **nunca** lat/lng |
+| `photo_url` | text NOT NULL | Storage bucket `community-photos` |
+| `species` | text NOT NULL | |
+| `weight_kg` | numeric(6,3) | |
+| `technique` | text | |
+| `caption` | text | |
+| `oracle_score` | integer 0-100 | |
+| `is_legal` | boolean | default `true` |
+| `country` | text | `PT` \| `ES` |
+| `created_at` | timestamptz | |
+
+Relacionada com `community_reactions` (PK composta `post_id + user_id`, likes) e junta com `user_profiles!inner(username, tier, avatar_url)` na query (`CommunityRepository._cols`).
+
+### `fishing_spots` (spots do Mapa, com tiers FREE/PRO/ELITE)
+Campos: `id, name, lat, lon, location (geography gerada), tier (free/pro/elite), country (PT/ES), region, zone_type, species[], best_season[], best_bait[], depth_min/max, bottom_type, car_access, trail_access, difficulty (1-5), score_avg, photos[], created_at`. RLS por tier: `free` público; `pro`/`elite` só autenticado (ver migration `fishing_spots_rls_tier_check` para regras mais finas por subscrição real).
+
+### `bait_shops` (lojas de isco, leitura pública)
+Campos: `id, name, lat, lon, location, country, region, address, phone, hours, speciality[], google_maps_url, created_at`.
+
+### Outras tabelas
+- `analytics_events` / `app_insights` — telemetria interna (ver `AnalyticsService`, `AppInsightsService`).
+- Migrations de segurança (`security_hardening`, `fix_security_advisories_*`, `storage_no_public_listing`, `storage_cleanup_profiles_social`, `fishing_spots_rls_tier_check`) — **hardening de RLS e Storage**; consultar antes de alterar policies.
+
+**Regra de ouro de dados**: qualquer nova tabela ligada a capturas/utilizador deve seguir o padrão já existente — `user_id uuid REFERENCES auth.users(id) ON DELETE CASCADE`, RLS activo, policy "select own or public" + "insert/update/delete own". Zonas visíveis publicamente usam sempre `zone_label`/geohash aproximado, nunca `lat/lng` exactos (Ghost Mode).
+
+## 5. Fluxos críticos da aplicação
+- **Registo/Login**: `login_module.dart` → `supabase.auth.signUp` / `signInWithPassword` (email+password) ou Google Sign-In. `LoginSessionStore` guarda "lembrar-me" + email local. `user_profiles` é criado lazily (via `sync_user_subscription_tier` ou ao publicar 1.º post na Comunidade), não no signup directo.
+- **Recuperação de password**: `password_recovery_service.dart` + deep link HTTPS (`SUPABASE_RESET_REDIRECT`) → evento `AuthChangeEvent.passwordRecovery` em `app.dart` abre `ResetPasswordScreen`.
+- **Arranque**: `main.dart` inicializa Mapbox token → Analytics → Supabase (se configurado) → `FishingContextStore` (país/região/espécie activa) → locale → catálogo de espécies → RevenueCat → `SubscriptionStore` → notificações Janela de Ouro → `SplashScreen` → `AquanautixHome` (7 tabs: 0 Início, 1 Oráculo, 2 Mapa, 3 Vision, 4 Logbook, 5 Perfil, 6 Comunidade).
+- **Adicionar captura (logbook pessoal, local)**: botão "+" no Logbook → `_showNovaCapturaSheet` → `_NovaCapturaSheet` (campos: Espécie, Peso) → grava em `SharedPreferences` via `_saveCapturas()`. **Não** vai para Supabase.
+- **Partilhar na Comunidade (Ghost, Supabase real)**: `_showNovoPostSheet` no Logbook → escolher foto (ImagePicker) + Zona (dropdown fuzzy, nunca GPS exacto) + Espécie + Peso + Legenda → `CommunityStore.uploadPhoto` (bucket `community-photos`) → `CommunityStore.createPost` → insert em `community_posts`.
+- **Vision Scanner**: `vision.dart` → foto → `VisionScanService` (OpenAI) → `VisionScanResult` → compliance (`species_compliance.dart`) → resultado com badge legal/ilegal PT/ES.
+- **Oráculo**: modo ao vivo (GPS obrigatório, `OracleGpsRequiredException` se recusado) ou planeamento (geocode Nominatim → `OracleDataService.fetch`/`fetchRiver` com coordenadas explícitas, sem GPS). Pipeline: Open-Meteo (marine + forecast) → scoring solunar/maré → `OracleBundle`/`RiverOracleBundle`.
+- **Mapa**: `flutter_map` com tiles ArcGIS (costa) ou OSM (rio), pins custom por tipo/tier, spots PRO/ELITE com blur + paywall se FREE.
+- **Perfil / Paywall**: `SubscriptionStore` (local) sincroniza com RevenueCat (`syncFromRevenueCat` ao retomar app); trial local de 3 dias; `PaywallScreen.open(context, source: ...)` regista origem do CTA.
+
+## 6. Regras de ouro para o agente
+1. **Actuar sempre como o programador principal da AQUANAUTIX** — com o mesmo cuidado que teria com produção própria.
+2. **Antes de propor ou aplicar qualquer alteração**, verificar consistência com este ficheiro (stack, pastas, modelos de dados, fluxos). Se o pedido contradizer algo aqui, avisar antes de avançar.
+3. **Ao corrigir ligações entre componentes** (ex.: formulário → repositório → tabela Supabase), garantir que **nomes de campos e tipos batem certo** nos três níveis: UI (controllers/campos) → modelo Dart (`toInsert`/`fromJson`) → coluna SQL (tipo, nullability, constraints/CHECK). Nunca assumir — confirmar lendo o ficheiro relevante primeiro.
+4. **Explicar cada alteração em linguagem simples**, como se estivesses a falar com alguém sem conhecimentos de programação (o utilizador prefere isto no resumo final, mesmo que o trabalho técnico seja rigoroso).
+5. **Após terminar uma tarefa**: correr `flutter analyze` (e `flutter test` se fizer sentido) e reportar claramente se há erros, avisos, ou se ficou tudo limpo.
+6. **Respeitar todas as regras já existentes** neste ficheiro e nas restantes regras do workspace: nunca apagar código sem AUTORIZO, nunca alterar design/UI sem AUTORIZO, nunca mexer no Site V2 sem AUTORIZO, uma alteração de cada vez, diff mínimo.
+7. **Nunca inventar/expor segredos** (`.env`, `sbp_*`, `sk_*`, tokens RevenueCat/OpenAI/Supabase) em código, commits ou respostas.
+8. **Privacidade dos spots**: nunca propor guardar ou expor coordenadas exactas de pescadores em conteúdo público — usar zona aproximada/geohash (Ghost Mode) como já é o padrão.
+9. **Após cada conjunto de alterações bem-sucedidas** (código a compilar/analisar limpo e a fazer o que foi pedido), correr `./auto-commit.sh "mensagem descritiva"` (ver secção 7) para manter o repositório sincronizado — salvo indicação do utilizador em contrário.
+
+## 7. Commit e push automático
+- Script: **`auto-commit.sh`** na raiz do repo. Faz `git add -A` → remove do staging quaisquer ficheiros sensíveis que tenham entrado por engano (`.env`, `local_secrets.ps1`, chaves) → `git commit -m "<mensagem>"` → `git push origin <branch actual, normalmente main>`.
+- **Equivalente PowerShell: `auto-commit.ps1`** (mesma lógica) — usar este neste PC Windows, já que não há Git Bash/WSL detectado no PATH; `auto-commit.sh` fica pronto para Git Bash, WSL, ou a Cursor Cloud (Linux, ver `AGENTS.md`).
+- Uso Windows: `.\auto-commit.ps1 "corrigida ligação entre formulário de captura e perfil do utilizador"`.
+- Uso Git Bash/WSL/Linux: `./auto-commit.sh "corrigida ligação entre formulário de captura e perfil do utilizador"`.
+- **`main` no GitHub é protegida (regra "Changes must be made through a pull request")** — push directo a `main` é sempre recusado (`GH013`). Ambos os scripts detectam isto automaticamente: criam um branch `auto-commit/<timestamp>` a partir do commit local, enviam-no, e imprimem o link `.../compare/main...auto-commit/<timestamp>?expand=1` para abrir o Pull Request manualmente (não há GitHub CLI `gh` instalado neste PC para criar o PR via linha de comandos).
+- Se o `git push` falhar por autenticação (sem SSH key / token válido, credential helper não configurado), o agente deve **avisar claramente** e sugerir:
+  - Gerar chave SSH (`ssh-keygen -t ed25519`) e adicioná-la em github.com/settings/keys, mudando o remote para `git@github.com:...`; **ou**
+  - Configurar um Personal Access Token e usar o Git Credential Manager (`git config credential.helper manager`) para o cache automático.
+- **Nunca** usar `git push --force` sem pedido explícito do utilizador.
+
 ## Visão geral
 - **App**: Flutter + Supabase (código em `lib/`, etc.).
 - **Site marketing / landing**: ficheiro único `Site V2/index.html` (~4900+ linhas), HTML + CSS + JS.

@@ -143,3 +143,50 @@ String indexGaugeLabel(AqxL10n t, int score) {
   if (score >= 45) return t.homeIndexModerate;
   return t.homeIndexWeak;
 }
+
+/// Veredito imediato — «ir pescar ou não» na 1.ª página.
+class HomeFishingVerdict {
+  const HomeFishingVerdict({
+    required this.headline,
+    required this.subtitle,
+    required this.color,
+    required this.icon,
+  });
+
+  final String headline;
+  final String subtitle;
+  final Color color;
+  final IconData icon;
+}
+
+HomeFishingVerdict homeFishingVerdict(AqxL10n t, int score) {
+  final label = indexGaugeLabel(t, score);
+  if (score >= 65) {
+    return HomeFishingVerdict(
+      headline: t.es ? 'SÍ — VALE IR A PESCAR' : 'SIM — VALE IR PESCAR',
+      subtitle: t.es
+          ? 'Índice $score · $label — buen momento hoy'
+          : 'Índice $score · $label — bom momento hoje',
+      color: AppColors.green,
+      icon: Icons.check_circle_rounded,
+    );
+  }
+  if (score >= 45) {
+    return HomeFishingVerdict(
+      headline: t.es ? 'TAL VEZ — DÍA ACEPTABLE' : 'TALVEZ — DIA ACEITÁVEL',
+      subtitle: t.es
+          ? 'Índice $score · $label — elige bien la hora'
+          : 'Índice $score · $label — escolhe bem a hora',
+      color: AppColors.amber,
+      icon: Icons.schedule_rounded,
+    );
+  }
+  return HomeFishingVerdict(
+    headline: t.es ? 'NO — MEJOR ESPERAR' : 'NÃO — MELHOR ESPERAR',
+    subtitle: t.es
+        ? 'Índice $score · $label — condiciones débiles hoy'
+        : 'Índice $score · $label — condições fracas hoje',
+    color: const Color(0xFFFF4C4C),
+    icon: Icons.pause_circle_outline_rounded,
+  );
+}

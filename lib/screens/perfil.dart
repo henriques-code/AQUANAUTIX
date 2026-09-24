@@ -5,6 +5,7 @@ import '_shared.dart';
 import 'login_module.dart';
 import 'mapa.dart';
 import 'paywall.dart';
+import 'affiliate_shop.dart';
 import '../core/supabase_bootstrap.dart';
 import '../core/services/app_insights_service.dart';
 import '../core/services/analytics_service.dart';
@@ -191,6 +192,70 @@ class _PerfilScreenState extends State<PerfilScreen> {
             destaque: '↓ €5.00/mês',
             onTap: () => _openPaywall('perfil_elite'),
           ),
+
+          const SizedBox(height: 18),
+          Text(t.es ? '// TIENDA AFILIADA' : '// LOJA AFILIADA', style: mono(10, ls: 1.2)),
+          const SizedBox(height: 10),
+          GestureDetector(
+            onTap: () => AffiliateShopScreen.open(context),
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: kCard,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: kAmber.withValues(alpha: 0.25)),
+              ),
+              child: Row(
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(10),
+                    child: Image.asset(
+                      'assets/marketing/catches/oracle_hero_pescador.jpg',
+                      width: 56,
+                      height: 56,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => Container(
+                        width: 56,
+                        height: 56,
+                        color: const Color(0xFF0A1F3A),
+                        child: const Icon(Icons.storefront_outlined, color: kAmber),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          t.es ? 'Equipamiento recomendado' : 'Equipamento recomendado',
+                          style: ibm(13, fw: FontWeight.w600),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          t.es
+                              ? 'Canas, señuelos y material — en desarrollo.'
+                              : 'Canas, iscos e material — em desenvolvimento.',
+                          style: ibm(11, c: kHint),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: kAmber.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: kAmber.withValues(alpha: 0.45)),
+                    ),
+                    child: Text('BETA', style: mono(8, c: kAmber, ls: 0.6)),
+                  ),
+                ],
+              ),
+            ),
+          ),
+
           const SizedBox(height: 18),
           Text('// PAÍS ACTIVO', style: mono(10, ls: 1.2)),
           const SizedBox(height: 10),

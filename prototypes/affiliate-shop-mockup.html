@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>AQUANAUTIX — Mockup Loja Afiliada</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=Orbitron:wght@600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #000814;
+      --card: #071428;
+      --cyan: #00f5ff;
+      --amber: #f3c64d;
+      --hint: #8aadbe;
+      --radius: 14px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: "IBM Plex Sans", system-ui, sans-serif;
+      background: #020408;
+      color: #fff;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      padding: 24px 12px 32px;
+    }
+    .phone {
+      width: 100%;
+      max-width: 390px;
+      background: var(--bg);
+      border-radius: 28px;
+      border: 1px solid rgba(0, 245, 255, 0.2);
+      box-shadow: 0 24px 80px rgba(0, 0, 0, 0.75), 0 0 60px rgba(0, 245, 255, 0.08);
+      overflow: hidden;
+    }
+    .appbar {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      background: #020a14;
+      position: relative;
+    }
+    .appbar .back {
+      position: absolute;
+      left: 16px;
+      color: var(--cyan);
+      font-size: 18px;
+    }
+    .logo-main {
+      font-family: Orbitron, sans-serif;
+      font-weight: 700;
+      font-size: 13px;
+      letter-spacing: 0.06em;
+      text-align: center;
+    }
+    .logo-sub {
+      font-family: "Share Tech Mono", monospace;
+      font-size: 8px;
+      color: var(--cyan);
+      letter-spacing: 0.2em;
+      text-align: center;
+    }
+    .scroll { padding: 0 16px 32px; }
+    .dev-banner {
+      margin-top: 8px;
+      padding: 12px 14px;
+      border-radius: 12px;
+      border: 1px solid rgba(243, 198, 77, 0.55);
+      background: linear-gradient(135deg, rgba(243,198,77,0.18), rgba(243,198,77,0.06));
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+    }
+    .dev-banner .icon {
+      width: 36px; height: 36px;
+      border-radius: 10px;
+      border: 1px solid rgba(243,198,77,0.4);
+      background: rgba(243,198,77,0.12);
+      display: grid;
+      place-items: center;
+      font-size: 18px;
+    }
+    .dev-banner h2 {
+      font-family: Orbitron, sans-serif;
+      font-size: 11px;
+      color: var(--amber);
+      letter-spacing: 0.08em;
+      margin-bottom: 4px;
+    }
+    .dev-banner p { font-size: 11px; color: rgba(255,255,255,0.72); line-height: 1.4; }
+    .hero {
+      margin-top: 14px;
+      border-radius: var(--radius);
+      overflow: hidden;
+      position: relative;
+      height: 168px;
+    }
+    .hero img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .hero::after {
+      content: "";
+      position: absolute; inset: 0;
+      background: linear-gradient(180deg, transparent 20%, rgba(0,0,0,0.88) 100%);
+    }
+    .hero .content {
+      position: absolute; left: 14px; right: 14px; bottom: 14px; z-index: 1;
+    }
+    .hero .kicker {
+      font-family: "Share Tech Mono", monospace;
+      font-size: 9px;
+      color: var(--cyan);
+      letter-spacing: 0.14em;
+    }
+    .hero h1 {
+      font-family: Orbitron, sans-serif;
+      font-size: 18px;
+      margin: 4px 0;
+    }
+    .hero p { font-size: 11px; color: var(--hint); }
+    .hero .beta {
+      position: absolute; top: 10px; right: 10px; z-index: 1;
+      font-family: "Share Tech Mono", monospace;
+      font-size: 8px;
+      color: var(--cyan);
+      background: rgba(0,0,0,0.55);
+      border: 1px solid rgba(0,245,255,0.35);
+      border-radius: 8px;
+      padding: 4px 8px;
+      letter-spacing: 0.1em;
+    }
+    .section-label {
+      margin-top: 14px;
+      font-family: "Share Tech Mono", monospace;
+      font-size: 10px;
+      color: var(--hint);
+      letter-spacing: 0.12em;
+    }
+    .pills {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      margin-top: 10px;
+      padding-bottom: 4px;
+    }
+    .pill {
+      flex: 0 0 auto;
+      font-family: "Share Tech Mono", monospace;
+      font-size: 9px;
+      letter-spacing: 0.06em;
+      padding: 7px 12px;
+      border-radius: 20px;
+      border: 1px solid rgba(0,245,255,0.12);
+      background: var(--card);
+      color: var(--hint);
+    }
+    .pill.active {
+      border-color: rgba(0,245,255,0.6);
+      background: rgba(0,245,255,0.15);
+      color: var(--cyan);
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 14px;
+    }
+    .card {
+      background: var(--card);
+      border-radius: 12px;
+      border: 1px solid rgba(0,245,255,0.1);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    .card .img-wrap {
+      position: relative;
+      height: 110px;
+      background: #0a1f3a;
+    }
+    .card img { width: 100%; height: 100%; object-fit: cover; }
+    .card .tag {
+      position: absolute; top: 8px; left: 8px;
+      font-family: "Share Tech Mono", monospace;
+      font-size: 7px;
+      color: var(--amber);
+      background: rgba(0,0,0,0.6);
+      border: 1px solid rgba(243,198,77,0.4);
+      border-radius: 6px;
+      padding: 3px 6px;
+      letter-spacing: 0.04em;
+    }
+    .card .body { padding: 8px 10px 10px; flex: 1; display: flex; flex-direction: column; }
+    .card .brand {
+      font-family: "Share Tech Mono", monospace;
+      font-size: 8px;
+      color: var(--hint);
+      letter-spacing: 0.05em;
+    }
+    .card h3 { font-size: 12px; font-weight: 600; margin: 2px 0 6px; line-height: 1.25; min-height: 30px; }
+    .card .row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+    .card .price {
+      font-family: Orbitron, sans-serif;
+      font-size: 13px;
+      color: var(--cyan);
+      font-weight: 700;
+    }
+    .card .partner { font-size: 9px; color: var(--amber); font-weight: 600; }
+    .card .cta {
+      margin-top: auto;
+      text-align: center;
+      font-family: "Share Tech Mono", monospace;
+      font-size: 9px;
+      color: var(--hint);
+      letter-spacing: 0.08em;
+      padding: 7px;
+      border-radius: 8px;
+      border: 1px solid rgba(138,173,190,0.25);
+      background: rgba(138,173,190,0.08);
+    }
+    .footer-note {
+      margin-top: 16px;
+      padding: 14px;
+      border-radius: 12px;
+      background: var(--card);
+      border: 1px solid rgba(138,173,190,0.2);
+      font-size: 11px;
+      color: var(--hint);
+      line-height: 1.45;
+    }
+    .caption {
+      margin-top: 16px;
+      text-align: center;
+      font-size: 11px;
+      color: rgba(138,173,190,0.7);
+    }
+  </style>
+</head>
+<body>
+  <div class="phone">
+    <header class="appbar">
+      <span class="back">‹</span>
+      <div>
+        <div class="logo-main">AQUANAUTIX</div>
+        <div class="logo-sub">LOJA</div>
+      </div>
+    </header>
+    <main class="scroll">
+      <section class="dev-banner" aria-label="Aviso de desenvolvimento">
+        <div class="icon">🚧</div>
+        <div>
+          <h2>ESTÁ EM DESENVOLVIMENTO</h2>
+          <p>Pré-visualização da loja afiliada — compras indisponíveis por agora.</p>
+        </div>
+      </section>
+
+      <section class="hero">
+        <img src="../assets/marketing/catches/oracle_hero_pescador.jpg" alt="Pescador AQUANAUTIX" />
+        <span class="beta">BETA</span>
+        <div class="content">
+          <div class="kicker">LOJA AFILIADA</div>
+          <h1>Equipa-te como os pros</h1>
+          <p>Recomendações alinhadas ao teu alvo e condições do Oráculo.</p>
+        </div>
+      </section>
+
+      <p class="section-label">MATERIAL SELECCIONADO PARA PESCADORES IBÉRICOS</p>
+      <div class="pills">
+        <span class="pill active">TODOS</span>
+        <span class="pill">CANAS</span>
+        <span class="pill">MOLINETES</span>
+        <span class="pill">ISCOS</span>
+        <span class="pill">VESTUÁRIO</span>
+      </div>
+
+      <div class="grid">
+        <article class="card">
+          <div class="img-wrap">
+            <img src="https://images.unsplash.com/photo-1544552866-d3ed42536cfd?auto=format&fit=crop&w=600&q=80" alt="Cana de pesca" />
+            <span class="tag">COSTA</span>
+          </div>
+          <div class="body">
+            <div class="brand">CAPERLAN</div>
+            <h3>Cana Spinning 2.40m</h3>
+            <div class="row"><span class="price">€49,99</span><span class="partner">→ Decathlon</span></div>
+            <div class="cta">EM BREVE</div>
+          </div>
+        </article>
+        <article class="card">
+          <div class="img-wrap">
+            <img src="https://images.unsplash.com/photo-1504307651254-35680f356dfd?auto=format&fit=crop&w=600&q=80" alt="Molinete" />
+            <span class="tag">VERSÁTIL</span>
+          </div>
+          <div class="body">
+            <div class="brand">MITCHELL</div>
+            <h3>Molinete 3000 FD</h3>
+            <div class="row"><span class="price">€34,99</span><span class="partner">→ Decathlon</span></div>
+            <div class="cta">EM BREVE</div>
+          </div>
+        </article>
+        <article class="card">
+          <div class="img-wrap">
+            <img src="../assets/marketing/catches/robalo.jpg" alt="Soft lures" />
+            <span class="tag">ROBALO</span>
+          </div>
+          <div class="body">
+            <div class="brand">SAVAGE GEAR</div>
+            <h3>Pack Soft Lures 12un</h3>
+            <div class="row"><span class="price">€12,90</span><span class="partner">→ Amazon</span></div>
+            <div class="cta">EM BREVE</div>
+          </div>
+        </article>
+        <article class="card">
+          <div class="img-wrap">
+            <img src="https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=600&q=80" alt="Caixa de isco" />
+            <span class="tag">ORGANIZAÇÃO</span>
+          </div>
+          <div class="body">
+            <div class="brand">FLAMBEAU</div>
+            <h3>Caixa Tackle Pro M</h3>
+            <div class="row"><span class="price">€29,99</span><span class="partner">→ Decathlon</span></div>
+            <div class="cta">EM BREVE</div>
+          </div>
+        </article>
+        <article class="card">
+          <div class="img-wrap">
+            <img src="https://images.unsplash.com/photo-1559827260-dc66d52bef19?auto=format&fit=crop&w=600&q=80" alt="Casaco de pesca" />
+            <span class="tag">INVERNO</span>
+          </div>
+          <div class="body">
+            <div class="brand">SIMOND</div>
+            <h3>Casaco Impermeável</h3>
+            <div class="row"><span class="price">€59,99</span><span class="partner">→ Decathlon</span></div>
+            <div class="cta">EM BREVE</div>
+          </div>
+        </article>
+        <article class="card">
+          <div class="img-wrap">
+            <img src="../assets/marketing/catches/dourada.jpg" alt="Óculos polarizados" />
+            <span class="tag">SOL</span>
+          </div>
+          <div class="body">
+            <div class="brand">WATERTIGHT</div>
+            <h3>Óculos Polarizados</h3>
+            <div class="row"><span class="price">€24,50</span><span class="partner">→ Amazon</span></div>
+            <div class="cta">EM BREVE</div>
+          </div>
+        </article>
+      </div>
+
+      <p class="footer-note">
+        🔗 Links de afiliado Decathlon e Amazon. Comissões revertem para manter o Oráculo e o Vision gratuitos para todos.
+      </p>
+      <p class="caption">Mockup estático — <code>prototypes/affiliate-shop-mockup.html</code></p>
+    </main>
+  </div>
+</body>
+</html>

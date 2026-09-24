@@ -19,8 +19,6 @@ import '../data/home_repository_impl.dart';
 import '../domain/repositories/home_repository.dart';
 import 'widgets/community_activity_card.dart';
 import 'widgets/featured_spot_card.dart';
-import 'widgets/fishing_activity_section.dart';
-import 'widgets/greeting_header.dart';
 import 'widgets/hourly_condition_card.dart';
 import 'widgets/section_header.dart';
 import 'widgets/weather_card.dart';
@@ -244,7 +242,6 @@ class _InicioDashboardScreenState extends State<InicioDashboardScreen>
 
     final data = _data!;
     final hour = DateTime.now().hour;
-    final tagline = homeTaglineParts(t, data.weather.solunarScore);
     final updatedAt = data.lastUpdated ?? DateTime.now();
     final greeting = t.homeGreetingPersonalized(hour, data.userDisplayName);
 
@@ -267,21 +264,12 @@ class _InicioDashboardScreenState extends State<InicioDashboardScreen>
               ),
               const SizedBox(height: AppSpacing.sm),
             ],
-            GreetingHeader(
-              greetingLine: greeting,
-              taglinePrefix: tagline.$1,
-              taglineHighlight: tagline.$2,
-              taglineSuffix: tagline.$3,
-              location: data.weather.location,
-              onLocationTap: widget.onVerOracle,
-            ),
-            const SizedBox(height: AppSpacing.md),
-            WeatherCard(weather: data.weather, t: t),
-            const SizedBox(height: AppSpacing.md),
-            FishingActivitySection(
-              score: data.weather.solunarScore,
+            WeatherCard(
+              weather: data.weather,
               t: t,
               updatedAt: updatedAt,
+              greetingLine: greeting,
+              onLocationTap: widget.onVerOracle,
               onRefresh: () => unawaited(_onPullRefresh()),
             ),
             const SizedBox(height: AppSpacing.lg),

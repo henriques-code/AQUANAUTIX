@@ -46,6 +46,9 @@ class SpeciesRecord {
   final bool vedaAtiva;
   final String photoUrl;
 
+  /// Bundle offline — `assets/species/{id}.jpg` (ver [SpeciesPhoto]).
+  String get bundledPhotoAsset => 'assets/species/$id.jpg';
+
   /// Compat legado — preferir [nomeFor].
   String get nome => nomePT;
 
