@@ -38,3 +38,30 @@ Site V2/.vercel/
 
 # Supabase temp
 supabase/.temp/
+
+# Chaves de assinatura Android
+*.keystore
+*.jks
+
+# Firebase (não usado, mas nunca indexar se aparecer)
+**/google-services.json
+**/GoogleService-Info.plist
+
+# Artefactos de compilação adicionais
+.gradle/
+android/.gradle/
+android/app/build/
+ios/Pods/
+windows/x64/
+
+# Cópias locais criadas pelo OneDrive
+Imagens - Cópia/
+Logo Aquanautix/
+Logo Aquanautix - Cópia/
+Logo Aquanautix - Cópia (2)/
+
+# IDE e sistema
+.idea/
+.vscode/
+*.log
+.DS_Store
